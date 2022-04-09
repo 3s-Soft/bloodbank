@@ -1,0 +1,76 @@
+/* BootStrap 5*/
+@import url(../../node_modules/bootstrap/dist/css/bootstrap.min.css);
+
+/* Font-awesome */
+@import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css');
+
+
+.hero-img{
+    height: 90vh;
+}
+
+
+
+
+/* News */
+
+.notice {
+    height: 10vh;
+    background: #0f1138;
+    font-family: 'Poppins', sans-sherif;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: rgb(0, 0, 0);
+    overflow: hidden
+}
+
+
+.ticker {
+    display: flex;
+    flex-wrap: wrap;
+    width: 80%;
+    height: 50px;
+    margin: 0 auto
+}
+
+.news {
+    width: 76%;
+    background: #ffffff;
+    padding: 0 2%
+}
+
+.title {
+    width: 20%;
+    text-align: center;
+    background: #c81c1c;
+    position: relative
+}
+
+/* .title:after {
+    position: absolute;
+    content: "";
+    right: -19%;
+    border-left: 20px solid #c81c1c;
+    border-top: 28px solid transparent;
+    border-right: 20px solid transparent;
+    border-bottom: 21px solid transparent;
+    top: 2px
+} */
+
+.title h5 {
+    font-size: 18px;
+    font-family: Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif;
+    margin: 8% 0
+}
+
+.news marquee {
+    font-size: 18px;
+    margin-top: 12px
+}
+
+.news-content p {
+    margin-right: 41px;
+    display: inline
+}
+/* News */
