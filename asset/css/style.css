@@ -74,3 +74,12 @@
     display: inline
 }
 /* News */
+
+/* Title */
+.title-bottom-line{
+    width: 100px;
+    height: 3px !important;
+    background: red;
+    opacity: 1 !important;
+    margin: 0 auto;
+}

@@ -3,8 +3,9 @@
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
+  "homepage": "https://github.com/3s-Soft/bloodbank",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "deploy":"gh-pages -d public"
   },
   "author": "",
   "license": "ISC",
