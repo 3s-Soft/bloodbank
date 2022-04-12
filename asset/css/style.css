@@ -3,7 +3,7 @@
 
 /* Font-awesome */
 @import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css');
-
+/* @import url('https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css'); */
 
 .hero-img{
     height: 90vh;
@@ -83,3 +83,54 @@
     opacity: 1 !important;
     margin: 0 auto;
 }
+
+
+
+
+
+/* Card */
+
+.social-link {
+    width: 30px;
+    height: 30px;
+    border: 1px solid #ddd;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #666;
+    border-radius: 50%;
+    transition: all 0.3s;
+    font-size: 0.9rem;
+}
+
+.social-link:hover, .social-link:focus {
+    background: #ddd;
+    text-decoration: none;
+    color: #555;
+}
+/* Blood */
+.social-link-blood {
+    width: 50px;
+    height: 40px;
+    border: 1px solid rgb(200, 6, 6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: rgb(209, 0, 0);
+    border-radius: 50%;
+    transition: all 0.3s;
+    font-size: 0.9rem;
+    font-weight: bolder;
+}
+
+.social-link-blood:hover, .social-link-blood:focus {
+    background: rgb(255, 0, 0);
+    text-decoration: none;
+    color: rgb(255, 252, 252);
+}
+
+
+.social-link-blood i{
+    color: #ff0101;
+}
+
