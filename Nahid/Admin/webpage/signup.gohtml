@@ -5,18 +5,18 @@
 
     <div class="container mt-5">
         <!-- Form -->
-        <form class="col-md-4 m-auto">
+        <form class="col-md-4 m-auto" action="/registered" method="POST">
             <!-- Name -->
             <div class="row mb-4">
                 <div class="col">
                     <div class="form-outline">
-                        <input type="text" id="form3Example1" class="form-control" />
+                        <input type="text" id="form3Example1" class="form-control" name="fname"/>
                         <label class="form-label" for="form3Example1">First name</label>
                     </div>
                 </div>
                 <div class="col">
                     <div class="form-outline">
-                        <input type="text" id="form3Example2" class="form-control" />
+                        <input type="text" id="form3Example2" class="form-control" name="lname"/>
                         <label class="form-label" for="form3Example2">Last name</label>
                     </div>
                 </div>
@@ -25,13 +25,13 @@
             <!-- Name -->
             <!-- Email input -->
             <div class="form-outline mb-4">
-                <input type="email" id="form2Example1" class="form-control" />
+                <input type="email" id="form2Example1" class="form-control" name="email" />
                 <label class="form-label" for="form2Example1">Email address</label>
             </div>
 
             <!-- Password input -->
             <div class="form-outline mb-4">
-                <input type="password" id="form2Example2" class="form-control" />
+                <input type="password" id="form2Example2" class="form-control"name="password" />
                 <label class="form-label" for="form2Example2">Password</label>
             </div>
 
@@ -52,7 +52,7 @@
             </div>
 
             <!-- Submit button -->
-            <button type="submit" class="btn btn-primary btn-block mb-4">Register</button>
+            <button type="submit" class="btn btn-primary btn-block mb-4 ">Register</button>
 
             <!-- Register buttons -->
             <div class="text-center">
