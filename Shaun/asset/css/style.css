@@ -9,9 +9,6 @@
     height: 90vh;
 }
 
-
-
-
 /* News */
 
 .notice {
@@ -47,17 +44,6 @@
     position: relative
 }
 
-/* .title:after {
-    position: absolute;
-    content: "";
-    right: -19%;
-    border-left: 20px solid #c81c1c;
-    border-top: 28px solid transparent;
-    border-right: 20px solid transparent;
-    border-bottom: 21px solid transparent;
-    top: 2px
-} */
-
 .title h5 {
     font-size: 18px;
     font-family: Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif;
@@ -83,10 +69,6 @@
     opacity: 1 !important;
     margin: 0 auto;
 }
-
-
-
-
 
 /* Card */
 
@@ -134,3 +116,75 @@
     color: #ff0101;
 }
 
+/* Profile */
+
+/* Profile Page */
+
+.container-profile {
+    padding: 2rem 1rem;
+    margin-top: 2rem;
+  }
+  .user-avatar {
+    display: inline;
+    position: absolute;
+    top: -50px;
+    left: 50%;
+    transform: translate(-50px);
+  }
+  .profile {
+    margin-top: 10px;
+    margin-bottom: 5px;
+    margin-right: 1rem;
+    padding: 2rem;
+    background: aliceblue;
+    box-shadow: 1px 1px 7px 2px #c5adad;
+    border-radius: 10px;
+    display: flex;
+    position: relative;
+  }
+  .profile-pic {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    display: inline;
+    padding: 10px;
+    border: 1px solid rgb(10, 216, 113);
+  }
+  .user-profile-details {
+    display: inline-block;
+    padding: 10px;
+    margin-top: 25px;
+  }
+
+
+
+  .donor-blood-group {
+    margin-left: auto;
+    background: red;
+    border-radius: 50%;
+    color: #fff;
+    padding: 2px;
+    display: inline-block;
+    position: absolute;
+    right: 15px;
+    top: 10px;
+    width: 40px;
+    text-align: center;
+    font-weight: bold;
+    font-size: 16px;
+    height: 30px;
+  }
+
+
+  .forms {
+    max-width: 600px;
+    margin: 3rem auto;
+    padding: 2rem;
+    background: rgb(187, 218, 244);
+    box-shadow: 1px 1px 7px 2px #c5adad;
+    border-radius: 10px;
+  }
+  .forms form input {
+    margin-bottom: 1rem;
+  }
+  
