@@ -9,6 +9,6 @@
     <link rel="stylesheet" href="{{ asset('css/app.css') }}">
 </head>
 <body>
-<h1 class="text-gray-200">Hello World!!!</h1>
+<h1 class="text-2xl font-bold">Hello World!!!</h1>
 </body>
 </html>
