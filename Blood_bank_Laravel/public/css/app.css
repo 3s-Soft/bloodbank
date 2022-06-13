@@ -636,6 +636,9 @@ video {
 .text-center {
   text-align: center;
 }
+.font-serif {
+  font-family: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
+}
 .text-sm {
   font-size: 0.875rem;
   line-height: 1.25rem;
@@ -646,6 +649,12 @@ video {
 }
 .font-semibold {
   font-weight: 600;
+}
+.font-medium {
+  font-weight: 500;
+}
+.font-extralight {
+  font-weight: 200;
 }
 .leading-7 {
   line-height: 1.75rem;
