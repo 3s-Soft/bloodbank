@@ -38,7 +38,7 @@ Before you start contributing, ensure that you have the following prerequisites 
 3. Navigate to the project directory:
 
    ```shell
-   cd laravel-react-blood-donation
+   cd bloodbank
    ```
 
 4. Install PHP dependencies:
@@ -93,7 +93,7 @@ Now you're ready to start working on the project!
 
 If you encounter a bug, have a feature request, or want to discuss anything related to the project, please follow these guidelines when creating an issue:
 
-1. Check the [existing issues](https://github.com/your-username/laravel-react-blood-donation/issues) to see if your issue has already been reported.
+1. Check the [existing issues](https://github.com/3s-Soft/bloodbank/issues) to see if your issue has already been reported.
 
 2. Use a clear and descriptive title for the issue.
 
