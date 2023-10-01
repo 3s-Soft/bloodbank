@@ -4,7 +4,7 @@ To create a webesite for the ease of donating blood. All blood donor's list and 
 
 # Laravel and React Blood Donation Application
 
-![Application Logo](link-to-your-logo.png)
+![Application Logo](logo.png)
 
 Welcome to the Laravel and React Blood Donation Application! This project aims to create a platform that connects blood donors with recipients, making it easier for those in need to find donors and schedule blood donations.
 
@@ -121,6 +121,8 @@ We welcome contributions from the community! If you'd like to contribute to the 
 ## License
 
 This project is licensed under the [MIT License](LICENSE).
+
 ```
 
 Customize this README.md file with your application's specific details, including the logo, features, and any additional information that you want to provide to users and contributors.
+```
