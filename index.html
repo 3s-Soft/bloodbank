@@ -1,11 +1,135 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Blood Bank</title>
+    <title>Blood Bank - Coming Soon</title>
+    <!-- <link rel="stylesheet" href="styles.css"> -->
+
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+            color: #333;
+        }
+
+        .landing-page {
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        .header {
+            background-color: #d32f2f;
+            color: white;
+            padding: 2rem 0;
+            text-align: center;
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 2.5rem;
+        }
+
+        .header p {
+            margin: 0.5rem 0 0;
+            font-size: 1.2rem;
+        }
+
+        .main-content {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem 0;
+        }
+
+        .main-content h2 {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+        }
+
+        .main-content p {
+            font-size: 1.2rem;
+            margin-bottom: 2rem;
+        }
+
+        .subscribe-form {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .subscribe-form input {
+            padding: 0.75rem;
+            font-size: 1rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            flex: 1;
+        }
+
+        .subscribe-form button {
+            padding: 0.75rem 1.5rem;
+            font-size: 1rem;
+            border: none;
+            border-radius: 4px;
+            background-color: #d32f2f;
+            color: white;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .subscribe-form button:hover {
+            background-color: #b71c1c;
+        }
+
+        .footer {
+            background-color: #333;
+            color: white;
+            text-align: center;
+            padding: 1rem 0;
+        }
+
+        .footer p {
+            margin: 0;
+        }
+    </style>
 </head>
+
 <body>
-    <h1>Welcome to Blood Bank</h1>
+    <div class="landing-page">
+        <header class="header">
+            <div class="container">
+                <h1>Blood Bank</h1>
+                <p>Connecting donors with recipients in rural areas of Bangladesh</p>
+            </div>
+        </header>
+        <main class="main-content">
+            <div class="container">
+                <h2>Coming Soon</h2>
+                <p>We are working hard to launch our new website. Stay tuned!</p>
+                <form class="subscribe-form">
+                    <input type="email" placeholder="Enter your email" required>
+                    <button type="submit">Notify Me</button>
+                </form>
+            </div>
+        </main>
+        <footer class="footer">
+            <div class="container">
+                <p>&copy; 2023 Blood Bank. All rights reserved.</p>
+            </div>
+        </footer>
+    </div>
+    <!-- <script src="scripts.js"></script> -->
+    <script>
+        document.querySelector('.subscribe-form').addEventListener('submit', function (e) {
+            e.preventDefault();
+            const email = e.target.querySelector('input').value;
+            alert(`Thank you! We will notify you at ${email} when we launch.`);
+            e.target.reset();
+        });
+    </script>
 </body>
+
 </html>
