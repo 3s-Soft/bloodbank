@@ -19,7 +19,7 @@ import {
   FaInfoCircle,
   FaUserShield,
   FaChevronDown,
-  FaSparkles
+  FaStar
 } from 'react-icons/fa';
 import { useAuth } from '../contexts/AuthContext';
 import Swal from 'sweetalert2';
@@ -247,7 +247,7 @@ const Navbar = () => {
                     {/* Special badges */}
                     {item.highlight && !active && (
                       <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full flex items-center justify-center">
-                        <FaSparkles className="w-2 h-2 text-white" />
+                        <FaStar className="w-2 h-2 text-white" />
                       </div>
                     )}
                   </Link>
@@ -415,7 +415,7 @@ const Navbar = () => {
                     </div>
                     {item.highlight && (
                       <div className="ml-auto">
-                        <FaSparkles className="w-4 h-4 text-yellow-400" />
+                        <FaStar className="w-4 h-4 text-yellow-400" />
                       </div>
                     )}
                   </Link>

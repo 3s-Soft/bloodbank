@@ -16,10 +16,10 @@ import {
   FaArrowRight,
   FaPlay,
   FaCheckCircle,
-  FaSparkles,
+  FaGem,
   FaBolt,
   FaRocket,
-  FaMagic
+  FaTachometerAlt
 } from 'react-icons/fa';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -154,7 +154,7 @@ const Home = () => {
           <div className="fade-in-up">
             {/* Hero Badge */}
             <div className="inline-flex items-center px-6 py-3 rounded-full modern-card mb-8 group">
-              <FaSparkles className="w-4 h-4 text-yellow-400 mr-2 animate-pulse" />
+              <FaGem className="w-4 h-4 text-yellow-400 mr-2 animate-pulse" />
               <span className="text-sm font-medium bg-gradient-to-r from-yellow-400 to-orange-500 bg-clip-text text-transparent">
                 Trusted by 12,500+ donors across Bangladesh
               </span>
