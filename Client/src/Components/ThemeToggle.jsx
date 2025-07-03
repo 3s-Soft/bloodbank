@@ -14,7 +14,7 @@ const ThemeToggle = () => {
         aria-label={`Switch to ${isLight ? "dark" : "light"} mode`}
       >
         {/* Background track with gradient */}
-        <div className="absolute inset-0.5 rounded-full bg-gradient-to-r from-white to-gray-800"></div>
+        <div className="absolute inset-0.5 rounded-full bg-gradient-to-r from-gray-100 to-gray-800"></div>
 
         {/* Sliding circle with icon */}
         <div

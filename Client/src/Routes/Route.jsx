@@ -18,6 +18,10 @@ let router = createBrowserRouter([
       {
         path: "/about",
         Component: About
+      },
+      {
+        path: "/contact",
+        Component: About
       }
     ]
   },

@@ -24,7 +24,17 @@ const Navbar = () => {
           }`
         }
       >
-        About
+        About Us
+      </NavLink>
+      <NavLink
+        to={"/contact"}
+        className={({ isActive }) =>
+          `text-base font-bold px-2 py-1 rounded ${
+            isActive && "bg-white text-[#D1444A]"
+          }`
+        }
+      >
+        Contact Us
       </NavLink>
     </>
   );
