@@ -1,6 +1,7 @@
 import React from "react";
 import { Link, NavLink } from "react-router";
 import logo from "../assets/logo.png";
+import ThemeToggle from "./ThemeToggle";
 
 const Navbar = () => {
   const links = (
@@ -8,8 +9,8 @@ const Navbar = () => {
       <NavLink
         to={"/"}
         className={({ isActive }) =>
-          `text-base font-bold px-2 py-1 rounded ${
-            isActive && "bg-white text-[#D1444A]"
+          `text-base font-bold px-2 py-1 rounded  ${
+            isActive && "text-[#D1444A] bg-white"
           }`
         }
       >
@@ -51,7 +52,7 @@ const Navbar = () => {
             </div>
             <ul
               tabIndex={0}
-              className="menu menu-sm dropdown-content bg-base-100 rounded-box z-1 mt-3 w-52 p-2 shadow"
+              className="menu menu-sm dropdown-content rounded-box z-1 mt-3 w-52 p-2 shadow"
             >
               {links}
             </ul>
@@ -62,9 +63,12 @@ const Navbar = () => {
           </Link>
         </div>
         <div className="navbar-center hidden lg:flex">
-          <ul className="menu menu-horizontal px-1 gap-3">{links}</ul>
+          <ul className="menu menu-horizontal text-white px-1 gap-3">{links}</ul>
         </div>
-        <div className="navbar-end">
+        <div className="navbar-end gap-3">
+          <div className="">
+            <ThemeToggle></ThemeToggle>
+          </div>
           {/* <Link className="btn">Dashboard</Link> */}
           <Link
             to={"/login"}

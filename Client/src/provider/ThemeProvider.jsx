@@ -4,42 +4,37 @@ const ThemeContext = createContext();
 
 export const useTheme = () => {
   const context = useContext(ThemeContext);
-
-  if (context === undefined) {
+  if (!context) {
     throw new Error("useTheme must be used within a ThemeProvider");
   }
   return context;
 };
 
 const ThemeProvider = ({ children }) => {
-  const [theme, setTheme] = useState(() => {
-    const savedTheme = localStorage.getItem("blood-bank-theme");
-    if (savedTheme) {
-      return savedTheme;
-    }
+  const [theme, setTheme] = useState("light"); // default safe value
 
-    // Check system preference
-    if (
-      window.matchMedia &&
-      window.matchMedia("(prefers-color-scheme: dark)").matches
-    ) {
-      return "dark";
-    }
-
-    return "light";
-  });
-
+  // Load theme from localStorage or system preference
   useEffect(() => {
-    // Apply Theme to Document
+    const savedTheme = localStorage.getItem("blood-bank-theme");
+
+    if (savedTheme) {
+      setTheme(savedTheme);
+    } else {
+      const prefersDark = window.matchMedia?.(
+        "(prefers-color-scheme: dark)"
+      ).matches;
+      setTheme(prefersDark ? "dark" : "light");
+    }
+  }, []);
+
+  // Apply theme to <html> tag and save to localStorage
+  useEffect(() => {
     document.documentElement.setAttribute("data-theme", theme);
-    // save to localStorage
     localStorage.setItem("blood-bank-theme", theme);
   }, [theme]);
 
-  const toggleTheme = () => {
-    setTheme((prevTheme) => (prevTheme === "light" ? "dark" : "light"));
-  };
-
+  const toggleTheme = () =>
+    setTheme((prev) => (prev === "light" ? "dark" : "light"));
   const setLightTheme = () => setTheme("light");
   const setDarkTheme = () => setTheme("dark");
 
@@ -50,7 +45,8 @@ const ThemeProvider = ({ children }) => {
     setDarkTheme,
     isLight: theme === "light",
     isDark: theme === "dark",
-  }
+  };
+
   return (
     <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>
   );
