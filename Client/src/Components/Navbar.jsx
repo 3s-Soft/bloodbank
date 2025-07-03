@@ -15,6 +15,16 @@ const Navbar = () => {
       >
         Home
       </NavLink>
+      <NavLink
+        to={"/about"}
+        className={({ isActive }) =>
+          `text-base font-bold px-2 py-1 rounded ${
+            isActive && "bg-white text-[#D1444A]"
+          }`
+        }
+      >
+        About
+      </NavLink>
     </>
   );
   return (
@@ -52,7 +62,7 @@ const Navbar = () => {
           </Link>
         </div>
         <div className="navbar-center hidden lg:flex">
-          <ul className="menu menu-horizontal px-1">{links}</ul>
+          <ul className="menu menu-horizontal px-1 gap-3">{links}</ul>
         </div>
         <div className="navbar-end">
           {/* <Link className="btn">Dashboard</Link> */}
