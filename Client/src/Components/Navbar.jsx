@@ -25,6 +25,15 @@ const Navbar = () => {
         About Us
       </NavLink>
       <NavLink
+        to={"/request-blood"}
+        className={({ isActive }) =>
+          `text-base font-bold px-2 py-1 rounded ${isActive && "bg-white text-[#D1444A]"
+          }`
+        }
+      >
+        Request Blood
+      </NavLink>
+      <NavLink
         to={"/contact"}
         className={({ isActive }) =>
           `text-base font-bold px-2 py-1 rounded ${isActive && "bg-white text-[#D1444A]"
@@ -79,7 +88,7 @@ const Navbar = () => {
           {/* <Link className="btn">Dashboard</Link> */}
           <Link
             to={"/login"}
-            className="text-[#D1444A] bg-white text-lg font-bold px-6 py-2 rounded-lg"
+            className="text-[#D1444A] bg-white text-lg font-bold px-8 py-1.5 rounded-lg"
           >
             Login
           </Link>
