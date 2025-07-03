@@ -7,6 +7,9 @@ let router = createBrowserRouter([
   {
     path: "/",
     Component: MainLayout,
+
+    errorElement: <div>Page Not Found</div>,
+
     children: [
       {
         index: true,
