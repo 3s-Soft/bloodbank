@@ -3,6 +3,7 @@ import MainLayout from "../Layout/MainLayout";
 import Home from "../pages/Home/Home";
 import About from "../pages/AboutUs/About";
 import Error from "../pages/Error/Error";
+import Contact from "../pages/ContactUs/Contact";
 
 let router = createBrowserRouter([
   {
@@ -22,7 +23,7 @@ let router = createBrowserRouter([
       },
       {
         path: "/contact",
-        Component: About
+        Component: Contact
       }
     ]
   },
