@@ -4,11 +4,11 @@ const { generateToken } = require('../auth/jwt');
 
 exports.register = async (req, res) => {
     const { name, email, password, phone, role } = req.body;
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const hashed = await bcrypt.hash(password, 10);
 
     db.query(
         'INSERT INTO users (name, email, password, phone, role) VALUES (?, ?, ?, ?, ?)',
-        [name, email, hashedPassword, phone, role],
+        [name, email, hashed, phone, role],
         (err, result) => {
             if (err) return res.status(500).json({ error: err.message });
             res.status(201).json({ message: 'User registered', id: result.insertId });
