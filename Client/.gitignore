@@ -23,4 +23,11 @@ dist-ssr
 *.sln
 *.sw?
 
-
+# Build directories
+build
+coverage
+lib
+# Dependency directories
+jspm_packages
+# TypeScript cache
+*.tsbuildinfo
