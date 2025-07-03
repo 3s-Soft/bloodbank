@@ -18,28 +18,25 @@ const ThemeToggle = () => {
 
         {/* Sliding circle with icon */}
         <div
-          className={`relative z-10 flex h-7 w-7 transform items-center justify-center rounded-full bg-white shadow-lg transition-all duration-300 ease-in-out ${
-            isLight ? "translate-x-0.5" : "translate-x-9"
-          }`}
+          className={`relative z-10 flex h-7 w-7 transform items-center justify-center rounded-full bg-white shadow-lg transition-all duration-300 ease-in-out ${isLight ? "translate-x-0.5" : "translate-x-9"
+            }`}
         >
           {/* Sun and Moon icons with smooth transition */}
           <div className="relative h-4 w-4">
             {/* Sun icon */}
             <MdSunny
-              className={`absolute inset-0 h-4 w-4 text-yellow-400 transition-all duration-300 ${
-                isLight
+              className={`absolute inset-0 h-4 w-4 text-yellow-400 transition-all duration-300 ${isLight
                   ? "opacity-100 rotate-0 scale-100"
                   : "opacity-0 rotate-180 scale-0"
-              }`}
+                }`}
             />
 
             {/* Moon icon */}
             <FaMoon
-              className={`absolute inset-0 h-4 w-4 text-gray-400 transition-all duration-300 ${
-                !isLight
+              className={`absolute inset-0 h-4 w-4 text-gray-400 transition-all duration-300 ${!isLight
                   ? "opacity-100 rotate-0 scale-100"
                   : "opacity-0 rotate-180 scale-0"
-              }`}
+                }`}
             />
           </div>
         </div>
