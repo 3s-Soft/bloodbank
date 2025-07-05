@@ -40,8 +40,8 @@ const RequestBlood = () => {
   };
 
   return (
-    <div className="min-h-[70vh] text-white px-4 py-12 flex justify-center items-center">
-      <div className="w-full max-w-3xl bg-[#2c2c2c] p-8 rounded-xl shadow-lg">
+    <div className="min-h-[70vh] px-4 py-12 flex justify-center items-center">
+      <div className="w-full max-w-3xl p-8 rounded-xl shadow-lg">
         <h2 className="text-3xl font-bold text-[#d1444a] mb-6 text-center">
           Request for Blood
         </h2>
@@ -55,7 +55,7 @@ const RequestBlood = () => {
                 value={formData.name}
                 onChange={handleChange}
                 required
-                className="w-full px-4 py-2 rounded bg-[#222222] text-white border border-gray-600 focus:outline-none focus:ring-2 focus:ring-[#d1444a]"
+                className="w-full px-4 py-2 rounded border border-gray-600 focus:outline-none focus:ring-2 focus:ring-[#d1444a]"
               />
             </div>
             <div>
@@ -66,7 +66,7 @@ const RequestBlood = () => {
                 value={formData.phone}
                 onChange={handleChange}
                 required
-                className="w-full px-4 py-2 rounded bg-[#222222] text-white border border-gray-600 focus:outline-none focus:ring-2 focus:ring-[#d1444a]"
+                className="w-full px-4 py-2 rounded border border-gray-600 focus:outline-none focus:ring-2 focus:ring-[#d1444a]"
               />
             </div>
             <div>
@@ -76,17 +76,35 @@ const RequestBlood = () => {
                 value={formData.bloodGroup}
                 onChange={handleChange}
                 required
-                className="w-full px-4 py-2 rounded bg-[#222222] text-white border border-gray-600 focus:outline-none focus:ring-2 focus:ring-[#d1444a]"
+                className={`w-full px-4 py-2 rounded border border-gray-600 focus:outline-none focus:ring-2 focus:ring-[#d1444a] class="bg-gray-800 text-white"`}
               >
-                <option value="">Select</option>
-                <option value="A+">A+</option>
-                <option value="A-">A−</option>
-                <option value="B+">B+</option>
-                <option value="B-">B−</option>
-                <option value="AB+">AB+</option>
-                <option value="AB-">AB−</option>
-                <option value="O+">O+</option>
-                <option value="O-">O−</option>
+                <option value="" className="bg-gray-800 text-white">
+                  Select
+                </option>
+                <option value="A+" className="bg-gray-800 text-white">
+                  A+
+                </option>
+                <option value="A-" className="bg-gray-800 text-white">
+                  A-
+                </option>
+                <option value="B+" className="bg-gray-800 text-white">
+                  B+
+                </option>
+                <option value="B-" className="bg-gray-800 text-white">
+                  B-
+                </option>
+                <option value="AB+" className="bg-gray-800 text-white">
+                  AB+
+                </option>
+                <option value="AB-" className="bg-gray-800 text-white">
+                  AB-
+                </option>
+                <option value="O+" className="bg-gray-800 text-white">
+                  O+
+                </option>
+                <option value="O-" className="bg-gray-800 text-white">
+                  O-
+                </option>
               </select>
             </div>
             <div>
@@ -97,7 +115,7 @@ const RequestBlood = () => {
                 value={formData.district}
                 onChange={handleChange}
                 required
-                className="w-full px-4 py-2 rounded bg-[#222222] text-white border border-gray-600 focus:outline-none focus:ring-2 focus:ring-[#d1444a]"
+                className="w-full px-4 py-2 rounded border border-gray-600 focus:outline-none focus:ring-2 focus:ring-[#d1444a]"
               />
             </div>
             <div>
@@ -108,7 +126,7 @@ const RequestBlood = () => {
                 value={formData.hospital}
                 onChange={handleChange}
                 required
-                className="w-full px-4 py-2 rounded bg-[#222222] text-white border border-gray-600 focus:outline-none focus:ring-2 focus:ring-[#d1444a]"
+                className="w-full px-4 py-2 rounded border border-gray-600 focus:outline-none focus:ring-2 focus:ring-[#d1444a]"
               />
             </div>
             <div>
@@ -120,7 +138,7 @@ const RequestBlood = () => {
                 onChange={handleChange}
                 required
                 placeholder="e.g. Room 201, 2nd Floor, Emergency Ward"
-                className="w-full px-4 py-2 rounded bg-[#222222] text-white border border-gray-600 focus:outline-none focus:ring-2 focus:ring-[#d1444a]"
+                className="w-full px-4 py-2 rounded border border-gray-600 focus:outline-none focus:ring-2 focus:ring-[#d1444a]"
               />
             </div>
             <div>
@@ -131,7 +149,7 @@ const RequestBlood = () => {
                 value={formData.date}
                 onChange={handleChange}
                 required
-                className="w-full px-4 py-2 rounded bg-[#222222] text-white border border-gray-600 focus:outline-none focus:ring-2 focus:ring-[#d1444a]"
+                className="w-full px-4 py-2 rounded border border-gray-600 focus:outline-none focus:ring-2 focus:ring-[#d1444a]"
               />
             </div>
             <div className="flex items-center">
@@ -142,9 +160,11 @@ const RequestBlood = () => {
                 onChange={handleChange}
                 className="mr-2 w-4 h-4 accent-[#d1444a]"
               />
-              <label htmlFor="isEmergency" className="text-sm text-gray-300">
+              <label htmlFor="isEmergency" className="text-sm">
                 This is an{" "}
-                <span className="font-semibold uppercase">emergency</span>{" "}
+                <span className="font-semibold uppercase text-red-400">
+                  emergency
+                </span>{" "}
                 request
               </label>
             </div>
@@ -159,7 +179,7 @@ const RequestBlood = () => {
               value={formData.message}
               onChange={handleChange}
               rows="4"
-              className="w-full px-4 py-2 rounded bg-[#222222] text-white border border-gray-600 focus:outline-none focus:ring-2 focus:ring-[#d1444a]"
+              className="w-full px-4 py-2 rounded border border-gray-600 focus:outline-none focus:ring-2 focus:ring-[#d1444a]"
             ></textarea>
           </div>
 
