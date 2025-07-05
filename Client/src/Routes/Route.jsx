@@ -5,6 +5,7 @@ import About from "../pages/AboutUs/About";
 import Error from "../pages/Error/Error";
 import Contact from "../pages/ContactUs/Contact";
 import RequestBlood from "../pages/RequestBlood/RequestBlood";
+import Login from "../pages/Authentication/Login/Login";
 
 let router = createBrowserRouter([
   {
@@ -29,6 +30,10 @@ let router = createBrowserRouter([
       {
         path: "/contact",
         Component: Contact
+      },
+      {
+        path: "/login",
+        Component: Login
       }
     ]
   },
