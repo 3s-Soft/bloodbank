@@ -34,6 +34,7 @@ const Contact = () => {
               <input
                 type="text"
                 name="name"
+                placeholder="Full Name"
                 value={formData.name}
                 onChange={handleChange}
                 required
@@ -45,6 +46,7 @@ const Contact = () => {
               <input
                 type="email"
                 name="email"
+                placeholder="Email"
                 value={formData.email}
                 onChange={handleChange}
                 required
@@ -55,6 +57,7 @@ const Contact = () => {
               <label className="block mb-1 text-sm">Message</label>
               <textarea
                 name="message"
+                placeholder="Type Your Message Here..."
                 value={formData.message}
                 onChange={handleChange}
                 required
@@ -64,7 +67,7 @@ const Contact = () => {
             </div>
             <button
               type="submit"
-              className="w-full bg-[#d1444a] transition-all font-semibold py-2 rounded cursor-pointer text-white"
+              className="w-full bg-[#d1444a] hover:bg-red-700 transition-all duration-300 font-semibold py-2 rounded cursor-pointer text-white"
             >
               Send Message
             </button>

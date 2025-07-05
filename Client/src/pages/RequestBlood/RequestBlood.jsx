@@ -46,12 +46,13 @@ const RequestBlood = () => {
           Request for Blood
         </h2>
         <form onSubmit={handleSubmit} className="space-y-5">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-8">
             <div>
               <label className="block mb-1 text-sm">Your Name</label>
               <input
                 type="text"
                 name="name"
+                placeholder="EX: Jashedul Islam"
                 value={formData.name}
                 onChange={handleChange}
                 required
@@ -63,6 +64,7 @@ const RequestBlood = () => {
               <input
                 type="text"
                 name="phone"
+                placeholder="+8801#########"
                 value={formData.phone}
                 onChange={handleChange}
                 required
@@ -112,6 +114,7 @@ const RequestBlood = () => {
               <input
                 type="text"
                 name="district"
+                placeholder="EX: Dhaka"
                 value={formData.district}
                 onChange={handleChange}
                 required
@@ -123,6 +126,7 @@ const RequestBlood = () => {
               <input
                 type="text"
                 name="hospital"
+                placeholder="EX: Dhaka Medical"
                 value={formData.hospital}
                 onChange={handleChange}
                 required
@@ -137,7 +141,7 @@ const RequestBlood = () => {
                 value={formData.location}
                 onChange={handleChange}
                 required
-                placeholder="e.g. Room 201, 2nd Floor, Emergency Ward"
+                placeholder="EX: Room 201, 2nd Floor, Emergency Ward"
                 className="w-full px-4 py-2 rounded border border-gray-600 focus:outline-none focus:ring-2 focus:ring-[#d1444a]"
               />
             </div>
@@ -176,6 +180,7 @@ const RequestBlood = () => {
             </label>
             <textarea
               name="message"
+              placeholder="Type Your Message Here...."
               value={formData.message}
               onChange={handleChange}
               rows="4"
@@ -185,7 +190,7 @@ const RequestBlood = () => {
 
           <button
             type="submit"
-            className="w-full bg-[#d1444a] hover:bg-red-600 transition-all text-white font-semibold py-2 rounded"
+            className="w-full bg-[#d1444a] hover:bg-red-700 transition-all duration-300 text-white font-semibold py-2 rounded cursor-pointer"
           >
             Submit Request
           </button>
