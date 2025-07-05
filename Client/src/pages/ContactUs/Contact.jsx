@@ -24,7 +24,7 @@ const Contact = () => {
 
   return (
     <div className="min-h-[70vh] py-12 flex items-center justify-center">
-      <div className="w-full max-w-6xl rounded-xl shadow p-5 md:p-12 flex flex-col-reverse lg:flex-row gap-10">
+      <div className="w-full max-w-6xl rounded-xl shadow-lg p-5 md:p-12 flex flex-col-reverse lg:flex-row gap-10">
         {/* Contact Form */}
         <div className="flex-1">
           <h2 className="text-3xl font-bold text-[#d1444a] mb-6">Send Us a Message</h2>

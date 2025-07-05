@@ -7,42 +7,54 @@ import { MdMenu } from "react-icons/md";
 const Navbar = () => {
   const links = (
     <>
-      <NavLink
-        to={"/"}
-        className={({ isActive }) =>
-          `text-base font-bold px-2 py-1 rounded  ${isActive && "text-[#D1444A] bg-white"
-          }`
-        }
-      >
-        Home
-      </NavLink>
-      <NavLink
-        to={"/about"}
-        className={({ isActive }) =>
-          `text-base font-bold px-2 py-1 rounded ${isActive && "bg-white text-[#D1444A]"
-          }`
-        }
-      >
-        About Us
-      </NavLink>
-      <NavLink
-        to={"/request-blood"}
-        className={({ isActive }) =>
-          `text-base font-bold px-2 py-1 rounded ${isActive && "bg-white text-[#D1444A]"
-          }`
-        }
-      >
-        Request Blood
-      </NavLink>
-      <NavLink
-        to={"/contact"}
-        className={({ isActive }) =>
-          `text-base font-bold px-2 py-1 rounded ${isActive && "bg-white text-[#D1444A]"
-          }`
-        }
-      >
-        Contact Us
-      </NavLink>
+      <li>
+        <NavLink
+          to={"/"}
+          className={({ isActive }) =>
+            `text-base font-bold px-2 py-1 rounded  ${
+              isActive && "text-[#D1444A] bg-white"
+            }`
+          }
+        >
+          Home
+        </NavLink>
+      </li>
+      <li>
+        <NavLink
+          to={"/about"}
+          className={({ isActive }) =>
+            `text-base font-bold px-2 py-1 rounded ${
+              isActive && "bg-white text-[#D1444A]"
+            }`
+          }
+        >
+          About Us
+        </NavLink>
+      </li>
+      <li>
+        <NavLink
+          to={"/request-blood"}
+          className={({ isActive }) =>
+            `text-base font-bold px-2 py-1 rounded ${
+              isActive && "bg-white text-[#D1444A]"
+            }`
+          }
+        >
+          Request Blood
+        </NavLink>
+      </li>
+      <li>
+        <NavLink
+          to={"/contact"}
+          className={({ isActive }) =>
+            `text-base font-bold px-2 py-1 rounded ${
+              isActive && "bg-white text-[#D1444A]"
+            }`
+          }
+        >
+          Contact Us
+        </NavLink>
+      </li>
     </>
   );
   return (
@@ -66,7 +78,9 @@ const Navbar = () => {
           </Link>
         </div>
         <div className="navbar-center hidden lg:flex">
-          <ul className="menu menu-horizontal text-white px-1 gap-3">{links}</ul>
+          <ul className="menu menu-horizontal text-white px-1 gap-3">
+            {links}
+          </ul>
         </div>
         <div className="navbar-end gap-3">
           <div className="">
