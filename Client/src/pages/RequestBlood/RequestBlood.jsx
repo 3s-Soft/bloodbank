@@ -56,7 +56,7 @@ const RequestBlood = () => {
                 value={formData.name}
                 onChange={handleChange}
                 required
-                className="w-full px-4 py-2 rounded border border-gray-600 focus:outline-none focus:ring-2 focus:ring-[#d1444a]"
+                className="w-full px-4 py-2 rounded border border-gray-600 focus:outline-none focus:ring"
               />
             </div>
             <div>
@@ -68,7 +68,7 @@ const RequestBlood = () => {
                 value={formData.phone}
                 onChange={handleChange}
                 required
-                className="w-full px-4 py-2 rounded border border-gray-600 focus:outline-none focus:ring-2 focus:ring-[#d1444a]"
+                className="w-full px-4 py-2 rounded border border-gray-600 focus:outline-none focus:ring"
               />
             </div>
             <div>
@@ -78,10 +78,10 @@ const RequestBlood = () => {
                 value={formData.bloodGroup}
                 onChange={handleChange}
                 required
-                className={`w-full px-4 py-2 rounded border border-gray-600 focus:outline-none focus:ring-2 focus:ring-[#d1444a] class="bg-gray-800 text-white"`}
+                className={`w-full px-4 py-2 rounded border border-gray-600 focus:outline-none focus:ring`}
               >
                 <option value="" className="bg-gray-800 text-white">
-                  Select
+                  Blood Group
                 </option>
                 <option value="A+" className="bg-gray-800 text-white">
                   A+
@@ -118,7 +118,7 @@ const RequestBlood = () => {
                 value={formData.district}
                 onChange={handleChange}
                 required
-                className="w-full px-4 py-2 rounded border border-gray-600 focus:outline-none focus:ring-2 focus:ring-[#d1444a]"
+                className="w-full px-4 py-2 rounded border border-gray-600 focus:outline-none focus:ring"
               />
             </div>
             <div>
@@ -130,7 +130,7 @@ const RequestBlood = () => {
                 value={formData.hospital}
                 onChange={handleChange}
                 required
-                className="w-full px-4 py-2 rounded border border-gray-600 focus:outline-none focus:ring-2 focus:ring-[#d1444a]"
+                className="w-full px-4 py-2 rounded border border-gray-600 focus:outline-none focus:ring"
               />
             </div>
             <div>
@@ -142,7 +142,7 @@ const RequestBlood = () => {
                 onChange={handleChange}
                 required
                 placeholder="EX: Room 201, 2nd Floor, Emergency Ward"
-                className="w-full px-4 py-2 rounded border border-gray-600 focus:outline-none focus:ring-2 focus:ring-[#d1444a]"
+                className="w-full px-4 py-2 rounded border border-gray-600 focus:outline-none focus:ring"
               />
             </div>
             <div>
@@ -153,7 +153,7 @@ const RequestBlood = () => {
                 value={formData.date}
                 onChange={handleChange}
                 required
-                className="w-full px-4 py-2 rounded border border-gray-600 focus:outline-none focus:ring-2 focus:ring-[#d1444a]"
+                className="w-full px-4 py-2 rounded border border-gray-600 focus:outline-none focus:ring"
               />
             </div>
             <div className="flex items-center">
@@ -184,7 +184,7 @@ const RequestBlood = () => {
               value={formData.message}
               onChange={handleChange}
               rows="4"
-              className="w-full px-4 py-2 rounded border border-gray-600 focus:outline-none focus:ring-2 focus:ring-[#d1444a]"
+              className="w-full px-4 py-2 rounded border border-gray-600 focus:outline-none focus:ring"
             ></textarea>
           </div>
 
