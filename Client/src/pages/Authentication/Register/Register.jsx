@@ -59,8 +59,6 @@ const Register = () => {
   const bloodTypes = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
   const genders = ["Male", "Female", "Other"];
 
-  console.log(form.divisionId);
-
   // Load Divisions
   useEffect(() => {
     fetch("https://bdapi.vercel.app/api/v.1/division")
@@ -148,7 +146,7 @@ const Register = () => {
 
     try {
       // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 2000));
+      // await new Promise((resolve) => setTimeout(resolve, 2000));
 
       console.log("Registration Data:", form);
       alert("Registration successful! Welcome to the Blood Bank community.");
@@ -250,15 +248,15 @@ const Register = () => {
         <div className="bg-red-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
           <User className="w-8 h-8 text-red-600" />
         </div>
-        <h3 className="text-xl font-bold text-gray-900 mb-2">
+        <h3 className="text-xl font-bold mb-2">
           Personal Information
         </h3>
-        <p className="text-gray-600">Tell us about yourself</p>
+        <p className="">Tell us about yourself</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
-          <label className="block text-sm font-semibold text-gray-700 mb-2">
+          <label className="block text-sm font-semibold  mb-2">
             Full Name *
           </label>
           <input
@@ -273,11 +271,11 @@ const Register = () => {
         </div>
 
         <div>
-          <label className="block text-sm font-semibold text-gray-700 mb-2">
+          <label className="block text-sm font-semibold mb-2">
             Email Address *
           </label>
           <div className="relative">
-            <Mail className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
+            <Mail className="absolute left-3 top-3 h-5 w-5 " />
             <input
               type="email"
               name="email"
@@ -291,11 +289,11 @@ const Register = () => {
         </div>
 
         <div>
-          <label className="block text-sm font-semibold text-gray-700 mb-2">
+          <label className="block text-sm font-semibold mb-2">
             Phone Number *
           </label>
           <div className="relative">
-            <Phone className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
+            <Phone className="absolute left-3 top-3 h-5 w-5" />
             <input
               type="tel"
               name="phone"
@@ -309,11 +307,11 @@ const Register = () => {
         </div>
 
         <div>
-          <label className="block text-sm font-semibold text-gray-700 mb-2">
+          <label className="block text-sm font-semibold mb-2">
             Date of Birth *
           </label>
           <div className="relative">
-            <Calendar className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
+            <Calendar className="absolute left-3 top-3 h-5 w-5" />
             <input
               type="date"
               name="dateOfBirth"
@@ -326,7 +324,7 @@ const Register = () => {
         </div>
 
         <div>
-          <label className="block text-sm font-semibold text-gray-700 mb-2">
+          <label className="block text-sm font-semibold mb-2">
             Gender *
           </label>
           <select
@@ -346,7 +344,7 @@ const Register = () => {
         </div>
 
         <div>
-          <label className="block text-sm font-semibold text-gray-700 mb-2">
+          <label className="block text-sm font-semibold mb-2">
             NID Number *
           </label>
           <input
@@ -363,7 +361,7 @@ const Register = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
-          <label className="block text-sm font-semibold text-gray-700 mb-2">
+          <label className="block text-sm font-semibold mb-2">
             Emergency Contact Name *
           </label>
           <input
@@ -378,11 +376,11 @@ const Register = () => {
         </div>
 
         <div>
-          <label className="block text-sm font-semibold text-gray-700 mb-2">
+          <label className="block text-sm font-semibold mb-2">
             Emergency Contact Phone *
           </label>
           <div className="relative">
-            <Phone className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
+            <Phone className="absolute left-3 top-3 h-5 w-5" />
             <input
               type="tel"
               name="emergencyPhone"
@@ -404,15 +402,15 @@ const Register = () => {
         <div className="bg-red-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
           <MapPin className="w-8 h-8 text-red-600" />
         </div>
-        <h3 className="text-xl font-bold text-gray-900 mb-2">
+        <h3 className="text-xl font-bold mb-2">
           Address Information
         </h3>
-        <p className="text-gray-600">Where are you located?</p>
+        <p className="">Where are you located?</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
-          <label className="block text-sm font-semibold text-gray-700 mb-2">
+          <label className="block text-sm font-semibold mb-2">
             Division *
           </label>
           <select
@@ -422,9 +420,9 @@ const Register = () => {
             required
             className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-all"
           >
-            <option value="">Select Division</option>
+            <option value="" className="bg-gray-800 text-white">Select Division</option>
             {divisions.map((d) => (
-              <option key={d.id} value={d.id}>
+              <option key={d.id} value={d.id} className="bg-gray-800 text-white">
                 {d.name}
               </option>
             ))}
@@ -432,7 +430,7 @@ const Register = () => {
         </div>
 
         <div>
-          <label className="block text-sm font-semibold text-gray-700 mb-2">
+          <label className="block text-sm font-semibold mb-2">
             District *
           </label>
           <select
@@ -441,11 +439,11 @@ const Register = () => {
             onChange={handleChange}
             required
             disabled={!districts.length}
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-all disabled:bg-gray-100"
+            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-all disabled:cursor-not-allowed"
           >
-            <option value="">Select District</option>
+            <option value="" className="bg-gray-800 text-white">Select District</option>
             {districts.map((d) => (
-              <option key={d.id} value={d.id}>
+              <option key={d.id} value={d.id} className="bg-gray-800 text-white">
                 {d.name}
               </option>
             ))}
@@ -453,7 +451,7 @@ const Register = () => {
         </div>
 
         <div>
-          <label className="block text-sm font-semibold text-gray-700 mb-2">
+          <label className="block text-sm font-semibold mb-2">
             Upazila *
           </label>
           <select
@@ -462,11 +460,11 @@ const Register = () => {
             onChange={handleChange}
             required
             disabled={!upazilas.length}
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-all disabled:bg-gray-100"
+            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-all disabled:cursor-not-allowed"
           >
-            <option value="">Select Upazila</option>
+            <option value="" className="bg-gray-800 text-white">Select Upazila</option>
             {upazilas.map((u) => (
-              <option key={u.id} value={u.id}>
+              <option key={u.id} value={u.id} className="bg-gray-800 text-white">
                 {u.name}
               </option>
             ))}
@@ -474,7 +472,7 @@ const Register = () => {
         </div>
 
         <div>
-          <label className="block text-sm font-semibold text-gray-700 mb-2">
+          <label className="block text-sm font-semibold mb-2">
             Union *
           </label>
           <select
@@ -483,11 +481,11 @@ const Register = () => {
             onChange={handleChange}
             required
             disabled={!unions.length}
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-all disabled:bg-gray-100"
+            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-all disabled:cursor-not-allowed"
           >
-            <option value="">Select Union</option>
+            <option value="" className="bg-gray-800 text-white">Select Union</option>
             {unions.map((u) => (
-              <option key={u.id} value={u.id}>
+              <option key={u.id} value={u.id} className="bg-gray-800 text-white">
                 {u.name}
               </option>
             ))}
@@ -496,7 +494,7 @@ const Register = () => {
       </div>
 
       <div>
-        <label className="block text-sm font-semibold text-gray-700 mb-2">
+        <label className="block text-sm font-semibold mb-2">
           Detailed Address *
         </label>
         <textarea
@@ -518,15 +516,15 @@ const Register = () => {
         <div className="bg-red-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
           <Droplets className="w-8 h-8 text-red-600" />
         </div>
-        <h3 className="text-xl font-bold text-gray-900 mb-2">
+        <h3 className="text-xl font-bold mb-2">
           Blood & Medical Information
         </h3>
-        <p className="text-gray-600">Help us help others</p>
+        <p className="">Help us help others</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
-          <label className="block text-sm font-semibold text-gray-700 mb-2">
+          <label className="block text-sm font-semibold mb-2">
             Blood Type *
           </label>
           <select
@@ -546,7 +544,7 @@ const Register = () => {
         </div>
 
         <div>
-          <label className="block text-sm font-semibold text-gray-700 mb-2">
+          <label className="block text-sm font-semibold mb-2">
             Weight (kg) *
           </label>
           <input
@@ -562,7 +560,7 @@ const Register = () => {
         </div>
 
         <div>
-          <label className="block text-sm font-semibold text-gray-700 mb-2">
+          <label className="block text-sm font-semibold mb-2">
             Last Blood Donation
           </label>
           <input
@@ -575,11 +573,11 @@ const Register = () => {
         </div>
 
         <div>
-          <label className="block text-sm font-semibold text-gray-700 mb-2">
+          <label className="block text-sm font-semibold mb-2">
             Password *
           </label>
           <div className="relative">
-            <Shield className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
+            <Shield className="absolute left-3 top-3 h-5 w-5" />
             <input
               type={showPassword ? "text" : "password"}
               name="password"
@@ -601,11 +599,11 @@ const Register = () => {
       </div>
 
       <div>
-        <label className="block text-sm font-semibold text-gray-700 mb-2">
+        <label className="block text-sm font-semibold mb-2">
           Confirm Password *
         </label>
         <div className="relative">
-          <Shield className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
+          <Shield className="absolute left-3 top-3 h-5 w-5" />
           <input
             type={showConfirmPassword ? "text" : "password"}
             name="confirmPassword"
@@ -626,7 +624,7 @@ const Register = () => {
       </div>
 
       <div>
-        <label className="block text-sm font-semibold text-gray-700 mb-2">
+        <label className="block text-sm font-semibold mb-2">
           Medical Conditions
         </label>
         <textarea
@@ -640,7 +638,7 @@ const Register = () => {
       </div>
 
       <div>
-        <label className="block text-sm font-semibold text-gray-700 mb-2">
+        <label className="block text-sm font-semibold mb-2">
           Current Medications
         </label>
         <textarea
@@ -663,7 +661,7 @@ const Register = () => {
           required
           className="h-4 w-4 text-red-600 focus:ring-red-500 border-gray-300 rounded"
         />
-        <label htmlFor="agreeTerms" className="text-sm text-gray-700">
+        <label htmlFor="agreeTerms" className="text-sm">
           I agree to the{" "}
           <span className="text-red-600 font-semibold">
             Terms and Conditions
@@ -678,12 +676,12 @@ const Register = () => {
     <div className="min-h-screen">
       {/* Registration Form */}
       <div className="max-w-4xl mx-auto px-4 py-8">
-        <div className="rounded-2xl shadow-lg p-8">
+        <div className="rounded-2xl shadow-lg p-8 border">
           <div className="bg-red-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
             <Heart className="w-8 h-8 text-red-600" />
           </div>
           <div className="text-center mb-8">
-            <h2 className="text-3xl font-bold text-gray-900 mb-2">
+            <h2 className="text-3xl font-bold mb-2">
               Register as a Blood Donor
             </h2>
             <p className="opacity-70">Help save lives in Bangladesh</p>
