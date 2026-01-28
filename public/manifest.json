@@ -1,0 +1,21 @@
+{
+    "name": "Rural Blood Bank SaaS",
+    "short_name": "RuralBlood",
+    "description": "Connecting blood donors and recipients in rural areas.",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#ffffff",
+    "theme_color": "#D32F2F",
+    "icons": [
+        {
+            "src": "/icons/icon-192x192.png",
+            "sizes": "192x192",
+            "type": "image/png"
+        },
+        {
+            "src": "/icons/icon-512x512.png",
+            "sizes": "512x512",
+            "type": "image/png"
+        }
+    ]
+}
