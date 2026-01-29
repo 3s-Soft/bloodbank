@@ -6,6 +6,7 @@ import { Button } from "./ui/button";
 import { Droplet, Menu, X, User as UserIcon } from "lucide-react";
 import { useState } from "react";
 import { useOrganization } from "@/lib/context/OrganizationContext";
+import { ThemeToggle } from "./ui/theme-toggle";
 
 export default function Navbar() {
     const { data: session } = useSession();
@@ -16,29 +17,33 @@ export default function Navbar() {
     const primaryColor = organization.primaryColor || "#D32F2F";
 
     return (
-        <nav className="sticky top-0 z-50 w-full border-b border-neutral-100 bg-white/80 backdrop-blur-md">
+        <nav className="sticky top-0 z-50 w-full border-b border-neutral-100 dark:border-neutral-800 bg-white/80 dark:bg-neutral-900/80 backdrop-blur-md">
             <div className="container mx-auto px-4 h-16 flex items-center justify-between">
                 {/* Logo */}
                 <Link href={`/${orgSlug}`} className="flex items-center space-x-2 group">
-                    <div className="bg-red-50 p-1.5 rounded-lg group-hover:bg-red-100 transition-colors" style={{ backgroundColor: `${primaryColor}10` }}>
+                    <div className="bg-red-50 dark:bg-red-900/20 p-1.5 rounded-lg group-hover:bg-red-100 dark:group-hover:bg-red-900/30 transition-colors" style={{ backgroundColor: `${primaryColor}10` }}>
                         <Droplet className="w-6 h-6 fill-current" style={{ color: primaryColor }} />
                     </div>
-                    <span className="text-xl font-bold text-neutral-900 tracking-tight">
+                    <span className="text-xl font-bold text-neutral-900 dark:text-white tracking-tight">
                         {organization.name.split(' ')[0]}<span style={{ color: primaryColor }}>{organization.name.split(' ').slice(1).join(' ')}</span>
                     </span>
                 </Link>
 
                 {/* Desktop Navigation */}
-                <div className="hidden md:flex items-center space-x-8">
-                    <Link href={`/${orgSlug}/donors`} className="text-sm font-medium text-neutral-600 hover:text-red-600 transition-colors">
+                <div className="hidden md:flex items-center space-x-6">
+                    <Link href={`/${orgSlug}/donors`} className="text-sm font-medium text-neutral-600 dark:text-neutral-300 hover:text-red-600 dark:hover:text-red-400 transition-colors">
                         Find Donors
                     </Link>
-                    <Link href={`/${orgSlug}/requests`} className="text-sm font-medium text-neutral-600 hover:text-red-600 transition-colors">
+                    <Link href={`/${orgSlug}/requests`} className="text-sm font-medium text-neutral-600 dark:text-neutral-300 hover:text-red-600 dark:hover:text-red-400 transition-colors">
                         Blood Requests
                     </Link>
+
+                    {/* Theme Toggle */}
+                    <ThemeToggle variant="icon" />
+
                     {session ? (
                         <div className="flex items-center space-x-4">
-                            <Link href={`/${orgSlug}/dashboard`} className="text-sm font-medium text-neutral-600 hover:text-red-600 transition-colors">
+                            <Link href={`/${orgSlug}/dashboard`} className="text-sm font-medium text-neutral-600 dark:text-neutral-300 hover:text-red-600 dark:hover:text-red-400 transition-colors">
                                 Dashboard
                             </Link>
                             <Button size="sm" variant="ghost" onClick={() => signOut()}>
@@ -58,32 +63,35 @@ export default function Navbar() {
                 </div>
 
                 {/* Mobile Menu Toggle */}
-                <button
-                    className="md:hidden p-2 text-neutral-600"
-                    onClick={() => setIsMenuOpen(!isMenuOpen)}
-                >
-                    {isMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-                </button>
+                <div className="md:hidden flex items-center gap-2">
+                    <ThemeToggle variant="icon" />
+                    <button
+                        className="p-2 text-neutral-600 dark:text-neutral-300"
+                        onClick={() => setIsMenuOpen(!isMenuOpen)}
+                    >
+                        {isMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+                    </button>
+                </div>
             </div>
 
             {/* Mobile Navigation */}
             {isMenuOpen && (
-                <div className="md:hidden absolute top-16 left-0 w-full bg-white border-b border-neutral-100 p-4 space-y-4 shadow-lg animate-in fade-in slide-in-from-top-2">
+                <div className="md:hidden absolute top-16 left-0 w-full bg-white dark:bg-neutral-900 border-b border-neutral-100 dark:border-neutral-800 p-4 space-y-4 shadow-lg animate-in fade-in slide-in-from-top-2">
                     <Link
                         href={`/${orgSlug}/donors`}
-                        className="block text-lg font-medium text-neutral-600"
+                        className="block text-lg font-medium text-neutral-600 dark:text-neutral-300"
                         onClick={() => setIsMenuOpen(false)}
                     >
                         Find Donors
                     </Link>
                     <Link
                         href={`/${orgSlug}/requests`}
-                        className="block text-lg font-medium text-neutral-600"
+                        className="block text-lg font-medium text-neutral-600 dark:text-neutral-300"
                         onClick={() => setIsMenuOpen(false)}
                     >
                         Blood Requests
                     </Link>
-                    <div className="pt-4 border-t border-neutral-100 flex flex-col space-y-3">
+                    <div className="pt-4 border-t border-neutral-100 dark:border-neutral-800 flex flex-col space-y-3">
                         {session ? (
                             <>
                                 <Link href={`/${orgSlug}/dashboard`} onClick={() => setIsMenuOpen(false)}>
@@ -109,3 +117,4 @@ export default function Navbar() {
         </nav>
     );
 }
+
