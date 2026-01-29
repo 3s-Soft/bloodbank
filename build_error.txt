@@ -1,0 +1,23 @@
+
+> bloodbank@0.1.0 build
+> next build
+
+Γû▓ Next.js 16.1.5 (Turbopack)
+- Environments: .env.local
+
+  Creating an optimized production build ...
+Γ£ô Compiled successfully in 11.2s
+  Running TypeScript ...
+Failed to compile.
+
+./app/[orgSlug]/register/page.tsx:71:26
+Type error: Cannot find name 'Link'.
+
+  69 |                     <div className="h-2 w-full" style={{ backgroundColor: primaryColor }} />
+  70 |                     <CardHeader className="text-center pt-8">
+> 71 |                         <Link href={`/${organization.slug}`} className="mx-auto w-16 h-16 bg-red-500/10 p-2 rounded-2xl flex items-center justify-center mb-4 border border-red-500/20 group">
+     |                          ^
+  72 |                             <Droplet className="w-8 h-8 text-red-500 fill-current group-hover:scale-110 transition-transform" />
+  73 |                         </Link>
+  74 |                         <CardTitle className="text-3xl font-black text-white tracking-tight">Become a Life Saver</CardTitle>
+Next.js build worker exited with code: 1 and signal: null

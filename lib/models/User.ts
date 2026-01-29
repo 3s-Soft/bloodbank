@@ -51,7 +51,7 @@ export interface IDonorProfile extends Document {
 
 const DonorProfileSchema: Schema = new Schema(
     {
-        user: { type: Schema.Types.ObjectId, ref: "User", required: true, unique: true },
+        user: { type: Schema.Types.ObjectId, ref: "User", required: true },
         organization: { type: Schema.Types.ObjectId, ref: "Organization", required: true },
         bloodGroup: { type: String, required: true },
         district: { type: String, required: true },
@@ -63,6 +63,14 @@ const DonorProfileSchema: Schema = new Schema(
     },
     { timestamps: true }
 );
+
+// Allow one donor profile per user PER organization
+DonorProfileSchema.index({ user: 1, organization: 1 }, { unique: true });
+
+// In development, handle hot-reloading by clearing the model if schema changed
+if (process.env.NODE_ENV === "development" && mongoose.models.User) {
+    delete (mongoose.models as any).User;
+}
 
 export const User: Model<IUser> = mongoose.models.User || mongoose.model<IUser>("User", UserSchema);
 export const DonorProfile: Model<IDonorProfile> =

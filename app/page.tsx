@@ -19,12 +19,6 @@ export default function Home() {
   const [organizations, setOrganizations] = useState<Organization[]>([]);
   const [loadingOrgs, setLoadingOrgs] = useState(true);
 
-  // Debug logging - remove after fixing
-  useEffect(() => {
-    console.log("Session status:", status);
-    console.log("Session data:", session);
-  }, [session, status]);
-
   useEffect(() => {
     const fetchOrganizations = async () => {
       try {
@@ -49,11 +43,6 @@ export default function Home() {
 
   return (
     <div className="flex flex-col min-h-screen bg-slate-950">
-      {/* DEBUG BANNER - Remove after fixing */}
-      <div className="bg-yellow-500 text-black text-center py-1 text-sm font-bold">
-        DEBUG: Status = {status} | User = {session?.user?.email || "none"}
-      </div>
-
       {/* Navigation */}
       <nav className="sticky top-0 z-50 w-full border-b border-slate-800 bg-slate-950/80 backdrop-blur-xl">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">

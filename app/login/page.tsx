@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Droplet, Phone, Lock, ArrowLeft } from "lucide-react";
+import { Droplet, Phone, Lock, ArrowLeft, Mail } from "lucide-react";
 import { signIn } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState, Suspense } from "react";
@@ -16,7 +16,9 @@ function LoginForm() {
     const searchParams = useSearchParams();
     const orgSlug = searchParams.get("org") || "";
 
+    const [loginType, setLoginType] = useState<"phone" | "email">("phone");
     const [phone, setPhone] = useState("");
+    const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [isLoading, setIsLoading] = useState(false);
     const [isGoogleLoading, setIsGoogleLoading] = useState(false);
@@ -26,19 +28,21 @@ function LoginForm() {
         setIsLoading(true);
 
         try {
-            const result = await signIn("credentials", {
-                phone,
-                password,
+            const providerId = loginType; // either "phone" or "email"
+            const credentials = loginType === "phone"
+                ? { phone, password }
+                : { email, password };
+
+            const result = await signIn(providerId, {
+                ...credentials,
                 redirect: false,
             });
-
-            console.log("Login result:", result); // DEBUG
 
             if (result?.error) {
                 toast.error(result.error);
             } else if (result?.ok) {
                 toast.success("Login successful!");
-                router.refresh(); // Refresh to sync session
+                router.refresh();
                 if (orgSlug) {
                     router.push(`/${orgSlug}/dashboard`);
                 } else {
@@ -48,7 +52,7 @@ function LoginForm() {
                 toast.error("Login failed - unexpected response");
             }
         } catch (error: any) {
-            console.error("Login error:", error); // DEBUG
+            console.error("Login error:", error);
             toast.error("An error occurred during login");
         } finally {
             setIsLoading(false);
@@ -64,7 +68,6 @@ function LoginForm() {
             if (user) {
                 toast.success(`Welcome, ${user.displayName}!`);
 
-                // Bridge Firebase login results to NextAuth to establish a session
                 await signIn("firebase", {
                     email: user.email,
                     name: user.displayName,
@@ -97,21 +100,62 @@ function LoginForm() {
                 </p>
             </CardHeader>
             <CardContent className="p-8 pt-2">
+                {/* Login Type Tabs */}
+                <div className="flex p-1 bg-slate-800/50 rounded-xl mb-6">
+                    <button
+                        onClick={() => setLoginType("phone")}
+                        className={`flex-1 flex items-center justify-center py-2 text-xs font-black uppercase tracking-widest rounded-lg transition-all ${loginType === "phone"
+                                ? "bg-red-600 text-white shadow-lg"
+                                : "text-slate-400 hover:text-white"
+                            }`}
+                    >
+                        <Phone className="w-3 h-3 mr-2" />
+                        Phone
+                    </button>
+                    <button
+                        onClick={() => setLoginType("email")}
+                        className={`flex-1 flex items-center justify-center py-2 text-xs font-black uppercase tracking-widest rounded-lg transition-all ${loginType === "email"
+                                ? "bg-red-600 text-white shadow-lg"
+                                : "text-slate-400 hover:text-white"
+                            }`}
+                    >
+                        <Mail className="w-3 h-3 mr-2" />
+                        Email
+                    </button>
+                </div>
+
                 <form onSubmit={handleSubmit} className="space-y-4">
-                    <div className="space-y-1.5">
-                        <label className="text-xs font-bold uppercase tracking-widest text-slate-500 ml-1 flex items-center">
-                            <Phone className="w-3 h-3 mr-2" />
-                            Phone Number
-                        </label>
-                        <input
-                            type="tel"
-                            value={phone}
-                            onChange={(e) => setPhone(e.target.value)}
-                            placeholder="017XXXXXXXX"
-                            required
-                            className="w-full h-12 rounded-xl border border-slate-800 bg-slate-900 px-4 focus:ring-2 focus:ring-red-500 outline-none transition-all text-white placeholder-slate-600"
-                        />
-                    </div>
+                    {loginType === "phone" ? (
+                        <div className="space-y-1.5">
+                            <label className="text-xs font-bold uppercase tracking-widest text-slate-500 ml-1 flex items-center">
+                                <Phone className="w-3 h-3 mr-2" />
+                                Phone Number
+                            </label>
+                            <input
+                                type="tel"
+                                value={phone}
+                                onChange={(e) => setPhone(e.target.value)}
+                                placeholder="017XXXXXXXX"
+                                required
+                                className="w-full h-12 rounded-xl border border-slate-800 bg-slate-900 px-4 focus:ring-2 focus:ring-red-500 outline-none transition-all text-white placeholder-slate-600"
+                            />
+                        </div>
+                    ) : (
+                        <div className="space-y-1.5">
+                            <label className="text-xs font-bold uppercase tracking-widest text-slate-500 ml-1 flex items-center">
+                                <Mail className="w-3 h-3 mr-2" />
+                                Email Address
+                            </label>
+                            <input
+                                type="email"
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
+                                placeholder="name@example.com"
+                                required
+                                className="w-full h-12 rounded-xl border border-slate-800 bg-slate-900 px-4 focus:ring-2 focus:ring-red-500 outline-none transition-all text-white placeholder-slate-600"
+                            />
+                        </div>
+                    )}
 
                     <div className="space-y-1.5">
                         <label className="text-xs font-bold uppercase tracking-widest text-slate-500 ml-1 flex items-center">
@@ -137,11 +181,11 @@ function LoginForm() {
                     </Button>
                 </form>
 
-                <div className="relative my-8">
+                <div className="relative my-6">
                     <div className="absolute inset-0 flex items-center">
                         <div className="w-full border-t border-slate-800"></div>
                     </div>
-                    <div className="relative flex justify-center text-xs uppercase tracking-widest font-black">
+                    <div className="relative flex justify-center text-[10px] uppercase tracking-widest font-black">
                         <span className="bg-[#0f172a] px-3 text-slate-500">Or continue with</span>
                     </div>
                 </div>

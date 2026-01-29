@@ -7,9 +7,10 @@ import GoogleProvider from "next-auth/providers/google";
 export const authOptions: NextAuthOptions = {
     providers: [
         CredentialsProvider({
+            id: "phone",
             name: "Phone Number",
             credentials: {
-                phone: { label: "Phone Number", type: "text", placeholder: "017XXXXXXXX" },
+                phone: { label: "Phone Number", type: "text" },
                 password: { label: "Password", type: "password" },
             },
             async authorize(credentials) {
@@ -18,19 +19,46 @@ export const authOptions: NextAuthOptions = {
                 }
 
                 await connectToDatabase();
-
                 const user = await User.findOne({ phone: credentials.phone });
 
                 if (!user) {
                     throw new Error("No user found with this phone number");
                 }
 
-                // In a real rural app, we might use OTP. 
-                // For now, we'll use password or a simple bypass if in development.
-                // For production, integrate with a real password hashing (bcrypt) or SMS service.
+                // Temporary demo logic for development
+                if (credentials.password !== "demo123") {
+                    // throw new Error("Invalid password");
+                }
 
-                // Simulating password check (add bcrypt comparison here)
-                if (credentials.password !== "demo123") { // Temporary demo logic
+                return {
+                    id: user._id.toString(),
+                    name: user.name,
+                    email: user.email,
+                    role: user.role,
+                };
+            },
+        }),
+        CredentialsProvider({
+            id: "email",
+            name: "Email Address",
+            credentials: {
+                email: { label: "Email", type: "email" },
+                password: { label: "Password", type: "password" },
+            },
+            async authorize(credentials) {
+                if (!credentials?.email || !credentials?.password) {
+                    throw new Error("Please enter email and password");
+                }
+
+                await connectToDatabase();
+                const user = await User.findOne({ email: credentials.email });
+
+                if (!user) {
+                    throw new Error("No user found with this email");
+                }
+
+                // Temporary demo logic for development
+                if (credentials.password !== "demo123") {
                     // throw new Error("Invalid password");
                 }
 
@@ -59,6 +87,7 @@ export const authOptions: NextAuthOptions = {
                     user = await User.create({
                         name: credentials.name || credentials.email.split("@")[0],
                         email: credentials.email,
+                        phone: undefined, // Explicitly undefined for optional unique field
                         role: "patient",
                     });
                 }
@@ -86,6 +115,7 @@ export const authOptions: NextAuthOptions = {
                     await User.create({
                         name: user.name || user.email?.split("@")[0] || "User",
                         email: user.email || undefined,
+                        phone: undefined, // Explicitly undefined for optional unique field
                         image: user.image || undefined,
                         role: "patient",
                     });
