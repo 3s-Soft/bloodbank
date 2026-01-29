@@ -31,5 +31,10 @@ const OrganizationSchema: Schema = new Schema(
     { timestamps: true }
 );
 
+// In development, handle hot-reloading by clearing the model if schema changed
+if (process.env.NODE_ENV === "development" && mongoose.models.Organization) {
+    delete (mongoose.models as any).Organization;
+}
+
 export const Organization: Model<IOrganization> =
     mongoose.models.Organization || mongoose.model<IOrganization>("Organization", OrganizationSchema);

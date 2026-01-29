@@ -75,6 +75,10 @@ export async function GET(request: NextRequest) {
         return NextResponse.json(organizations);
     } catch (error: any) {
         console.error("Error fetching organizations:", error);
-        return NextResponse.json({ error: error.message || "Failed to fetch organizations" }, { status: 500 });
+        return NextResponse.json({
+            error: "Internal Server Error",
+            message: error.message,
+            stack: process.env.NODE_ENV === "development" ? error.stack : undefined
+        }, { status: 500 });
     }
 }

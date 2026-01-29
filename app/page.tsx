@@ -24,7 +24,13 @@ export default function Home() {
       try {
         const res = await fetch("/api/organizations");
         const data = await res.json();
-        setOrganizations(data);
+
+        if (res.ok && Array.isArray(data)) {
+          setOrganizations(data);
+        } else {
+          console.error("Fetch organizations failed:", data.error || "Unknown error");
+          setOrganizations([]);
+        }
       } catch (error) {
         console.error("Failed to fetch organizations:", error);
       } finally {
