@@ -8,6 +8,8 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Droplet, Heart } from "lucide-react";
+import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 
 const donorSchema = z.object({
     name: z.string().min(2, "Name must be at least 2 characters"),
@@ -25,6 +27,7 @@ type DonorFormValues = z.infer<typeof donorSchema>;
 
 export default function DonorRegistration() {
     const organization = useOrganization();
+    const router = useRouter();
     const primaryColor = organization.primaryColor || "#D32F2F";
 
     const {
@@ -48,9 +51,10 @@ export default function DonorRegistration() {
                 throw new Error(error.error || "Something went wrong");
             }
 
-            alert("Registration successful! You are now a donor.");
+            toast.success("Registration successful! You are now a donor.");
+            router.push(`/${organization.slug}/donors`);
         } catch (error: any) {
-            alert(error.message);
+            toast.error(error.message);
         }
     };
 

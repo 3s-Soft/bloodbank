@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import connectDB from "@/lib/db/mongodb";
-import User, { UserRole, DonorProfile } from "@/lib/models/User";
-import Organization from "@/lib/models/Organization";
+import { User, UserRole, DonorProfile } from "@/lib/models/User";
+import { Organization } from "@/lib/models/Organization";
 
 export async function POST(req: Request) {
     try {

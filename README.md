@@ -1,36 +1,109 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Rural Blood Bank
+
+A community-powered blood donation platform connecting blood donors with patients in rural areas of Bangladesh.
+
+## Features
+
+- 🩸 **Multi-tenant Architecture** - Each organization has its own branded blood bank
+- 👥 **Donor Registration** - Simple form with validation and verification
+- 🔍 **Donor Discovery** - Search by blood group, district, and upazila
+- 📋 **Blood Requests** - Post and manage urgent blood requests
+- 📊 **Dashboard** - Stats, donor verification, and request management
+- 📱 **PWA Support** - Works offline and installable on mobile
 
 ## Getting Started
 
-First, run the development server:
+### 1. Install Dependencies
+
+```bash
+npm install
+```
+
+### 2. Setup Environment
+
+Create a `.env.local` file in the root directory:
+
+```env
+# MongoDB Connection
+MONGODB_URI=mongodb://localhost:27017/bloodbank
+
+# NextAuth Configuration
+NEXTAUTH_URL=http://localhost:3000
+NEXTAUTH_SECRET=your-secret-key-here
+```
+
+### 3. Seed Database
+
+Run the seed script to create test organizations and users:
+
+```bash
+npx tsx scripts/seed.ts
+```
+
+### 4. Run Development Server
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000) to view the application.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Demo Credentials
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### Test Admin User
 
-## Learn More
+| Field    | Value         |
+|----------|---------------|
+| Phone    | `01700000000` |
+| Password | `demo123`     |
 
-To learn more about Next.js, take a look at the following resources:
+### Test Organizations
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+| Organization Name    | URL Slug              | Primary Color |
+|---------------------|-----------------------|---------------|
+| Savar Blood Bank    | `savar-blood-bank`    | Red           |
+| Uttara Donors       | `uttara-donors`       | Blue          |
+| Mirpur Life Savers  | `mirpur-life-savers`  | Green         |
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### Test URLs (After Seeding)
 
-## Deploy on Vercel
+- **Main Landing:** http://localhost:3000
+- **Login:** http://localhost:3000/login
+- **Savar Blood Bank:** http://localhost:3000/savar-blood-bank
+- **Donor Registration:** http://localhost:3000/savar-blood-bank/register
+- **Find Donors:** http://localhost:3000/savar-blood-bank/donors
+- **Blood Requests:** http://localhost:3000/savar-blood-bank/requests
+- **Dashboard:** http://localhost:3000/savar-blood-bank/dashboard
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Tech Stack
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- **Framework:** Next.js 16
+- **Database:** MongoDB with Mongoose
+- **Authentication:** NextAuth.js
+- **Styling:** Tailwind CSS
+- **Forms:** React Hook Form + Zod
+- **Notifications:** Sonner
+
+## Project Structure
+
+```
+bloodbank/
+├── app/
+│   ├── [orgSlug]/          # Organization-scoped pages
+│   │   ├── dashboard/      # Admin dashboard
+│   │   ├── donors/         # Donor discovery
+│   │   ├── register/       # Donor registration
+│   │   └── requests/       # Blood requests
+│   ├── api/                # API routes
+│   └── login/              # Authentication
+├── components/             # Reusable UI components
+├── lib/
+│   ├── db/                 # Database connection
+│   └── models/             # Mongoose models
+└── scripts/
+    └── seed.ts             # Database seeder
+```
+
+## License
+
+MIT License - See [LICENSE](LICENSE) for details.

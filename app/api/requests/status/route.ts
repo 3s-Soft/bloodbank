@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import connectDB from "@/lib/db/mongodb";
-import BloodRequest from "@/lib/models/BloodRequest";
+import { BloodRequest } from "@/lib/models/BloodRequest";
 
 export async function POST(req: Request) {
     try {

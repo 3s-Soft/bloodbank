@@ -4,7 +4,7 @@ import { useOrganization } from "@/lib/context/OrganizationContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
-import { Search, Droplet, MapPin, Phone, CheckCircle2, Loader2 } from "lucide-react";
+import { Search, Droplet, MapPin, Phone, CheckCircle2, Loader2, Users } from "lucide-react";
 import { useState, useEffect } from "react";
 
 export default function DonorDiscovery() {

@@ -105,7 +105,7 @@ export default function DonorManagement() {
                                 </div>
                                 <div className="flex items-center space-x-3 w-full md:w-auto">
                                     <Button
-                                        variant={donor.isVerified ? "outline" : "default"}
+                                        variant={donor.isVerified ? "outline" : "primary"}
                                         className={!donor.isVerified ? "text-white" : ""}
                                         style={!donor.isVerified ? { backgroundColor: primaryColor } : {}}
                                         onClick={() => handleVerify(donor._id, donor.isVerified)}
@@ -140,10 +140,11 @@ export default function DonorManagement() {
 }
 
 function Badge({ label, color }: { label: string, color: string }) {
-    const styles = {
+    const styleMap: Record<string, string> = {
         green: "bg-green-100 text-green-700",
         orange: "bg-orange-100 text-orange-700",
-    }[color as keyof typeof styles] || "bg-neutral-100 text-neutral-700";
+    };
+    const styles = styleMap[color] || "bg-neutral-100 text-neutral-700";
 
     return (
         <div className={`px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-widest ${styles}`}>

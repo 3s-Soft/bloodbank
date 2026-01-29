@@ -7,6 +7,7 @@ interface OrganizationData {
     slug: string;
     logo?: string;
     primaryColor?: string;
+    contactEmail?: string;
 }
 
 const OrganizationContext = createContext<OrganizationData | null>(null);
@@ -27,7 +28,7 @@ export function OrganizationProvider({
 
 export function useOrganization() {
     const context = useContext(OrganizationContext);
-    if (context === undefined) {
+    if (context === null || context === undefined) {
         throw new Error("useOrganization must be used within an OrganizationProvider");
     }
     return context;

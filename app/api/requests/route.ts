@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import connectDB from "@/lib/db/mongodb";
-import BloodRequest from "@/lib/models/BloodRequest";
-import Organization from "@/lib/models/Organization";
+import { BloodRequest } from "@/lib/models/BloodRequest";
+import { Organization } from "@/lib/models/Organization";
 
 export async function GET(req: Request) {
     try {

@@ -8,6 +8,8 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Droplet, AlertCircle, Phone, MapPin } from "lucide-react";
+import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 
 const requestSchema = z.object({
     patientName: z.string().min(2, "Patient name is required"),
@@ -25,6 +27,7 @@ type RequestFormValues = z.infer<typeof requestSchema>;
 
 export default function NewBloodRequest() {
     const organization = useOrganization();
+    const router = useRouter();
     const primaryColor = organization.primaryColor || "#D32F2F";
 
     const {
@@ -51,9 +54,10 @@ export default function NewBloodRequest() {
                 throw new Error(error.error || "Failed to post request");
             }
 
-            alert("Blood request posted successfully. We hope a donor connects soon!");
+            toast.success("Blood request posted successfully. We hope a donor connects soon!");
+            router.push(`/${organization.slug}/requests`);
         } catch (error: any) {
-            alert(error.message);
+            toast.error(error.message);
         }
     };
 

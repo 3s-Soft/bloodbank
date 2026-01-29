@@ -9,9 +9,9 @@ export default async function OrganizationLayout({
     params,
 }: {
     children: React.ReactNode;
-    params: { orgSlug: string };
+    params: Promise<{ orgSlug: string }>;
 }) {
-    const { orgSlug } = params;
+    const { orgSlug } = await params;
     const organization = await getOrganizationBySlug(orgSlug);
 
     if (!organization) {
@@ -23,6 +23,7 @@ export default async function OrganizationLayout({
         slug: organization.slug,
         logo: organization.logo,
         primaryColor: organization.primaryColor,
+        contactEmail: organization.contactEmail,
     };
 
     return (

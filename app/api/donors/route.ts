@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import connectDB from "@/lib/db/mongodb";
 import { DonorProfile } from "@/lib/models/User";
-import Organization from "@/lib/models/Organization";
+import { Organization } from "@/lib/models/Organization";
 
 export async function GET(req: Request) {
     try {
