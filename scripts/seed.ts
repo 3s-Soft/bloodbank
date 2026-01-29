@@ -14,12 +14,12 @@ import * as dotenv from "dotenv";
 import { resolve } from "path";
 
 // Load environment variables
-dotenv.config({ path: resolve(process.cwd(), ".env") });
+dotenv.config({ path: resolve(process.cwd(), ".env.local") });
 
 const MONGODB_URI = process.env.MONGODB_URI;
 
 if (!MONGODB_URI) {
-    console.error("❌ MONGODB_URI not found in .env");
+    console.error("❌ MONGODB_URI not found in .env.local");
     process.exit(1);
 }
 
