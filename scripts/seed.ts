@@ -44,7 +44,7 @@ const Organization = mongoose.models.Organization || mongoose.model("Organizatio
 const UserSchema = new mongoose.Schema(
     {
         name: { type: String, required: true },
-        phone: { type: String, required: true, unique: true },
+        phone: { type: String, unique: true, sparse: true },
         email: { type: String, unique: true, sparse: true },
         password: { type: String },
         role: { type: String, default: "patient" },
@@ -152,7 +152,17 @@ async function seed() {
 
     try {
         await mongoose.connect(MONGODB_URI!);
-        console.log("✅ Connected to MongoDB\n");
+        console.log("✅ Connected to MongoDB");
+
+        // Clear existing data
+        console.log("🧹 Clearing existing data...");
+        await Promise.all([
+            Organization.deleteMany({}),
+            User.deleteMany({}),
+            DonorProfile.deleteMany({}),
+            BloodRequest.deleteMany({}),
+        ]);
+        console.log("✅ Collections cleared\n");
 
         // Create test organizations
         const organizations = [

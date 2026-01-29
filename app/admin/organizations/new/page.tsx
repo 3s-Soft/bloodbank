@@ -35,6 +35,7 @@ export default function NewOrganizationPage() {
         handleSubmit,
         formState: { errors },
         watch,
+        control,
     } = useForm<OrganizationFormValues>({
         resolver: zodResolver(organizationSchema),
         defaultValues: {

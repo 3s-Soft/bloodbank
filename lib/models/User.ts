@@ -10,7 +10,7 @@ export enum UserRole {
 
 export interface IUser extends Document {
     name: string;
-    phone: string;
+    phone?: string;
     email?: string;
     password?: string;
     role: UserRole;
@@ -23,8 +23,8 @@ export interface IUser extends Document {
 const UserSchema: Schema = new Schema(
     {
         name: { type: String, required: true },
-        phone: { type: String, unique: true, sparse: true },
-        email: { type: String, unique: true, sparse: true },
+        phone: { type: String, unique: true, sparse: true, required: false },
+        email: { type: String, unique: true, sparse: true, required: false },
         password: { type: String },
         role: {
             type: String,

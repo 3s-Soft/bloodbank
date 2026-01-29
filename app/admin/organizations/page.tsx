@@ -2,7 +2,6 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import {
     Building2,
     Plus,
@@ -10,6 +9,10 @@ import {
     ExternalLink,
     Trash2,
     Edit,
+    CheckCircle,
+    XCircle,
+    Clock,
+    Loader2,
 } from "lucide-react";
 import Link from "next/link";
 import { useState, useEffect } from "react";
@@ -24,6 +27,7 @@ interface Organization {
     contactPhone?: string;
     address?: string;
     isActive: boolean;
+    isVerified?: boolean;
     createdAt: string;
 }
 
@@ -32,6 +36,8 @@ export default function OrganizationsPage() {
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState("");
     const [deleting, setDeleting] = useState<string | null>(null);
+    const [verifying, setVerifying] = useState<string | null>(null);
+    const [activeTab, setActiveTab] = useState<"all" | "pending">("all");
 
     useEffect(() => {
         fetchOrganizations();
@@ -74,7 +80,39 @@ export default function OrganizationsPage() {
         }
     };
 
-    const filteredOrganizations = organizations.filter(
+    const handleVerify = async (id: string, action: "verify" | "reject") => {
+        setVerifying(id);
+        try {
+            const res = await fetch(`/api/admin/organizations/${id}/verify`, {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ action }),
+            });
+
+            if (!res.ok) {
+                throw new Error("Failed to process");
+            }
+
+            if (action === "verify") {
+                toast.success("Organization verified successfully!");
+                setOrganizations(organizations.map((org) =>
+                    org._id === id ? { ...org, isVerified: true } : org
+                ));
+            } else {
+                toast.success("Organization rejected and removed");
+                setOrganizations(organizations.filter((org) => org._id !== id));
+            }
+        } catch (error) {
+            toast.error("Failed to process request");
+        } finally {
+            setVerifying(null);
+        }
+    };
+
+    const pendingOrganizations = organizations.filter((org) => org.isVerified === false);
+    const verifiedOrganizations = organizations.filter((org) => org.isVerified !== false);
+
+    const filteredOrganizations = (activeTab === "pending" ? pendingOrganizations : verifiedOrganizations).filter(
         (org) =>
             org.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
             org.slug.toLowerCase().includes(searchQuery.toLowerCase())
@@ -84,10 +122,10 @@ export default function OrganizationsPage() {
         return (
             <div className="container mx-auto px-4 py-12">
                 <div className="animate-pulse space-y-8">
-                    <div className="h-10 w-64 bg-neutral-200 rounded"></div>
+                    <div className="h-10 w-64 bg-slate-800 rounded"></div>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {[1, 2, 3, 4, 5, 6].map((i) => (
-                            <div key={i} className="h-48 bg-neutral-200 rounded-2xl"></div>
+                            <div key={i} className="h-48 bg-slate-800 rounded-2xl"></div>
                         ))}
                     </div>
                 </div>
@@ -100,49 +138,74 @@ export default function OrganizationsPage() {
             {/* Header */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
                 <div>
-                    <h1 className="text-4xl font-black text-neutral-900 mb-2">Organizations</h1>
-                    <p className="text-neutral-500 font-medium">
+                    <h1 className="text-4xl font-black text-white mb-2">Organizations</h1>
+                    <p className="text-slate-400 font-medium">
                         Manage all blood bank organizations on the platform.
                     </p>
                 </div>
                 <Link href="/admin/organizations/new">
-                    <Button className="bg-red-600 hover:bg-red-700 text-white">
+                    <Button className="bg-red-600 hover:bg-red-700 text-white font-bold">
                         <Plus className="w-5 h-5 mr-2" />
                         New Organization
                     </Button>
                 </Link>
             </div>
 
+            {/* Tabs */}
+            <div className="flex items-center space-x-2 mb-6">
+                <button
+                    onClick={() => setActiveTab("all")}
+                    className={`px-4 py-2 rounded-lg font-bold text-sm transition-colors ${activeTab === "all"
+                            ? "bg-red-600 text-white"
+                            : "bg-slate-800 text-slate-400 hover:bg-slate-700"
+                        }`}
+                >
+                    All Organizations ({verifiedOrganizations.length})
+                </button>
+                <button
+                    onClick={() => setActiveTab("pending")}
+                    className={`px-4 py-2 rounded-lg font-bold text-sm transition-colors flex items-center ${activeTab === "pending"
+                            ? "bg-orange-600 text-white"
+                            : "bg-slate-800 text-slate-400 hover:bg-slate-700"
+                        }`}
+                >
+                    <Clock className="w-4 h-4 mr-2" />
+                    Pending Verification ({pendingOrganizations.length})
+                </button>
+            </div>
+
             {/* Search */}
             <div className="mb-8">
                 <div className="relative max-w-md">
-                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-neutral-400" />
+                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500" />
                     <input
                         type="text"
                         placeholder="Search organizations..."
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        className="w-full h-12 pl-12 pr-4 rounded-xl border border-neutral-200 focus:ring-2 focus:ring-red-500 outline-none"
+                        className="w-full h-12 pl-12 pr-4 rounded-xl border border-slate-700 bg-slate-900 text-white placeholder-slate-500 focus:ring-2 focus:ring-red-500 outline-none"
                     />
                 </div>
             </div>
 
             {/* Organizations Grid */}
             {filteredOrganizations.length === 0 ? (
-                <Card className="border-none shadow-sm">
+                <Card className="border-none shadow-sm bg-slate-900/50 border border-slate-800">
                     <CardContent className="py-16 text-center">
-                        <Building2 className="w-16 h-16 mx-auto mb-4 text-neutral-300" />
-                        <h3 className="text-lg font-bold text-neutral-900 mb-2">
-                            {searchQuery ? "No organizations found" : "No organizations yet"}
+                        <Building2 className="w-16 h-16 mx-auto mb-4 text-slate-700" />
+                        <h3 className="text-lg font-bold text-white mb-2">
+                            {searchQuery ? "No organizations found" : activeTab === "pending" ? "No pending organizations" : "No organizations yet"}
                         </h3>
-                        <p className="text-neutral-500 mb-6">
+                        <p className="text-slate-400 mb-6">
                             {searchQuery
                                 ? "Try a different search term"
-                                : "Create your first organization to get started."}
+                                : activeTab === "pending"
+                                    ? "All organizations have been reviewed!"
+                                    : "Create your first organization to get started."}
                         </p>
-                        {!searchQuery && (
+                        {!searchQuery && activeTab === "all" && (
                             <Link href="/admin/organizations/new">
-                                <Button className="bg-red-600 hover:bg-red-700 text-white">
+                                <Button className="bg-red-600 hover:bg-red-700 text-white font-bold">
                                     <Plus className="w-5 h-5 mr-2" />
                                     Create Organization
                                 </Button>
@@ -153,7 +216,7 @@ export default function OrganizationsPage() {
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {filteredOrganizations.map((org) => (
-                        <Card key={org._id} className="border-none shadow-sm hover:shadow-md transition-shadow">
+                        <Card key={org._id} className="border-none shadow-sm hover:shadow-md transition-shadow bg-slate-900/50 border border-slate-800">
                             <div
                                 className="h-2 w-full rounded-t-xl"
                                 style={{ backgroundColor: org.primaryColor || "#D32F2F" }}
@@ -168,24 +231,28 @@ export default function OrganizationsPage() {
                                             {org.name.charAt(0)}
                                         </div>
                                         <div>
-                                            <h3 className="font-bold text-neutral-900">{org.name}</h3>
-                                            <code className="text-xs bg-neutral-100 px-1.5 py-0.5 rounded">
+                                            <h3 className="font-bold text-white">{org.name}</h3>
+                                            <code className="text-xs bg-slate-800 text-slate-400 px-1.5 py-0.5 rounded">
                                                 /{org.slug}
                                             </code>
                                         </div>
                                     </div>
-                                    {org.isActive ? (
-                                        <span className="px-2 py-1 rounded-full text-xs font-bold bg-green-100 text-green-700">
+                                    {org.isVerified === false ? (
+                                        <span className="px-2 py-1 rounded-full text-xs font-bold bg-orange-500/20 text-orange-400 border border-orange-500/30">
+                                            Pending
+                                        </span>
+                                    ) : org.isActive ? (
+                                        <span className="px-2 py-1 rounded-full text-xs font-bold bg-green-500/20 text-green-400 border border-green-500/30">
                                             Active
                                         </span>
                                     ) : (
-                                        <span className="px-2 py-1 rounded-full text-xs font-bold bg-neutral-100 text-neutral-600">
+                                        <span className="px-2 py-1 rounded-full text-xs font-bold bg-slate-700 text-slate-400">
                                             Inactive
                                         </span>
                                     )}
                                 </div>
 
-                                <div className="space-y-2 mb-6 text-sm text-neutral-600">
+                                <div className="space-y-2 mb-6 text-sm text-slate-400">
                                     {org.contactPhone && (
                                         <p>📞 {org.contactPhone}</p>
                                     )}
@@ -195,33 +262,64 @@ export default function OrganizationsPage() {
                                     {org.address && (
                                         <p>📍 {org.address}</p>
                                     )}
-                                    <p className="text-xs text-neutral-400">
+                                    <p className="text-xs text-slate-500">
                                         Created {new Date(org.createdAt).toLocaleDateString()}
                                     </p>
                                 </div>
 
-                                <div className="flex items-center space-x-2">
-                                    <Link href={`/${org.slug}`} target="_blank" className="flex-1">
-                                        <Button size="sm" variant="outline" className="w-full">
-                                            <ExternalLink className="w-4 h-4 mr-2" />
-                                            View
+                                {/* Actions */}
+                                {org.isVerified === false ? (
+                                    <div className="flex items-center space-x-2">
+                                        <Button
+                                            size="sm"
+                                            className="flex-1 bg-green-600 hover:bg-green-700 text-white font-bold"
+                                            onClick={() => handleVerify(org._id, "verify")}
+                                            disabled={verifying === org._id}
+                                        >
+                                            {verifying === org._id ? (
+                                                <Loader2 className="w-4 h-4 animate-spin" />
+                                            ) : (
+                                                <>
+                                                    <CheckCircle className="w-4 h-4 mr-2" />
+                                                    Verify
+                                                </>
+                                            )}
                                         </Button>
-                                    </Link>
-                                    <Link href={`/admin/organizations/${org._id}`}>
-                                        <Button size="sm" variant="outline">
-                                            <Edit className="w-4 h-4" />
+                                        <Button
+                                            size="sm"
+                                            variant="outline"
+                                            className="flex-1 border-red-500/50 text-red-400 hover:bg-red-500/10"
+                                            onClick={() => handleVerify(org._id, "reject")}
+                                            disabled={verifying === org._id}
+                                        >
+                                            <XCircle className="w-4 h-4 mr-2" />
+                                            Reject
                                         </Button>
-                                    </Link>
-                                    <Button
-                                        size="sm"
-                                        variant="outline"
-                                        className="text-red-600 hover:bg-red-50"
-                                        onClick={() => handleDelete(org._id, org.name)}
-                                        disabled={deleting === org._id}
-                                    >
-                                        <Trash2 className="w-4 h-4" />
-                                    </Button>
-                                </div>
+                                    </div>
+                                ) : (
+                                    <div className="flex items-center space-x-2">
+                                        <Link href={`/${org.slug}`} target="_blank" className="flex-1">
+                                            <Button size="sm" variant="outline" className="w-full border-slate-700 text-slate-300 hover:bg-slate-800">
+                                                <ExternalLink className="w-4 h-4 mr-2" />
+                                                View
+                                            </Button>
+                                        </Link>
+                                        <Link href={`/admin/organizations/${org._id}`}>
+                                            <Button size="sm" variant="outline" className="border-slate-700 text-slate-300 hover:bg-slate-800">
+                                                <Edit className="w-4 h-4" />
+                                            </Button>
+                                        </Link>
+                                        <Button
+                                            size="sm"
+                                            variant="outline"
+                                            className="text-red-400 border-red-500/50 hover:bg-red-500/10"
+                                            onClick={() => handleDelete(org._id, org.name)}
+                                            disabled={deleting === org._id}
+                                        >
+                                            <Trash2 className="w-4 h-4" />
+                                        </Button>
+                                    </div>
+                                )}
                             </CardContent>
                         </Card>
                     ))}

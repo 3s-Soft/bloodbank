@@ -8,6 +8,8 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useState, Suspense } from "react";
 import { toast } from "sonner";
 import Link from "next/link";
+import { auth, googleProvider } from "@/lib/firebase";
+import { signInWithPopup } from "firebase/auth";
 
 function LoginForm() {
     const router = useRouter();
@@ -30,17 +32,23 @@ function LoginForm() {
                 redirect: false,
             });
 
+            console.log("Login result:", result); // DEBUG
+
             if (result?.error) {
                 toast.error(result.error);
-            } else {
+            } else if (result?.ok) {
                 toast.success("Login successful!");
+                router.refresh(); // Refresh to sync session
                 if (orgSlug) {
                     router.push(`/${orgSlug}/dashboard`);
                 } else {
                     router.push("/");
                 }
+            } else {
+                toast.error("Login failed - unexpected response");
             }
         } catch (error: any) {
+            console.error("Login error:", error); // DEBUG
             toast.error("An error occurred during login");
         } finally {
             setIsLoading(false);
@@ -50,9 +58,26 @@ function LoginForm() {
     const handleGoogleSignIn = async () => {
         setIsGoogleLoading(true);
         try {
-            await signIn("google", { callbackUrl: orgSlug ? `/${orgSlug}/dashboard` : "/" });
-        } catch (error) {
-            toast.error("Google sign-in failed");
+            const result = await signInWithPopup(auth, googleProvider);
+            const user = result.user;
+
+            if (user) {
+                toast.success(`Welcome, ${user.displayName}!`);
+
+                // Bridge Firebase login results to NextAuth to establish a session
+                await signIn("firebase", {
+                    email: user.email,
+                    name: user.displayName,
+                    callbackUrl: orgSlug ? `/${orgSlug}/dashboard` : "/",
+                });
+            }
+        } catch (error: any) {
+            console.error("Firebase Auth Error:", error);
+            if (error.code === "auth/operation-not-allowed") {
+                toast.error("Google login is not enabled in Firebase Console.");
+            } else {
+                toast.error("Google sign-in failed. Please try again.");
+            }
             setIsGoogleLoading(false);
         }
     };

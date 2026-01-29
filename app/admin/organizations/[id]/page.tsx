@@ -56,6 +56,7 @@ export default function EditOrganizationPage({
         formState: { errors },
         watch,
         reset,
+        control,
     } = useForm<OrganizationFormValues>({
         resolver: zodResolver(organizationSchema),
         defaultValues: {

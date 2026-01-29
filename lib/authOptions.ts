@@ -42,6 +42,35 @@ export const authOptions: NextAuthOptions = {
                 };
             },
         }),
+        CredentialsProvider({
+            id: "firebase",
+            name: "Firebase",
+            credentials: {
+                email: { label: "Email", type: "text" },
+                name: { label: "Name", type: "text" },
+            },
+            async authorize(credentials) {
+                if (!credentials?.email) return null;
+
+                await connectToDatabase();
+                let user = await User.findOne({ email: credentials.email });
+
+                if (!user) {
+                    user = await User.create({
+                        name: credentials.name || credentials.email.split("@")[0],
+                        email: credentials.email,
+                        role: "patient",
+                    });
+                }
+
+                return {
+                    id: user._id.toString(),
+                    name: user.name,
+                    email: user.email,
+                    role: user.role,
+                };
+            }
+        }),
         GoogleProvider({
             clientId: process.env.GOOGLE_CLIENT_ID || "",
             clientSecret: process.env.GOOGLE_CLIENT_SECRET || "",
@@ -55,10 +84,10 @@ export const authOptions: NextAuthOptions = {
 
                 if (!existingUser) {
                     await User.create({
-                        name: user.name,
-                        email: user.email,
-                        image: user.image,
-                        role: "patient", // Default role
+                        name: user.name || user.email?.split("@")[0] || "User",
+                        email: user.email || undefined,
+                        image: user.image || undefined,
+                        role: "patient",
                     });
                 }
             }

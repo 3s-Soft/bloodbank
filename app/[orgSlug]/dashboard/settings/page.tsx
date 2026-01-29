@@ -51,6 +51,7 @@ export default function OrgSettingsPage({
         formState: { errors, isDirty },
         watch,
         reset,
+        control,
     } = useForm<SettingsFormValues>({
         resolver: zodResolver(settingsSchema),
         defaultValues: {

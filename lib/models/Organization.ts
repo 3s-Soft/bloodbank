@@ -9,6 +9,8 @@ export interface IOrganization extends Document {
     contactPhone?: string;
     address?: string;
     isActive: boolean;
+    isVerified: boolean;
+    createdBy?: mongoose.Types.ObjectId;
     createdAt: Date;
     updatedAt: Date;
 }
@@ -23,6 +25,8 @@ const OrganizationSchema: Schema = new Schema(
         contactPhone: { type: String },
         address: { type: String },
         isActive: { type: Boolean, default: true },
+        isVerified: { type: Boolean, default: false },
+        createdBy: { type: Schema.Types.ObjectId, ref: "User" },
     },
     { timestamps: true }
 );
