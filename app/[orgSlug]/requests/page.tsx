@@ -33,9 +33,9 @@ export default function BloodRequestsListing() {
 
     const getUrgencyStyles = (urgency: string) => {
         switch (urgency) {
-            case "emergency": return "bg-red-600 text-white animate-pulse";
+            case "emergency": return "bg-red-500 text-white animate-pulse shadow-[0_0_15px_rgba(239,68,68,0.3)]";
             case "urgent": return "bg-orange-500 text-white";
-            default: return "bg-neutral-100 text-neutral-600";
+            default: return "bg-slate-800 text-slate-400";
         }
     };
 
@@ -43,8 +43,8 @@ export default function BloodRequestsListing() {
         <div className="container mx-auto px-4 py-12">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12">
                 <div className="max-w-xl">
-                    <h1 className="text-4xl font-black text-neutral-900 mb-4">Blood Requests</h1>
-                    <p className="text-neutral-500 font-medium leading-relaxed">
+                    <h1 className="text-4xl font-black text-white mb-4 tracking-tight">Blood Requests</h1>
+                    <p className="text-slate-400 font-medium leading-relaxed">
                         Active requests in {organization.name}. Your small act of kindness can save a neighbor's life.
                     </p>
                 </div>
@@ -58,9 +58,9 @@ export default function BloodRequestsListing() {
 
             <div className="grid grid-cols-1 gap-6 max-w-4xl">
                 {isLoading ? (
-                    <div className="flex flex-col items-center justify-center py-20 text-neutral-400">
-                        <Loader2 className="w-10 h-10 animate-spin mb-4" />
-                        <p className="font-medium">Finding active requests nearby...</p>
+                    <div className="flex flex-col items-center justify-center py-24 text-slate-500">
+                        <Loader2 className="w-12 h-12 animate-spin mb-4" />
+                        <p className="font-medium tracking-wide uppercase text-xs">Finding active requests nearby...</p>
                     </div>
                 ) : requests.length > 0 ? (
                     requests.map((request) => (
@@ -72,9 +72,9 @@ export default function BloodRequestsListing() {
                                 </div>
                             )}
                             <CardContent className="p-0 flex flex-col md:flex-row">
-                                <div className={`w-full md:w-32 flex flex-col items-center justify-center p-6 border-b md:border-b-0 md:border-r border-neutral-100 ${request.urgency === "emergency" ? "bg-red-50" : "bg-neutral-50"
+                                <div className={`w-full md:w-32 flex flex-col items-center justify-center p-6 border-b md:border-b-0 md:border-r border-slate-800 ${request.urgency === "emergency" ? "bg-red-500/5" : "bg-slate-900/50"
                                     }`}>
-                                    <div className="text-3xl font-black text-red-600 mb-1">{request.bloodGroup}</div>
+                                    <div className="text-3xl font-black text-red-500 mb-1">{request.bloodGroup}</div>
                                     <div className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-tighter ${getUrgencyStyles(request.urgency)}`}>
                                         {request.urgency}
                                     </div>
@@ -83,10 +83,10 @@ export default function BloodRequestsListing() {
                                 <div className="flex-grow p-6">
                                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
                                         <div>
-                                            <h3 className="text-xl font-bold text-neutral-900 mb-1">{request.patientName}</h3>
-                                            <div className="flex flex-wrap items-center gap-4 text-sm text-neutral-500 font-medium">
+                                            <h3 className="text-xl font-bold text-white mb-1 tracking-tight">{request.patientName}</h3>
+                                            <div className="flex flex-wrap items-center gap-4 text-sm text-slate-400 font-medium">
                                                 <div className="flex items-center">
-                                                    <MapPin className="w-4 h-4 mr-1.5 opacity-50" />
+                                                    <MapPin className="w-4 h-4 mr-1.5 opacity-40" />
                                                     {request.location}, {request.upazila}
                                                 </div>
                                                 <div className="flex items-center">
@@ -107,7 +107,7 @@ export default function BloodRequestsListing() {
                                         </div>
                                     </div>
                                     {request.urgency === "emergency" && (
-                                        <p className="text-sm text-red-600 font-bold bg-red-50 p-3 rounded-lg flex items-center">
+                                        <p className="text-sm text-red-400 font-bold bg-red-500/10 p-4 rounded-xl flex items-center border border-red-500/20">
                                             <Droplet className="w-4 h-4 mr-2" />
                                             Immediate donor required for surgery. please contact now!
                                         </p>
@@ -117,12 +117,12 @@ export default function BloodRequestsListing() {
                         </Card>
                     ))
                 ) : (
-                    <div className="text-center py-20 bg-neutral-50 rounded-3xl border-2 border-dashed border-neutral-200">
-                        <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm text-neutral-300">
+                    <div className="text-center py-20 bg-slate-900/50 rounded-3xl border-2 border-dashed border-slate-800">
+                        <div className="w-16 h-16 bg-slate-900 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-xl text-slate-700">
                             <Droplet className="w-8 h-8" />
                         </div>
-                        <h3 className="text-lg font-bold text-neutral-900">No Active Requests</h3>
-                        <p className="text-neutral-500">Everything looks calm in {organization.name} right now.</p>
+                        <h3 className="text-lg font-bold text-white">No Active Requests</h3>
+                        <p className="text-slate-500">Everything looks calm in {organization.name} right now.</p>
                     </div>
                 )}
             </div>

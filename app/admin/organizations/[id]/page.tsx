@@ -8,8 +8,9 @@ import Link from "next/link";
 import { useState, useEffect, use } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { ColorPicker } from "@/components/ui/color-picker";
 import * as z from "zod";
 
 const organizationSchema = z.object({
@@ -142,8 +143,8 @@ export default function EditOrganizationPage({
         return (
             <div className="container mx-auto px-4 py-12 max-w-2xl">
                 <div className="animate-pulse space-y-8">
-                    <div className="h-6 w-40 bg-neutral-200 rounded"></div>
-                    <div className="h-96 bg-neutral-200 rounded-2xl"></div>
+                    <div className="h-6 w-40 bg-slate-800 rounded"></div>
+                    <div className="h-96 bg-slate-900 rounded-2xl border border-slate-800"></div>
                 </div>
             </div>
         );
@@ -154,7 +155,7 @@ export default function EditOrganizationPage({
             {/* Back Link */}
             <Link
                 href="/admin/organizations"
-                className="inline-flex items-center text-sm font-medium text-neutral-600 hover:text-neutral-900 mb-8"
+                className="inline-flex items-center text-sm font-medium text-slate-400 hover:text-white mb-8"
             >
                 <ArrowLeft className="w-4 h-4 mr-2" />
                 Back to Organizations
@@ -163,37 +164,37 @@ export default function EditOrganizationPage({
             {/* Stats Cards */}
             {organization?.stats && (
                 <div className="grid grid-cols-3 gap-4 mb-8">
-                    <Card className="border-none shadow-sm">
+                    <Card className="border-none shadow-sm bg-slate-900/50 backdrop-blur">
                         <CardContent className="p-4 text-center">
-                            <Users className="w-6 h-6 mx-auto mb-2 text-blue-600" />
-                            <div className="text-2xl font-black text-neutral-900">
+                            <Users className="w-6 h-6 mx-auto mb-2 text-blue-400" />
+                            <div className="text-2xl font-black text-white">
                                 {organization.stats.donorCount}
                             </div>
-                            <div className="text-xs text-neutral-500 font-medium">Donors</div>
+                            <div className="text-xs text-slate-400 font-medium font-sans">Donors</div>
                         </CardContent>
                     </Card>
-                    <Card className="border-none shadow-sm">
+                    <Card className="border-none shadow-sm bg-slate-900/50 backdrop-blur">
                         <CardContent className="p-4 text-center">
-                            <Droplet className="w-6 h-6 mx-auto mb-2 text-red-600" />
-                            <div className="text-2xl font-black text-neutral-900">
+                            <Droplet className="w-6 h-6 mx-auto mb-2 text-red-500" />
+                            <div className="text-2xl font-black text-white">
                                 {organization.stats.requestCount}
                             </div>
-                            <div className="text-xs text-neutral-500 font-medium">Total Requests</div>
+                            <div className="text-xs text-slate-400 font-medium font-sans">Total Requests</div>
                         </CardContent>
                     </Card>
-                    <Card className="border-none shadow-sm">
+                    <Card className="border-none shadow-sm bg-slate-900/50 backdrop-blur">
                         <CardContent className="p-4 text-center">
-                            <Droplet className="w-6 h-6 mx-auto mb-2 text-orange-600" />
-                            <div className="text-2xl font-black text-neutral-900">
+                            <Droplet className="w-6 h-6 mx-auto mb-2 text-orange-400" />
+                            <div className="text-2xl font-black text-white">
                                 {organization.stats.activeRequests}
                             </div>
-                            <div className="text-xs text-neutral-500 font-medium">Active Requests</div>
+                            <div className="text-xs text-slate-400 font-medium font-sans">Active Requests</div>
                         </CardContent>
                     </Card>
                 </div>
             )}
 
-            <Card className="border-none shadow-xl overflow-hidden">
+            <Card className="border-none shadow-xl overflow-hidden bg-slate-900/50 backdrop-blur">
                 <div
                     className="h-2 w-full transition-colors"
                     style={{ backgroundColor: primaryColor }}
@@ -202,22 +203,22 @@ export default function EditOrganizationPage({
                     <div className="flex items-center justify-between">
                         <div className="flex items-center space-x-4">
                             <div
-                                className="w-14 h-14 rounded-2xl flex items-center justify-center text-white font-bold text-xl transition-colors"
+                                className="w-14 h-14 rounded-2xl flex items-center justify-center text-white font-bold text-xl transition-colors shadow-lg"
                                 style={{ backgroundColor: primaryColor }}
                             >
                                 {watch("name")?.charAt(0) || "O"}
                             </div>
                             <div>
-                                <CardTitle className="text-2xl font-black text-neutral-900">
+                                <CardTitle className="text-2xl font-black text-white">
                                     Edit Organization
                                 </CardTitle>
-                                <p className="text-neutral-500 text-sm">
+                                <p className="text-slate-400 text-sm font-medium">
                                     Update organization details and settings.
                                 </p>
                             </div>
                         </div>
                         <Link href={`/${organization?.slug}`} target="_blank">
-                            <Button variant="outline" size="sm">
+                            <Button variant="outline" size="sm" className="border-slate-700 text-slate-300 hover:bg-slate-800">
                                 <ExternalLink className="w-4 h-4 mr-2" />
                                 View Site
                             </Button>
@@ -239,31 +240,24 @@ export default function EditOrganizationPage({
                             {...register("slug")}
                             error={errors.slug?.message}
                         />
-                        <p className="text-xs text-neutral-500 -mt-4 ml-1">
-                            This will be the URL: yoursite.com/<span className="font-bold">{watch("slug") || "slug"}</span>
+                        <p className="text-xs text-slate-500 -mt-4 ml-1 italic">
+                            This will be the URL: yoursite.com/<span className="font-bold text-slate-300">{watch("slug") || "slug"}</span>
                         </p>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div className="space-y-1.5">
-                                <label className="text-sm font-medium text-neutral-700 ml-1">
-                                    Primary Color
-                                </label>
-                                <div className="flex items-center space-x-3">
-                                    <input
-                                        type="color"
-                                        {...register("primaryColor")}
-                                        className="w-12 h-12 rounded-xl border border-neutral-200 cursor-pointer"
-                                    />
-                                    <input
-                                        type="text"
-                                        {...register("primaryColor")}
-                                        placeholder="#D32F2F"
-                                        className="flex-1 h-12 rounded-xl border border-neutral-200 px-4 focus:ring-2 focus:ring-red-500 outline-none"
-                                    />
-                                </div>
-                                {errors.primaryColor && (
-                                    <p className="text-xs text-red-500 ml-1">{errors.primaryColor.message}</p>
-                                )}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-slate-800">
+                            <div className="pt-2">
+                                <Controller
+                                    name="primaryColor"
+                                    control={control}
+                                    render={({ field }) => (
+                                        <ColorPicker
+                                            value={field.value || "#D32F2F"}
+                                            onChange={field.onChange}
+                                            label="Primary Theme Color"
+                                            error={errors.primaryColor?.message}
+                                        />
+                                    )}
+                                />
                             </div>
 
                             <Input
@@ -290,12 +284,12 @@ export default function EditOrganizationPage({
                         />
 
                         {/* Active Toggle */}
-                        <div className="flex items-center justify-between p-4 rounded-xl border border-neutral-200">
+                        <div className="flex items-center justify-between p-4 rounded-xl border border-slate-800 bg-slate-900/40">
                             <div>
-                                <label className="text-sm font-medium text-neutral-900">
+                                <label className="text-sm font-medium text-white">
                                     Organization Status
                                 </label>
-                                <p className="text-xs text-neutral-500">
+                                <p className="text-xs text-slate-500 font-medium">
                                     Inactive organizations won't be accessible to users.
                                 </p>
                             </div>
@@ -305,7 +299,7 @@ export default function EditOrganizationPage({
                                     {...register("isActive")}
                                     className="sr-only peer"
                                 />
-                                <div className="w-11 h-6 bg-neutral-200 rounded-full peer peer-checked:bg-green-600 peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
+                                <div className="w-11 h-6 bg-slate-700 rounded-full peer peer-checked:bg-green-600 peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
                             </label>
                         </div>
 

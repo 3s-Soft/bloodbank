@@ -78,7 +78,7 @@ export default function NewBloodRequest() {
             {/* Back Link */}
             <Link
                 href={`/${organization.slug}/requests`}
-                className="inline-flex items-center text-sm font-medium text-neutral-500 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-white mb-6"
+                className="inline-flex items-center text-sm font-medium text-slate-400 hover:text-white mb-6"
             >
                 <ArrowLeft className="w-4 h-4 mr-2" />
                 Back to Requests
@@ -93,10 +93,10 @@ export default function NewBloodRequest() {
                     >
                         <AlertCircle className="w-8 h-8" style={{ color: primaryColor }} />
                     </div>
-                    <CardTitle className="text-3xl font-black text-neutral-900 dark:text-white">
+                    <CardTitle className="text-3xl font-black text-white">
                         Request Blood
                     </CardTitle>
-                    <p className="text-neutral-500 dark:text-neutral-400 font-medium">
+                    <p className="text-slate-400 font-medium">
                         Create an emergency request in {organization.name}
                     </p>
                 </CardHeader>
@@ -144,19 +144,19 @@ export default function NewBloodRequest() {
                                                 type="button"
                                                 onClick={() => field.onChange(opt.value)}
                                                 className={`p-4 rounded-xl border-2 text-center transition-all ${field.value === opt.value
-                                                        ? opt.color === "red"
-                                                            ? "border-red-500 bg-red-50 dark:bg-red-900/20"
-                                                            : opt.color === "orange"
-                                                                ? "border-orange-500 bg-orange-50 dark:bg-orange-900/20"
-                                                                : "border-green-500 bg-green-50 dark:bg-green-900/20"
-                                                        : "border-neutral-200 dark:border-neutral-700 hover:border-neutral-300"
+                                                    ? opt.color === "red"
+                                                        ? "border-red-500 bg-red-50 dark:bg-red-900/20"
+                                                        : opt.color === "orange"
+                                                            ? "border-orange-500 bg-orange-50 dark:bg-orange-900/20"
+                                                            : "border-green-500 bg-green-50 dark:bg-green-900/20"
+                                                    : "border-slate-800 bg-slate-900 hover:border-slate-700"
                                                     }`}
                                             >
                                                 <div className={`text-sm font-bold ${opt.color === "red"
-                                                        ? "text-red-600"
-                                                        : opt.color === "orange"
-                                                            ? "text-orange-600"
-                                                            : "text-green-600"
+                                                    ? "text-red-600"
+                                                    : opt.color === "orange"
+                                                        ? "text-orange-600"
+                                                        : "text-green-600"
                                                     }`}>
                                                     {opt.label}
                                                 </div>
@@ -188,7 +188,7 @@ export default function NewBloodRequest() {
 
                         {/* Location Section */}
                         <div className="space-y-4 pt-4 border-t border-neutral-100 dark:border-neutral-700">
-                            <h3 className="text-sm font-bold text-neutral-900 dark:text-white uppercase tracking-wider flex items-center">
+                            <h3 className="text-sm font-bold text-white uppercase tracking-wider flex items-center">
                                 <MapPin className="w-4 h-4 mr-2" style={{ color: primaryColor }} />
                                 Location Details
                             </h3>
@@ -250,7 +250,7 @@ export default function NewBloodRequest() {
                             </label>
                             <textarea
                                 {...register("additionalNotes")}
-                                className="w-full min-h-[100px] rounded-xl border border-neutral-200 dark:border-neutral-700 dark:bg-neutral-900 p-4 focus:ring-2 focus:ring-red-500 outline-none resize-none text-neutral-900 dark:text-white"
+                                className="w-full min-h-[120px] rounded-xl border border-slate-800 bg-slate-900 p-4 focus:ring-2 focus:ring-red-500 outline-none resize-none text-white placeholder-slate-500"
                                 placeholder="Any special instructions for donors..."
                             />
                         </div>

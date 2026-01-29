@@ -37,22 +37,22 @@ export default function DashboardLayout({
     const basePath = `/${orgSlug}/dashboard`;
 
     return (
-        <div className="min-h-screen bg-neutral-50">
+        <div className="min-h-screen bg-slate-950">
             {/* Sidebar */}
-            <aside className="fixed left-0 top-0 z-40 h-screen w-64 bg-white border-r border-neutral-200 pt-20 hidden lg:block">
+            <aside className="fixed left-0 top-0 z-40 h-screen w-64 bg-slate-900 border-r border-slate-800 pt-20 hidden lg:block shadow-2xl">
                 <div className="px-4 py-6">
                     {/* Org Badge */}
-                    <div className="mb-6 p-4 rounded-xl" style={{ backgroundColor: `${primaryColor}10` }}>
+                    <div className="mb-6 p-4 rounded-xl border border-slate-800 bg-slate-950/50">
                         <div className="flex items-center gap-3">
                             <div
-                                className="w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold"
+                                className="w-10 h-10 rounded-xl flex items-center justify-center text-white font-black shadow-lg"
                                 style={{ backgroundColor: primaryColor }}
                             >
                                 {org?.name?.charAt(0) || "O"}
                             </div>
                             <div>
-                                <div className="font-bold text-neutral-900 text-sm">{org?.name || "Organization"}</div>
-                                <div className="text-xs text-neutral-500">Admin Dashboard</div>
+                                <div className="font-bold text-white text-sm tracking-tight">{org?.name || "Organization"}</div>
+                                <div className="text-[10px] uppercase font-black tracking-widest text-slate-500">Admin Dashboard</div>
                             </div>
                         </div>
                     </div>
@@ -68,9 +68,9 @@ export default function DashboardLayout({
                                 <Link
                                     key={item.href}
                                     href={fullPath}
-                                    className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-colors ${isActive
-                                            ? "text-white"
-                                            : "text-neutral-600 hover:bg-neutral-100"
+                                    className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all ${isActive
+                                        ? "text-white shadow-lg"
+                                        : "text-slate-400 hover:text-white hover:bg-slate-800"
                                         }`}
                                     style={isActive ? { backgroundColor: primaryColor } : {}}
                                 >
@@ -82,10 +82,10 @@ export default function DashboardLayout({
                     </nav>
 
                     {/* Back to Site */}
-                    <div className="mt-8 pt-6 border-t border-neutral-100">
+                    <div className="mt-8 pt-6 border-t border-slate-800">
                         <Link
                             href={`/${orgSlug}`}
-                            className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-neutral-500 hover:bg-neutral-100 transition-colors"
+                            className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold text-slate-500 hover:text-white hover:bg-slate-800 transition-all"
                         >
                             <ArrowLeft className="w-5 h-5" />
                             Back to Site
@@ -95,7 +95,7 @@ export default function DashboardLayout({
             </aside>
 
             {/* Mobile Header */}
-            <div className="lg:hidden fixed top-16 left-0 right-0 z-30 bg-white border-b border-neutral-200">
+            <div className="lg:hidden fixed top-16 left-0 right-0 z-30 bg-slate-900 border-b border-slate-800">
                 <div className="flex items-center gap-2 px-4 py-3 overflow-x-auto">
                     {navItems.map((item) => {
                         const fullPath = item.href ? `${basePath}${item.href}` : basePath;
@@ -106,9 +106,9 @@ export default function DashboardLayout({
                             <Link
                                 key={item.href}
                                 href={fullPath}
-                                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium whitespace-nowrap transition-colors ${isActive
-                                        ? "text-white"
-                                        : "bg-neutral-100 text-neutral-600"
+                                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-widest whitespace-nowrap transition-all ${isActive
+                                    ? "text-white shadow-lg"
+                                    : "bg-slate-800 text-slate-400"
                                     }`}
                                 style={isActive ? { backgroundColor: primaryColor } : {}}
                             >

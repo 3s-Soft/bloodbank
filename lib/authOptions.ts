@@ -2,6 +2,7 @@ import { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import connectToDatabase from "./db/mongodb";
 import { User } from "./models/User";
+import GoogleProvider from "next-auth/providers/google";
 
 export const authOptions: NextAuthOptions = {
     providers: [
@@ -41,13 +42,43 @@ export const authOptions: NextAuthOptions = {
                 };
             },
         }),
+        GoogleProvider({
+            clientId: process.env.GOOGLE_CLIENT_ID || "",
+            clientSecret: process.env.GOOGLE_CLIENT_SECRET || "",
+        }),
     ],
     callbacks: {
-        async jwt({ token, user }) {
+        async signIn({ user, account, profile }) {
+            if (account?.provider === "google") {
+                await connectToDatabase();
+                const existingUser = await User.findOne({ email: user.email });
+
+                if (!existingUser) {
+                    await User.create({
+                        name: user.name,
+                        email: user.email,
+                        image: user.image,
+                        role: "patient", // Default role
+                    });
+                }
+            }
+            return true;
+        },
+        async jwt({ token, user, trigger, session }) {
             if (user) {
                 token.id = user.id;
-                token.role = (user as any).role;
             }
+
+            // Always fetch latest role from DB during JWT refresh or login
+            if (token?.email) {
+                await connectToDatabase();
+                const dbUser = await User.findOne({ email: token.email });
+                if (dbUser) {
+                    token.id = dbUser._id.toString();
+                    token.role = dbUser.role;
+                }
+            }
+
             return token;
         },
         async session({ session, token }) {

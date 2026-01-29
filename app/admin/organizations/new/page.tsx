@@ -8,8 +8,9 @@ import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { ColorPicker } from "@/components/ui/color-picker";
 import * as z from "zod";
 
 const organizationSchema = z.object({
@@ -72,13 +73,13 @@ export default function NewOrganizationPage() {
             {/* Back Link */}
             <Link
                 href="/admin/organizations"
-                className="inline-flex items-center text-sm font-medium text-neutral-600 hover:text-neutral-900 mb-8"
+                className="inline-flex items-center text-sm font-medium text-slate-400 hover:text-white mb-8"
             >
                 <ArrowLeft className="w-4 h-4 mr-2" />
                 Back to Organizations
             </Link>
 
-            <Card className="border-none shadow-xl overflow-hidden">
+            <Card className="border-none shadow-xl overflow-hidden bg-slate-900/50 backdrop-blur">
                 <div
                     className="h-2 w-full transition-colors"
                     style={{ backgroundColor: primaryColor }}
@@ -90,10 +91,10 @@ export default function NewOrganizationPage() {
                     >
                         <Building2 className="w-8 h-8" style={{ color: primaryColor }} />
                     </div>
-                    <CardTitle className="text-3xl font-black text-neutral-900">
+                    <CardTitle className="text-3xl font-black text-white">
                         Create Organization
                     </CardTitle>
-                    <p className="text-neutral-500 font-medium">
+                    <p className="text-slate-400 font-medium font-sans">
                         Add a new blood bank organization to the platform.
                     </p>
                 </CardHeader>
@@ -112,31 +113,24 @@ export default function NewOrganizationPage() {
                             {...register("slug")}
                             error={errors.slug?.message}
                         />
-                        <p className="text-xs text-neutral-500 -mt-4 ml-1">
-                            This will be the URL: yoursite.com/<span className="font-bold">{watch("slug") || "slug"}</span>
+                        <p className="text-xs text-slate-500 -mt-4 ml-1 italic">
+                            This will be the URL: yoursite.com/<span className="font-bold text-slate-300">{watch("slug") || "slug"}</span>
                         </p>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div className="space-y-1.5">
-                                <label className="text-sm font-medium text-neutral-700 ml-1">
-                                    Primary Color
-                                </label>
-                                <div className="flex items-center space-x-3">
-                                    <input
-                                        type="color"
-                                        {...register("primaryColor")}
-                                        className="w-12 h-12 rounded-xl border border-neutral-200 cursor-pointer"
-                                    />
-                                    <input
-                                        type="text"
-                                        {...register("primaryColor")}
-                                        placeholder="#D32F2F"
-                                        className="flex-1 h-12 rounded-xl border border-neutral-200 px-4 focus:ring-2 focus:ring-red-500 outline-none"
-                                    />
-                                </div>
-                                {errors.primaryColor && (
-                                    <p className="text-xs text-red-500 ml-1">{errors.primaryColor.message}</p>
-                                )}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-slate-800">
+                            <div className="pt-2">
+                                <Controller
+                                    name="primaryColor"
+                                    control={control}
+                                    render={({ field }) => (
+                                        <ColorPicker
+                                            value={field.value || "#D32F2F"}
+                                            onChange={field.onChange}
+                                            label="Primary Theme Color"
+                                            error={errors.primaryColor?.message}
+                                        />
+                                    )}
+                                />
                             </div>
 
                             <Input

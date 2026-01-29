@@ -19,8 +19,9 @@ import {
 import { useState, useEffect, use } from "react";
 import { useOrganization } from "@/lib/context/OrganizationContext";
 import { toast } from "sonner";
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { ColorPicker } from "@/components/ui/color-picker";
 import * as z from "zod";
 
 const settingsSchema = z.object({
@@ -109,8 +110,8 @@ export default function OrgSettingsPage({
         return (
             <div className="container mx-auto px-4 py-12 max-w-2xl">
                 <div className="animate-pulse space-y-8">
-                    <div className="h-10 w-64 bg-neutral-200 rounded"></div>
-                    <div className="h-96 bg-neutral-200 rounded-2xl"></div>
+                    <div className="h-10 w-64 bg-slate-800 rounded-lg"></div>
+                    <div className="h-96 bg-slate-900 rounded-2xl border border-slate-800"></div>
                 </div>
             </div>
         );
@@ -127,8 +128,8 @@ export default function OrgSettingsPage({
                     <Settings className="w-8 h-8" style={{ color: primaryColor }} />
                 </div>
                 <div>
-                    <h1 className="text-4xl font-black text-neutral-900">Organization Settings</h1>
-                    <p className="text-neutral-500 font-medium">
+                    <h1 className="text-4xl font-black text-white tracking-tight">Organization Settings</h1>
+                    <p className="text-slate-400 font-medium">
                         Customize your organization's appearance and contact information.
                     </p>
                 </div>
@@ -141,13 +142,13 @@ export default function OrgSettingsPage({
                     style={{ backgroundColor: primaryColor }}
                 />
                 <CardHeader>
-                    <CardTitle className="text-lg font-bold flex items-center gap-2">
-                        <Eye className="w-5 h-5 text-neutral-400" />
+                    <CardTitle className="text-lg font-bold flex items-center gap-2 text-white">
+                        <Eye className="w-5 h-5 text-slate-400" />
                         Live Preview
                     </CardTitle>
                 </CardHeader>
                 <CardContent>
-                    <div className="flex items-center gap-4 p-4 bg-neutral-50 rounded-xl">
+                    <div className="flex items-center gap-4 p-4 bg-slate-950 rounded-xl border border-slate-800">
                         {logoUrl ? (
                             <img
                                 src={logoUrl}
@@ -166,10 +167,10 @@ export default function OrgSettingsPage({
                             </div>
                         )}
                         <div>
-                            <div className="text-xl font-black text-neutral-900">
+                            <div className="text-xl font-black text-white">
                                 {watch("name") || "Organization Name"}
                             </div>
-                            <div className="text-sm text-neutral-500 flex items-center gap-2">
+                            <div className="text-sm text-slate-400 flex items-center gap-2">
                                 <span
                                     className="inline-block w-3 h-3 rounded-full"
                                     style={{ backgroundColor: primaryColor }}
@@ -182,12 +183,12 @@ export default function OrgSettingsPage({
             </Card>
 
             {/* Settings Form */}
-            <Card className="border-none shadow-xl">
+            <Card className="border-none shadow-xl bg-slate-900/50 backdrop-blur">
                 <CardContent className="p-8">
                     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
                         {/* Basic Information */}
                         <div className="space-y-4">
-                            <h3 className="text-lg font-bold text-neutral-900 flex items-center gap-2">
+                            <h3 className="text-lg font-bold text-white flex items-center gap-2">
                                 <Building2 className="w-5 h-5" style={{ color: primaryColor }} />
                                 Basic Information
                             </h3>
@@ -205,76 +206,40 @@ export default function OrgSettingsPage({
                                 {...register("logo")}
                                 error={errors.logo?.message}
                             />
-                            <p className="text-xs text-neutral-500 -mt-2 ml-1">
+                            <p className="text-xs text-slate-500 -mt-2 ml-1 italic">
                                 Enter a URL to an image for your organization logo.
                             </p>
                         </div>
 
                         {/* Branding */}
-                        <div className="space-y-4 pt-4 border-t border-neutral-100">
-                            <h3 className="text-lg font-bold text-neutral-900 flex items-center gap-2">
+                        <div className="space-y-4 pt-4 border-t border-slate-800">
+                            <h3 className="text-lg font-bold text-white flex items-center gap-2">
                                 <Palette className="w-5 h-5" style={{ color: primaryColor }} />
                                 Branding
                             </h3>
 
-                            <div className="space-y-1.5">
-                                <label className="text-sm font-medium text-neutral-700 ml-1">
-                                    Primary Color *
-                                </label>
-                                <div className="flex items-center space-x-3">
-                                    <input
-                                        type="color"
-                                        {...register("primaryColor")}
-                                        className="w-14 h-14 rounded-xl border border-neutral-200 cursor-pointer"
-                                    />
-                                    <input
-                                        type="text"
-                                        {...register("primaryColor")}
-                                        placeholder="#D32F2F"
-                                        className="flex-1 h-12 rounded-xl border border-neutral-200 px-4 focus:ring-2 focus:ring-red-500 outline-none"
-                                    />
-                                </div>
-                                {errors.primaryColor && (
-                                    <p className="text-xs text-red-500 ml-1">{errors.primaryColor.message}</p>
-                                )}
-                                <p className="text-xs text-neutral-500 ml-1">
+                            <div className="pt-2">
+                                <Controller
+                                    name="primaryColor"
+                                    control={control}
+                                    render={({ field }) => (
+                                        <ColorPicker
+                                            value={field.value}
+                                            onChange={field.onChange}
+                                            label="Primary Theme Color *"
+                                            error={errors.primaryColor?.message}
+                                        />
+                                    )}
+                                />
+                                <p className="text-xs text-slate-500 ml-1 mt-2 italic">
                                     This color will be used throughout your organization's pages.
                                 </p>
-                            </div>
-
-                            {/* Color Presets */}
-                            <div>
-                                <label className="text-sm font-medium text-neutral-700 ml-1 block mb-2">
-                                    Quick Presets
-                                </label>
-                                <div className="flex flex-wrap gap-2">
-                                    {[
-                                        { color: "#D32F2F", name: "Red" },
-                                        { color: "#1976D2", name: "Blue" },
-                                        { color: "#388E3C", name: "Green" },
-                                        { color: "#7B1FA2", name: "Purple" },
-                                        { color: "#F57C00", name: "Orange" },
-                                        { color: "#00796B", name: "Teal" },
-                                        { color: "#C2185B", name: "Pink" },
-                                        { color: "#303F9F", name: "Indigo" },
-                                    ].map((preset) => (
-                                        <button
-                                            key={preset.color}
-                                            type="button"
-                                            onClick={() => reset({ ...watch(), primaryColor: preset.color })}
-                                            className={`w-8 h-8 rounded-lg border-2 transition-transform hover:scale-110 ${primaryColor === preset.color ? "border-neutral-900 scale-110" : "border-transparent"
-                                                }`}
-                                            style={{ backgroundColor: preset.color }}
-                                            title={preset.name}
-                                        />
-                                    ))}
-                                </div>
                             </div>
                         </div>
 
                         {/* Contact Information */}
-                        <div className="space-y-4 pt-4 border-t border-neutral-100">
-                            <h3 className="text-lg font-bold text-neutral-900 flex items-center gap-2">
+                        <div className="space-y-4 pt-4 border-t border-slate-800">
+                            <h3 className="text-lg font-bold text-white flex items-center gap-2">
                                 <Phone className="w-5 h-5" style={{ color: primaryColor }} />
                                 Contact Information
                             </h3>
@@ -297,13 +262,13 @@ export default function OrgSettingsPage({
                             </div>
 
                             <div>
-                                <label className="text-sm font-medium text-neutral-700 ml-1 block mb-1.5">
+                                <label className="text-sm font-medium text-slate-300 ml-1 block mb-3">
                                     Address
                                 </label>
                                 <textarea
                                     {...register("address")}
                                     placeholder="Full address of your organization"
-                                    className="w-full h-24 px-4 py-3 rounded-xl border border-neutral-200 focus:ring-2 focus:ring-red-500 outline-none resize-none"
+                                    className="w-full h-32 px-4 py-3 rounded-xl border border-slate-800 bg-slate-900 focus:ring-2 focus:ring-red-500 outline-none resize-none text-white placeholder-slate-500"
                                 />
                             </div>
                         </div>
@@ -340,7 +305,7 @@ export default function OrgSettingsPage({
                         </div>
 
                         {!isDirty && (
-                            <p className="text-center text-sm text-neutral-500">
+                            <p className="text-center text-sm text-slate-500">
                                 No changes to save
                             </p>
                         )}
@@ -349,18 +314,18 @@ export default function OrgSettingsPage({
             </Card>
 
             {/* URL Info */}
-            <Card className="border-none shadow-sm mt-8">
+            <Card className="border-none shadow-sm mt-8 bg-slate-900/40">
                 <CardContent className="p-6">
                     <div className="flex items-start gap-4">
-                        <div className="p-2 bg-neutral-100 rounded-xl">
-                            <MapPin className="w-5 h-5 text-neutral-600" />
+                        <div className="p-2 bg-slate-800 rounded-xl">
+                            <MapPin className="w-5 h-5 text-slate-400" />
                         </div>
                         <div>
-                            <h4 className="font-bold text-neutral-900">Your Organization URL</h4>
-                            <p className="text-sm text-neutral-500 mb-2">
+                            <h4 className="font-bold text-white">Your Organization URL</h4>
+                            <p className="text-sm text-slate-500 mb-3">
                                 Share this link with your community to access your blood bank.
                             </p>
-                            <code className="px-3 py-2 bg-neutral-100 rounded-lg text-sm font-mono">
+                            <code className="px-4 py-2 bg-slate-950 rounded-lg text-sm font-mono border border-slate-800 text-slate-300">
                                 {typeof window !== "undefined" ? window.location.origin : ""}/{orgSlug}
                             </code>
                         </div>

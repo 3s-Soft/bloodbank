@@ -4,6 +4,7 @@ import "./globals.css";
 import AuthProvider from "@/components/AuthProvider";
 import { Toaster } from "sonner";
 import { ThemeProvider } from "@/lib/context/ThemeContext";
+import { LanguageProvider } from "@/lib/i18n";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -16,8 +17,11 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Rural Blood Bank - Save Lives, Donate Blood",
-  description: "A non-profit platform connecting blood donors and recipients in rural areas. Find blood donors quickly and for free.",
+  title: "Bangladesh Bloodbank - Every Drop Saves a Life",
+  description: "A professional community-driven platform connecting blood donors and recipients across Bangladesh. Find blood donors quickly and for free.",
+  icons: {
+    icon: "/assets/favicon.png",
+  },
 };
 
 export default function RootLayout({
@@ -26,20 +30,23 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" className="dark" suppressHydrationWarning>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased selection:bg-red-100 selection:text-red-900 bg-neutral-50 dark:bg-neutral-900 transition-colors`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased selection:bg-red-500/30 selection:text-white bg-slate-950 text-slate-50`}
       >
         <ThemeProvider>
-          <AuthProvider>
-            <div className="min-h-screen flex flex-col">
-              {children}
-            </div>
-            <Toaster richColors position="top-right" />
-          </AuthProvider>
+          <LanguageProvider>
+            <AuthProvider>
+              <div className="min-h-screen flex flex-col">
+                {children}
+              </div>
+              <Toaster richColors position="top-right" />
+            </AuthProvider>
+          </LanguageProvider>
         </ThemeProvider>
       </body>
     </html>
   );
 }
+
 

@@ -3,70 +3,109 @@
 import Link from "next/link";
 import { useSession, signOut } from "next-auth/react";
 import { Button } from "./ui/button";
-import { Droplet, Menu, X, User as UserIcon } from "lucide-react";
+import { Droplet, Menu, X } from "lucide-react";
 import { useState } from "react";
 import { useOrganization } from "@/lib/context/OrganizationContext";
-import { ThemeToggle } from "./ui/theme-toggle";
+import { LanguageToggle } from "./ui/language-toggle";
+import { useLanguage } from "@/lib/i18n";
 
 export default function Navbar() {
     const { data: session } = useSession();
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const organization = useOrganization();
+    const { t } = useLanguage();
 
     const orgSlug = organization.slug;
-    const primaryColor = organization.primaryColor || "#D32F2F";
+    const primaryColor = organization.primaryColor || "#dc2626";
 
     return (
-        <nav className="sticky top-0 z-50 w-full border-b border-neutral-100 dark:border-neutral-800 bg-white/80 dark:bg-neutral-900/80 backdrop-blur-md">
+        <nav className="sticky top-0 z-50 w-full border-b border-slate-200 dark:border-slate-800 bg-white/90 dark:bg-slate-900/90 backdrop-blur-lg">
             <div className="container mx-auto px-4 h-16 flex items-center justify-between">
                 {/* Logo */}
-                <Link href={`/${orgSlug}`} className="flex items-center space-x-2 group">
-                    <div className="bg-red-50 dark:bg-red-900/20 p-1.5 rounded-lg group-hover:bg-red-100 dark:group-hover:bg-red-900/30 transition-colors" style={{ backgroundColor: `${primaryColor}10` }}>
-                        <Droplet className="w-6 h-6 fill-current" style={{ color: primaryColor }} />
+                <Link href={`/${orgSlug}`} className="flex items-center space-x-3 group">
+                    <div className="relative w-10 h-10 overflow-hidden rounded-xl transition-all group-hover:scale-105">
+                        <img
+                            src="/assets/logo.png"
+                            alt="Bangladesh Bloodbank Logo"
+                            className="w-full h-full object-cover"
+                        />
                     </div>
-                    <span className="text-xl font-bold text-neutral-900 dark:text-white tracking-tight">
+                    <span className="text-xl font-bold text-slate-900 dark:text-white tracking-tight">
                         {organization.name.split(' ')[0]}<span style={{ color: primaryColor }}>{organization.name.split(' ').slice(1).join(' ')}</span>
                     </span>
                 </Link>
 
                 {/* Desktop Navigation */}
-                <div className="hidden md:flex items-center space-x-6">
-                    <Link href={`/${orgSlug}/donors`} className="text-sm font-medium text-neutral-600 dark:text-neutral-300 hover:text-red-600 dark:hover:text-red-400 transition-colors">
-                        Find Donors
+                <div className="hidden md:flex items-center space-x-1">
+                    <Link
+                        href={`/${orgSlug}/donors`}
+                        className="px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
+                    >
+                        {t.nav.findDonors}
                     </Link>
-                    <Link href={`/${orgSlug}/requests`} className="text-sm font-medium text-neutral-600 dark:text-neutral-300 hover:text-red-600 dark:hover:text-red-400 transition-colors">
-                        Blood Requests
+                    <Link
+                        href={`/${orgSlug}/requests`}
+                        className="px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
+                    >
+                        {t.nav.bloodRequests}
                     </Link>
 
-                    {/* Theme Toggle */}
-                    <ThemeToggle variant="icon" />
+                    <div className="w-px h-6 bg-slate-200 dark:bg-slate-700 mx-2" />
+
+                    {/* Language Toggle */}
+                    <LanguageToggle variant="icon" />
+
+                    <div className="w-px h-6 bg-slate-200 dark:bg-slate-700 mx-2" />
 
                     {session ? (
-                        <div className="flex items-center space-x-4">
-                            <Link href={`/${orgSlug}/dashboard`} className="text-sm font-medium text-neutral-600 dark:text-neutral-300 hover:text-red-600 dark:hover:text-red-400 transition-colors">
-                                Dashboard
+                        <div className="flex items-center space-x-2">
+                            <Link href={`/${orgSlug}/dashboard`}>
+                                <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    className="text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white"
+                                >
+                                    {t.nav.dashboard}
+                                </Button>
                             </Link>
-                            <Button size="sm" variant="ghost" onClick={() => signOut()}>
-                                Logout
+                            <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => signOut()}
+                                className="border-slate-200 dark:border-slate-700"
+                            >
+                                {t.nav.logout}
                             </Button>
                         </div>
                     ) : (
-                        <div className="flex items-center space-x-4">
+                        <div className="flex items-center space-x-2">
                             <Link href={`/login?org=${orgSlug}`}>
-                                <Button size="sm" variant="ghost">Login</Button>
+                                <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    className="text-slate-600 dark:text-slate-300"
+                                >
+                                    {t.nav.login}
+                                </Button>
                             </Link>
                             <Link href={`/${orgSlug}/register`}>
-                                <Button size="sm" style={{ backgroundColor: primaryColor }} className="text-white hover:opacity-90">Become a Donor</Button>
+                                <Button
+                                    size="sm"
+                                    style={{ backgroundColor: primaryColor }}
+                                    className="text-white hover:opacity-90 shadow-lg"
+                                >
+                                    {t.nav.becomeDonor}
+                                </Button>
                             </Link>
                         </div>
                     )}
                 </div>
 
                 {/* Mobile Menu Toggle */}
-                <div className="md:hidden flex items-center gap-2">
-                    <ThemeToggle variant="icon" />
+                <div className="md:hidden flex items-center gap-1">
+                    <LanguageToggle variant="icon" />
                     <button
-                        className="p-2 text-neutral-600 dark:text-neutral-300"
+                        className="p-2 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg"
                         onClick={() => setIsMenuOpen(!isMenuOpen)}
                     >
                         {isMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
@@ -76,38 +115,54 @@ export default function Navbar() {
 
             {/* Mobile Navigation */}
             {isMenuOpen && (
-                <div className="md:hidden absolute top-16 left-0 w-full bg-white dark:bg-neutral-900 border-b border-neutral-100 dark:border-neutral-800 p-4 space-y-4 shadow-lg animate-in fade-in slide-in-from-top-2">
+                <div className="md:hidden absolute top-16 left-0 w-full bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 p-4 space-y-2 shadow-xl">
                     <Link
                         href={`/${orgSlug}/donors`}
-                        className="block text-lg font-medium text-neutral-600 dark:text-neutral-300"
+                        className="block px-4 py-3 text-lg font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl"
                         onClick={() => setIsMenuOpen(false)}
                     >
-                        Find Donors
+                        {t.nav.findDonors}
                     </Link>
                     <Link
                         href={`/${orgSlug}/requests`}
-                        className="block text-lg font-medium text-neutral-600 dark:text-neutral-300"
+                        className="block px-4 py-3 text-lg font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl"
                         onClick={() => setIsMenuOpen(false)}
                     >
-                        Blood Requests
+                        {t.nav.bloodRequests}
                     </Link>
-                    <div className="pt-4 border-t border-neutral-100 dark:border-neutral-800 flex flex-col space-y-3">
+                    <div className="pt-3 mt-3 border-t border-slate-100 dark:border-slate-800 flex flex-col space-y-2">
                         {session ? (
                             <>
                                 <Link href={`/${orgSlug}/dashboard`} onClick={() => setIsMenuOpen(false)}>
-                                    <Button className="w-full text-white" style={{ backgroundColor: primaryColor }}>Dashboard</Button>
+                                    <Button
+                                        className="w-full text-white shadow-lg"
+                                        style={{ backgroundColor: primaryColor }}
+                                    >
+                                        {t.nav.dashboard}
+                                    </Button>
                                 </Link>
-                                <Button variant="ghost" className="w-full" onClick={() => signOut()}>
-                                    Logout
+                                <Button
+                                    variant="outline"
+                                    className="w-full border-slate-200 dark:border-slate-700"
+                                    onClick={() => signOut()}
+                                >
+                                    {t.nav.logout}
                                 </Button>
                             </>
                         ) : (
                             <>
                                 <Link href={`/login?org=${orgSlug}`} onClick={() => setIsMenuOpen(false)}>
-                                    <Button variant="outline" className="w-full">Login</Button>
+                                    <Button variant="outline" className="w-full border-slate-200 dark:border-slate-700">
+                                        {t.nav.login}
+                                    </Button>
                                 </Link>
                                 <Link href={`/${orgSlug}/register`} onClick={() => setIsMenuOpen(false)}>
-                                    <Button className="w-full text-white" style={{ backgroundColor: primaryColor }}>Become a Donor</Button>
+                                    <Button
+                                        className="w-full text-white shadow-lg"
+                                        style={{ backgroundColor: primaryColor }}
+                                    >
+                                        {t.nav.becomeDonor}
+                                    </Button>
                                 </Link>
                             </>
                         )}
@@ -117,4 +172,3 @@ export default function Navbar() {
         </nav>
     );
 }
-
