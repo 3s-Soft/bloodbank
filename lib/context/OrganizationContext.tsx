@@ -3,6 +3,7 @@
 import { createContext, useContext, ReactNode } from "react";
 
 interface OrganizationData {
+    _id: string;
     name: string;
     slug: string;
     logo?: string;
