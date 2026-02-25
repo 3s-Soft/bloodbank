@@ -12,6 +12,10 @@ const pwaConfig = withPWA({
 const nextConfig: NextConfig = {
   /* config options here */
   turbopack: {},
+  images: {
+    formats: ["image/avif", "image/webp"],
+  },
+  compress: true,
 };
 
 export default pwaConfig(nextConfig);

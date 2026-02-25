@@ -1,25 +1,16 @@
-"use client";
-
 import {
     Globe,
-    Heart,
-    Users,
     Shield,
     Zap,
-    ArrowRight,
     Droplet,
-    Search,
-    ChevronRight,
-    MessageCircle,
     HandHeart,
     Building2,
     BookOpen,
-    ArrowLeft,
     Activity,
     CheckCircle2
 } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
+import DocSearch from "@/components/DocSearch";
 
 const mainGuides = [
     {
@@ -48,8 +39,12 @@ const mainGuides = [
     }
 ];
 
-export default function GlobalDocs() {
-    const [searchQuery, setSearchQuery] = useState("");
+export default async function GlobalDocs({
+    searchParams,
+}: {
+    searchParams: Promise<{ q?: string }>;
+}) {
+    const { q = "" } = await searchParams;
 
     return (
         <div className="min-h-screen bg-slate-950 flex flex-col text-slate-50 selection:bg-red-500/30">
@@ -72,15 +67,8 @@ export default function GlobalDocs() {
                         </div>
                     </div>
 
-                    <div className="relative w-72 hidden md:block">
-                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
-                        <input
-                            type="text"
-                            placeholder="Type to search platform guides..."
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                            className="w-full h-11 pl-11 pr-4 rounded-2xl bg-slate-800 border-none text-sm text-white placeholder-slate-500 focus:ring-2 focus:ring-red-500/50 outline-none transition-all"
-                        />
+                    <div className="hidden md:block">
+                        <DocSearch defaultValue={q} />
                     </div>
                 </div>
             </header>
@@ -119,83 +107,87 @@ export default function GlobalDocs() {
 
                 {/* Content Sections */}
                 <div className="container mx-auto px-4 py-24 max-w-4xl">
-                    <section id="vision" className="mb-32 scroll-mt-32">
-                        <div className="flex items-center gap-4 mb-8">
-                            <span className="px-3 py-1 rounded-full bg-red-500/10 text-red-500 text-[10px] font-black uppercase tracking-widest">Platform Vision & Scale</span>
-                            <div className="h-px flex-grow bg-slate-800" />
-                        </div>
-                        <h2 className="text-3xl md:text-5xl font-black text-white mb-8 tracking-tight">One Platform, Endless Impact</h2>
-                        <div className="prose prose-invert max-w-none text-slate-400 font-medium leading-relaxed space-y-6">
-                            <p>
-                                Bangladesh BloodBank is more than just a website; it's a digital infrastructure designed to bridge the gap between those who can help and those who need it most. Our platform addresses the critical shortage of organized blood donation data in rural areas of Bangladesh.
-                            </p>
-
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-12">
-                                <div className="p-6 rounded-2xl bg-slate-900/50 border border-white/5 text-center">
-                                    <div className="text-2xl font-black text-white mb-1">64</div>
-                                    <div className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Districts Covered</div>
-                                </div>
-                                <div className="p-6 rounded-2xl bg-slate-900/50 border border-white/5 text-center">
-                                    <div className="text-2xl font-black text-white mb-1">490+</div>
-                                    <div className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Active Upazilas</div>
-                                </div>
-                                <div className="p-6 rounded-2xl bg-slate-900/50 border border-white/5 text-center">
-                                    <div className="text-2xl font-black text-white mb-1">5m</div>
-                                    <div className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Matching Speed</div>
-                                </div>
-                                <div className="p-6 rounded-2xl bg-slate-900/50 border border-white/5 text-center">
-                                    <div className="text-2xl font-black text-white mb-1">0৳</div>
-                                    <div className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Always Free</div>
-                                </div>
+                    {(!q || "platform vision".includes(q.toLowerCase())) && (
+                        <section id="vision" className="mb-32 scroll-mt-32">
+                            <div className="flex items-center gap-4 mb-8">
+                                <span className="px-3 py-1 rounded-full bg-red-500/10 text-red-500 text-[10px] font-black uppercase tracking-widest">Platform Vision & Scale</span>
+                                <div className="h-px flex-grow bg-slate-800" />
                             </div>
-                        </div>
-                    </section>
-
-                    <section id="donors" className="mb-32 scroll-mt-32">
-                        <div className="flex items-center gap-4 mb-8">
-                            <span className="px-3 py-1 rounded-full bg-blue-500/10 text-blue-500 text-[10px] font-black uppercase tracking-widest">The Life-Saving Protocol</span>
-                            <div className="h-px flex-grow bg-slate-800" />
-                        </div>
-                        <h2 className="text-3xl md:text-5xl font-black text-white mb-8 tracking-tight">Protocol for Emergency Response</h2>
-                        <div className="space-y-8">
-                            <div className="p-8 rounded-3xl bg-slate-900 border border-white/5 relative overflow-hidden group">
-                                <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-opacity">
-                                    <Droplet className="w-32 h-32 text-red-500 fill-current" />
-                                </div>
-                                <h4 className="text-xl font-bold text-white mb-4">Phase 1: Verification & Matching</h4>
-                                <p className="text-slate-500 text-sm leading-relaxed mb-6">
-                                    When an emergency request is filed, our system immediately scans the local geographical hub for O-negative and specific compatible groups. We prioritize donors with high "reliability scores"—those who have fulfilled past requests promptly.
+                            <h2 className="text-3xl md:text-5xl font-black text-white mb-8 tracking-tight">One Platform, Endless Impact</h2>
+                            <div className="prose prose-invert max-w-none text-slate-400 font-medium leading-relaxed space-y-6">
+                                <p>
+                                    Bangladesh BloodBank is more than just a website; it's a digital infrastructure designed to bridge the gap between those who can help and those who need it most. Our platform addresses the critical shortage of organized blood donation data in rural areas of Bangladesh.
                                 </p>
-                                <div className="flex gap-4">
-                                    <div className="flex items-center gap-2 text-[10px] font-bold text-slate-400">
-                                        <div className="w-1.5 h-1.5 rounded-full bg-green-500" />
-                                        LOCAL PRIORITY
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-12">
+                                    <div className="p-6 rounded-2xl bg-slate-900/50 border border-white/5 text-center">
+                                        <div className="text-2xl font-black text-white mb-1">64</div>
+                                        <div className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Districts Covered</div>
                                     </div>
-                                    <div className="flex items-center gap-2 text-[10px] font-bold text-slate-400">
-                                        <div className="w-1.5 h-1.5 rounded-full bg-blue-500" />
-                                        AUTO-SCREENING
+                                    <div className="p-6 rounded-2xl bg-slate-900/50 border border-white/5 text-center">
+                                        <div className="text-2xl font-black text-white mb-1">490+</div>
+                                        <div className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Active Upazilas</div>
+                                    </div>
+                                    <div className="p-6 rounded-2xl bg-slate-900/50 border border-white/5 text-center">
+                                        <div className="text-2xl font-black text-white mb-1">5m</div>
+                                        <div className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Matching Speed</div>
+                                    </div>
+                                    <div className="p-6 rounded-2xl bg-slate-900/50 border border-white/5 text-center">
+                                        <div className="text-2xl font-black text-white mb-1">0৳</div>
+                                        <div className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Always Free</div>
                                     </div>
                                 </div>
                             </div>
+                        </section>
+                    )}
 
-                            <div className="p-8 rounded-3xl bg-slate-900 border border-white/5 relative overflow-hidden group">
-                                <h4 className="text-xl font-bold text-white mb-4">Phase 2: Direct Connection SLA</h4>
-                                <p className="text-slate-500 text-sm leading-relaxed mb-4">
-                                    Our targeted Response SLA (Service Level Agreement) is 5 minutes from request validation.
-                                </p>
-                                <ul className="space-y-3">
-                                    <li className="flex items-center gap-3 text-slate-400 text-sm">
-                                        <CheckCircle2 className="w-4 h-4 text-red-500" />
-                                        Instant Push & WhatsApp Notifications to compatible donors.
-                                    </li>
-                                    <li className="flex items-center gap-3 text-slate-400 text-sm">
-                                        <CheckCircle2 className="w-4 h-4 text-red-500" />
-                                        Automatic Handover to Regional Logistics Volunteer.
-                                    </li>
-                                </ul>
+                    {(!q || "donors protocol emergency response".includes(q.toLowerCase())) && (
+                        <section id="donors" className="mb-32 scroll-mt-32">
+                            <div className="flex items-center gap-4 mb-8">
+                                <span className="px-3 py-1 rounded-full bg-blue-500/10 text-blue-500 text-[10px] font-black uppercase tracking-widest">The Life-Saving Protocol</span>
+                                <div className="h-px flex-grow bg-slate-800" />
                             </div>
-                        </div>
-                    </section>
+                            <h2 className="text-3xl md:text-5xl font-black text-white mb-8 tracking-tight">Protocol for Emergency Response</h2>
+                            <div className="space-y-8">
+                                <div className="p-8 rounded-3xl bg-slate-900 border border-white/5 relative overflow-hidden group">
+                                    <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-opacity">
+                                        <Droplet className="w-32 h-32 text-red-500 fill-current" />
+                                    </div>
+                                    <h4 className="text-xl font-bold text-white mb-4">Phase 1: Verification & Matching</h4>
+                                    <p className="text-slate-500 text-sm leading-relaxed mb-6">
+                                        When an emergency request is filed, our system immediately scans the local geographical hub for O-negative and specific compatible groups. We prioritize donors with high "reliability scores"—those who have fulfilled past requests promptly.
+                                    </p>
+                                    <div className="flex gap-4">
+                                        <div className="flex items-center gap-2 text-[10px] font-bold text-slate-400">
+                                            <div className="w-1.5 h-1.5 rounded-full bg-green-500" />
+                                            LOCAL PRIORITY
+                                        </div>
+                                        <div className="flex items-center gap-2 text-[10px] font-bold text-slate-400">
+                                            <div className="w-1.5 h-1.5 rounded-full bg-blue-500" />
+                                            AUTO-SCREENING
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="p-8 rounded-3xl bg-slate-900 border border-white/5 relative overflow-hidden group">
+                                    <h4 className="text-xl font-bold text-white mb-4">Phase 2: Direct Connection SLA</h4>
+                                    <p className="text-slate-500 text-sm leading-relaxed mb-4">
+                                        Our targeted Response SLA (Service Level Agreement) is 5 minutes from request validation.
+                                    </p>
+                                    <ul className="space-y-3">
+                                        <li className="flex items-center gap-3 text-slate-400 text-sm">
+                                            <CheckCircle2 className="w-4 h-4 text-red-500" />
+                                            Instant Notifications to compatible donors.
+                                        </li>
+                                        <li className="flex items-center gap-3 text-slate-400 text-sm">
+                                            <CheckCircle2 className="w-4 h-4 text-red-500" />
+                                            Automatic Handover to Regional Logistics Volunteer.
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </section>
+                    )}
                 </div>
 
                 {/* CTA */}
@@ -235,7 +227,6 @@ export default function GlobalDocs() {
                     <div className="flex flex-wrap justify-center gap-8 text-[10px] font-black text-slate-500 uppercase tracking-widest">
                         <Link href="/" className="hover:text-white transition-colors">Home Page</Link>
                         <Link href="/admin" className="hover:text-white transition-colors">System Admin</Link>
-                        <Link href="mailto:support@bloodbank.org.bd" className="hover:text-white transition-colors">Technical Support</Link>
                     </div>
                 </div>
             </footer>

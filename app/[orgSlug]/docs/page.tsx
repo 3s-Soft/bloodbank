@@ -1,6 +1,5 @@
-"use client";
-
-import { useOrganization } from "@/lib/context/OrganizationContext";
+import { getOrganizationBySlug } from "@/lib/orgUtils";
+import { notFound } from "next/navigation";
 import {
     Book,
     LayoutDashboard,
@@ -8,7 +7,6 @@ import {
     Droplet,
     Shield,
     Settings,
-    Search,
     ChevronRight,
     ArrowLeft,
     CheckCircle2,
@@ -17,7 +15,7 @@ import {
     LifeBuoy
 } from "lucide-react";
 import Link from "next/link";
-import { useState, useMemo } from "react";
+import DocSearch from "@/components/DocSearch";
 
 const sections = [
     {
@@ -72,19 +70,27 @@ const sections = [
     }
 ];
 
-export default function OrganizationDocs() {
-    const organization = useOrganization();
-    const primaryColor = organization.primaryColor || "#dc2626";
-    const [searchQuery, setSearchQuery] = useState("");
-    const [activeSection, setActiveSection] = useState("getting-started");
+export default async function OrganizationDocs({
+    params,
+    searchParams
+}: {
+    params: Promise<{ orgSlug: string }>;
+    searchParams: Promise<{ q?: string }>;
+}) {
+    const { orgSlug } = await params;
+    const { q = "" } = await searchParams;
+    const organization = await getOrganizationBySlug(orgSlug);
 
-    const filteredSections = useMemo(() => {
-        if (!searchQuery) return sections;
-        return sections.filter(s =>
-            s.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            s.subsections.some(sub => sub.title.toLowerCase().includes(searchQuery.toLowerCase()))
-        );
-    }, [searchQuery]);
+    if (!organization) notFound();
+
+    const primaryColor = (organization as any).primaryColor || "#dc2626";
+
+    const filteredSections = q
+        ? sections.filter(s =>
+            s.title.toLowerCase().includes(q.toLowerCase()) ||
+            s.subsections.some(sub => sub.title.toLowerCase().includes(q.toLowerCase()))
+        )
+        : sections;
 
     return (
         <div className="min-h-screen bg-slate-950 flex flex-col">
@@ -92,7 +98,7 @@ export default function OrganizationDocs() {
             <header className="sticky top-0 z-50 bg-slate-900/80 backdrop-blur-xl border-b border-slate-800 h-16">
                 <div className="container mx-auto px-4 h-full flex items-center justify-between">
                     <div className="flex items-center gap-4">
-                        <Link href={`/${organization.slug}/dashboard`} className="p-2 hover:bg-slate-800 rounded-lg text-slate-400 hover:text-white transition-colors">
+                        <Link href={`/${orgSlug}/dashboard`} className="p-2 hover:bg-slate-800 rounded-lg text-slate-400 hover:text-white transition-colors">
                             <ArrowLeft className="w-5 h-5" />
                         </Link>
                         <div className="flex items-center gap-3">
@@ -103,15 +109,8 @@ export default function OrganizationDocs() {
                         </div>
                     </div>
 
-                    <div className="relative w-64 hidden md:block">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
-                        <input
-                            type="text"
-                            placeholder="Find a guide..."
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                            className="w-full h-9 pl-9 pr-4 rounded-full bg-slate-800 border-none text-xs text-white placeholder-slate-500 focus:ring-2 focus:ring-red-500/50 outline-none"
-                        />
+                    <div className="hidden md:block">
+                        <DocSearch defaultValue={q} />
                     </div>
                 </div>
             </header>
@@ -131,17 +130,13 @@ export default function OrganizationDocs() {
                                     <ul className="space-y-1">
                                         {section.subsections.map((sub) => (
                                             <li key={sub.id}>
-                                                <button
-                                                    onClick={() => {
-                                                        setActiveSection(section.id);
-                                                        const el = document.getElementById(sub.id);
-                                                        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                                                    }}
+                                                <Link
+                                                    href={`#${sub.id}`}
                                                     className="w-full flex items-center justify-between text-left px-3 py-2 rounded-xl text-sm font-bold text-slate-400 hover:text-white hover:bg-slate-900 transition-all group"
                                                 >
                                                     {sub.title}
                                                     <ChevronRight className="w-3.5 h-3.5 opacity-0 group-hover:opacity-100 -translate-x-2 group-hover:translate-x-0 transition-all" />
-                                                </button>
+                                                </Link>
                                             </li>
                                         ))}
                                     </ul>
@@ -156,9 +151,9 @@ export default function OrganizationDocs() {
                         <p className="text-slate-500 text-[11px] leading-relaxed mb-4">
                             Can't find what you're looking for? Reach out to our technical team.
                         </p>
-                        <button className="w-full py-2 bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold rounded-lg transition-colors">
+                        <Link href={`mailto:support@bloodbank.org.bd`} className="w-full py-2 bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold rounded-lg transition-colors inline-block text-center">
                             Contact Support
-                        </button>
+                        </Link>
                     </div>
                 </aside>
 
