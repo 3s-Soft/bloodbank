@@ -450,67 +450,11 @@ Get organization statistics.
 
 ---
 
-## Known Limitations
+## 7. Open Issues & Future Work
 
-### Authentication
-1. **No Password Hashing**: Demo mode accepts any password
-2. **No OTP/SMS**: Phone verification not implemented
-3. **No Password Reset**: Recovery flow not available
-
-### Data
-1. **No Pagination**: Large datasets may cause performance issues
-2. **No Caching**: API responses not cached
-3. **Villages Count Static**: Currently hardcoded to 45
-
-### Security
-1. **No Rate Limiting**: APIs are not rate-limited
-2. **No CSRF Protection**: Additional security measures needed
-3. **Admin Routes Not Protected**: Dashboard accessible without proper role check
-
-### UX
-1. **No Real-Time Updates**: Dashboard doesn't auto-refresh
-2. **No Push Notifications**: For new blood requests
-3. **No Location Auto-Complete**: Districts/upazilas are text fields
+Please see our [TODO.md](TODO.md) for a list of real project issues and technical debt that needs community help.
 
 ---
-
-## Roadmap
-
-### Phase 1: Security & Auth (Priority: High)
-- [ ] Implement bcrypt password hashing
-- [ ] Add OTP/SMS verification via Bangladesh gateways
-- [ ] Role-based route protection middleware
-- [ ] Rate limiting for API endpoints
-- [ ] CSRF protection
-
-### Phase 2: Enhanced Features (Priority: Medium)
-- [ ] Real-time notifications (Socket.io or SSE)
-- [ ] Push notifications for new requests
-- [ ] Email notifications
-- [ ] Donor availability scheduler
-- [ ] Donation history tracking
-- [ ] Blood type compatibility suggestions
-
-### Phase 3: Admin Improvements (Priority: Medium)
-- [x] User management page ✅ COMPLETE
-- [x] Organization settings page ✅ COMPLETE
-- [x] Bulk donor verification ✅ COMPLETE
-- [x] Export data (CSV/JSON reports) ✅ COMPLETE
-- [x] Analytics dashboard with charts ✅ COMPLETE
-
-### Phase 4: UX Enhancements (Priority: Low)
-- [x] District/Upazila dropdown with autocomplete ✅ COMPLETE
-- [ ] Location-based donor sorting (nearest first)
-- [x] Advanced search filters ✅ COMPLETE
-- [x] Dark mode support ✅ COMPLETE
-- [x] Multi-language support (Bengali) ✅ COMPLETE
-
-### Phase 5: Scaling (Priority: Low)
-- [ ] API response caching (Redis)
-- [ ] Pagination for large datasets
-- [ ] CDN for static assets
-- [ ] Database indexing optimization
-- [ ] Kubernetes deployment config
 
 ---
 

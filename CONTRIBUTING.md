@@ -1,57 +1,54 @@
-# Contributing to Blood Bank Management System
+# Contributing to Rural Blood Bank 🩸
 
-We welcome contributions to the Blood Bank Management System! Here's how you can contribute:
+First off, thank you for considering contributing to the Rural Blood Bank project! It's people like you that make this a valuable tool for rural communities.
 
-## Code of Conduct
+## 🌈 How Can I Contribute?
 
-Please note that this project is released with a [Contributor Code of Conduct](CODE_OF_CONDUCT.md). By participating in this project, you agree to abide by its terms.
+### Reporting Bugs
+- Check the [Issues Tab](https://github.com/3s-Soft/bloodbank/issues) to see if the bug has already been reported.
+- If not, open a new issue using the **Bug Report** template.
+- Include as much detail as possible: steps to reproduce, expected vs actual behavior, and screenshots.
 
-## How to Contribute
+### Suggesting Enhancements
+- Open a new issue using the **Feature Request** template.
+- Explain the "why" behind the feature and how it benefits the users.
 
-1.  **Fork the Repository:** Start by forking the repository on GitHub.
+### Pull Requests
+1. **Fork** the repo and create your branch from `main`.
+2. If you've added code that should be tested, add tests.
+3. If you've changed APIs, update the documentation.
+4. Ensure the test suite passes.
+5. Make sure your code lints.
+6. Use **Conventional Commits** for your messages:
+   - `feat: add new donor filter`
+   - `fix: resolve crash on login`
+   - `docs: update readme with docker instructions`
+   - `style: fix formatting in navbar`
+   - `refactor: simplify auth logic`
 
-2.  **Clone Locally:** Clone the forked repository to your local machine:
+## 💻 Technical Stack & Style
 
-    ```bash
-    git clone https://github.com/your-username/bloodbank.git
-    cd bloodbank
-    ```
+- **Framework**: Next.js 16 (App Router)
+- **Language**: TypeScript
+- **Styling**: Tailwind CSS 4
+- **State/Form**: React Hook Form + Zod
+- **Icons**: Lucide React
 
-3.  **Create a Branch:** Create a new branch for your feature or bug fix:
+### Code Style Guidelines
+- Use functional components with arrow functions.
+- Follow the existing folder structure.
+- Keep components focused and small.
+- Use meaningful variable and function names.
+- Document complex logic with comments.
 
-    ```bash
-    git checkout -b feature/your-feature-name
-    ```
+## 🚀 Setting Up Your Environment
 
-4.  **Make Changes:** Implement your changes, ensuring that the code follows the project's coding standards.
+1. Fork and clone the repository.
+2. Copy `.env.example` to `.env.local` and fill in the values.
+3. Install dependencies: `npm install`.
+4. Seed the database (optional): `npx tsx scripts/seed.ts`.
+5. Run the dev server: `npm run dev`.
 
-5.  **Test Your Changes:** Ensure that your changes are working correctly by running any available tests or manually testing the application.
+---
 
-6.  **Commit Your Changes:** Commit your changes with a clear and concise commit message:
-
-    ```bash
-    git commit -m "Add: Description of your changes"
-    ```
-
-7.  **Push to GitHub:** Push your branch to your forked repository on GitHub:
-
-    ```bash
-    git push origin feature/your-feature-name
-    ```
-
-8.  **Create a Pull Request:** Open a pull request from your branch to the main branch of the original repository. Provide a detailed description of your changes and any relevant information.
-
-## Guidelines
-
--   Follow the project's coding standards and conventions.
--   Write clear and concise commit messages.
--   Test your changes thoroughly before submitting a pull request.
--   Be respectful and considerate of other contributors.
-
-## Reporting Issues
-
-If you encounter any issues or have suggestions for improvements, please open an issue on GitHub. Provide as much detail as possible, including steps to reproduce the issue.
-
-## License
-
-By contributing to the Blood Bank Management System, you agree that your contributions will be licensed under the [MIT License](LICENSE).
+By contributing, you agree that your contributions will be licensed under the **MIT License**.

@@ -243,37 +243,39 @@ bloodbank/
 - MongoDB (local or Atlas)
 - npm or yarn
 
-### 1. Clone the Repository
+### 1. Run with Docker (Recommended)
+The easiest way to get started is using Docker Compose:
+
+```bash
+docker compose up --build
+```
+
+The application will be available at [http://localhost:3000](http://localhost:3000).
+
+### 2. Manual Setup
+
+If you prefer to run it manually:
+
+#### I. Clone the Repository
 ```bash
 git clone https://github.com/3s-Soft/bloodbank.git
 cd bloodbank
 ```
 
-### 2. Install Dependencies
+#### II. Install Dependencies
 ```bash
 npm install
 ```
 
-### 3. Setup Environment Variables
-Create a `.env.local` file in the root directory:
+#### III. Setup Environment Variables
+Copy `.env.example` to `.env.local` and fill in your connection details.
 
-```env
-# MongoDB Connection
-MONGODB_URI=mongodb://localhost:27017/bloodbank
-
-# NextAuth Configuration
-NEXTAUTH_URL=http://localhost:3000
-NEXTAUTH_SECRET=your-secret-key-here-generate-with-openssl
-```
-
-### 4. Seed the Database
-Run the seed script to create test organizations and users:
-
+#### IV. Seed the Database
 ```bash
 npx tsx scripts/seed.ts
 ```
 
-### 5. Run Development Server
+#### V. Run Development Server
 ```bash
 npm run dev
 ```
@@ -326,7 +328,23 @@ Open [http://localhost:3000](http://localhost:3000) to view the application.
 
 ## 🤝 Contributing
 
-Contributions are welcome! Please read our [Contributing Guide](CONTRIBUTING.md) and [Code of Conduct](CODE_OF_CONDUCT.md) before submitting a pull request.
+We love contributions! Whether it's a bug fix, feature request, or documentation improvement, we welcome your help.
+
+1. Read our [Contributing Guide](CONTRIBUTING.md).
+2. Look for "Good First Issues" in our [Issue Tracker](https://github.com/3s-Soft/bloodbank/issues).
+3. Join the community and help us save lives!
+
+---
+
+## ✨ Contributors
+
+Thanks to these wonderful people who have contributed to this project:
+
+<a href="https://github.com/3s-Soft/bloodbank/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=3s-Soft/bloodbank" />
+</a>
+
+Designed with ❤️ for humanity.
 
 ---
 
