@@ -8,6 +8,9 @@ interface OrganizationData {
     logo?: string;
     primaryColor?: string;
     contactEmail?: string;
+    contactPhone?: string;
+    address?: string;
+    isVerified?: boolean;
 }
 
 const OrganizationContext = createContext<OrganizationData | null>(null);

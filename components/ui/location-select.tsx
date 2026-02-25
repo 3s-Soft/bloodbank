@@ -91,48 +91,50 @@ export function LocationSelect({
                 type="button"
                 onClick={() => !disabled && setIsOpen(!isOpen)}
                 disabled={disabled || (type === "upazila" && !district)}
-                className={`w-full h-12 px-4 pr-10 text-left rounded-xl border transition-all flex items-center gap-2 ${error
-                        ? "border-red-500 focus:ring-red-500"
-                        : "border-neutral-200 focus:ring-2 focus:ring-red-500"
+                className={`w-full h-10 px-4 pr-10 text-left rounded-xl border transition-all flex items-center gap-2 ${error
+                    ? "border-red-500 focus:ring-red-500"
+                    : "border-slate-700 focus:ring-2 focus:ring-red-500/50"
                     } ${disabled || (type === "upazila" && !district)
-                        ? "bg-neutral-100 text-neutral-400 cursor-not-allowed"
-                        : "bg-white hover:border-neutral-300"
+                        ? "bg-slate-800/50 text-slate-600 cursor-not-allowed"
+                        : "bg-slate-800 hover:border-slate-600"
                     } outline-none`}
             >
-                <MapPin className="w-4 h-4 text-neutral-400 shrink-0" />
-                <span className={value ? "text-neutral-900" : "text-neutral-400"}>
+                <MapPin className="w-4 h-4 text-slate-500 shrink-0" />
+                <span className={value ? "text-white text-sm" : "text-slate-500 text-sm"}>
                     {value || displayPlaceholder}
                 </span>
 
-                {/* Clear button */}
+                {/* Clear button — uses span to avoid nested <button> */}
                 {value && !disabled && (
-                    <button
-                        type="button"
+                    <span
+                        role="button"
+                        tabIndex={0}
                         onClick={handleClear}
-                        className="absolute right-10 top-1/2 -translate-y-1/2 p-1 hover:bg-neutral-100 rounded"
+                        onKeyDown={(e) => { if (e.key === "Enter") handleClear(e as any); }}
+                        className="absolute right-10 top-1/2 -translate-y-1/2 p-1 hover:bg-slate-700 rounded cursor-pointer"
                     >
-                        <X className="w-4 h-4 text-neutral-400" />
-                    </button>
+                        <X className="w-3.5 h-3.5 text-slate-400" />
+                    </span>
                 )}
 
                 {/* Chevron */}
-                <ChevronDown className={`absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400 transition-transform ${isOpen ? "rotate-180" : ""}`} />
+                <ChevronDown className={`absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 transition-transform ${isOpen ? "rotate-180" : ""}`} />
             </button>
 
             {/* Dropdown */}
             {isOpen && (
-                <div className="absolute z-50 w-full mt-1 bg-white rounded-xl border border-neutral-200 shadow-xl overflow-hidden">
+                <div className="absolute z-50 w-full mt-1 bg-slate-800 rounded-xl border border-slate-700 shadow-xl overflow-hidden">
                     {/* Search Input */}
-                    <div className="p-2 border-b border-neutral-100">
+                    <div className="p-2 border-b border-slate-700">
                         <div className="relative">
-                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400" />
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
                             <input
                                 ref={inputRef}
                                 type="text"
                                 placeholder={`Search ${type}...`}
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
-                                className="w-full h-10 pl-9 pr-4 rounded-lg border border-neutral-200 focus:ring-2 focus:ring-red-500 outline-none text-sm"
+                                className="w-full h-9 pl-9 pr-4 rounded-lg border border-slate-600 bg-slate-900 focus:ring-2 focus:ring-red-500/50 outline-none text-sm text-white placeholder-slate-500"
                             />
                         </div>
                     </div>
@@ -140,7 +142,7 @@ export function LocationSelect({
                     {/* Options List */}
                     <div className="max-h-60 overflow-y-auto">
                         {filteredOptions.length === 0 ? (
-                            <div className="py-8 text-center text-neutral-500 text-sm">
+                            <div className="py-8 text-center text-slate-500 text-sm">
                                 {type === "upazila" && !district
                                     ? "Select a district first"
                                     : searchQuery
@@ -153,10 +155,10 @@ export function LocationSelect({
                                     key={opt}
                                     type="button"
                                     onClick={() => handleSelect(opt)}
-                                    className={`w-full px-4 py-3 text-left text-sm hover:bg-neutral-50 transition-colors flex items-center gap-2 ${value === opt ? "bg-red-50 text-red-600 font-medium" : "text-neutral-700"
+                                    className={`w-full px-4 py-2.5 text-left text-sm hover:bg-slate-700 transition-colors flex items-center gap-2 ${value === opt ? "bg-red-500/10 text-red-400 font-medium" : "text-slate-300"
                                         }`}
                                 >
-                                    <MapPin className={`w-4 h-4 ${value === opt ? "text-red-500" : "text-neutral-300"}`} />
+                                    <MapPin className={`w-3.5 h-3.5 ${value === opt ? "text-red-400" : "text-slate-600"}`} />
                                     {opt}
                                 </button>
                             ))
@@ -193,16 +195,16 @@ export function BloodGroupSelect({
 }: BloodGroupSelectProps) {
     return (
         <div className={className}>
-            <div className="grid grid-cols-4 gap-2">
+            <div className="grid grid-cols-4 sm:grid-cols-8 gap-2">
                 {bloodGroups.map((group) => (
                     <button
                         key={group}
                         type="button"
                         disabled={disabled}
-                        onClick={() => onChange(group)}
-                        className={`py-3 rounded-xl text-sm font-bold transition-all ${value === group
-                                ? "bg-red-600 text-white shadow-lg scale-105"
-                                : "bg-neutral-100 text-neutral-600 hover:bg-neutral-200"
+                        onClick={() => onChange(value === group ? "" : group)}
+                        className={`py-2 rounded-lg text-xs font-bold transition-all ${value === group
+                            ? "bg-red-600 text-white shadow-lg scale-105"
+                            : "bg-slate-800 text-slate-400 border border-slate-700 hover:border-slate-500 hover:text-white"
                             } ${disabled ? "opacity-50 cursor-not-allowed" : ""}`}
                     >
                         {group}

@@ -6,7 +6,7 @@ import { Button } from "./ui/button";
 import { Droplet, Menu, X } from "lucide-react";
 import { useState } from "react";
 import { useOrganization } from "@/lib/context/OrganizationContext";
-import { LanguageToggle } from "./ui/language-toggle";
+
 import { useLanguage } from "@/lib/i18n";
 
 export default function Navbar() {
@@ -49,11 +49,18 @@ export default function Navbar() {
                     >
                         {t.nav.bloodRequests}
                     </Link>
-
-                    <div className="w-px h-6 bg-slate-200 dark:bg-slate-700 mx-2" />
-
-                    {/* Language Toggle */}
-                    <LanguageToggle variant="icon" />
+                    <Link
+                        href={`/${orgSlug}/leaderboard`}
+                        className="px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
+                    >
+                        Leaderboard
+                    </Link>
+                    <Link
+                        href={`/${orgSlug}/events`}
+                        className="px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
+                    >
+                        Events
+                    </Link>
 
                     <div className="w-px h-6 bg-slate-200 dark:bg-slate-700 mx-2" />
 
@@ -103,7 +110,6 @@ export default function Navbar() {
 
                 {/* Mobile Menu Toggle */}
                 <div className="md:hidden flex items-center gap-1">
-                    <LanguageToggle variant="icon" />
                     <button
                         className="p-2 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg"
                         onClick={() => setIsMenuOpen(!isMenuOpen)}
@@ -129,6 +135,20 @@ export default function Navbar() {
                         onClick={() => setIsMenuOpen(false)}
                     >
                         {t.nav.bloodRequests}
+                    </Link>
+                    <Link
+                        href={`/${orgSlug}/leaderboard`}
+                        className="block px-4 py-3 text-lg font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl"
+                        onClick={() => setIsMenuOpen(false)}
+                    >
+                        Leaderboard
+                    </Link>
+                    <Link
+                        href={`/${orgSlug}/events`}
+                        className="block px-4 py-3 text-lg font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl"
+                        onClick={() => setIsMenuOpen(false)}
+                    >
+                        Events
                     </Link>
                     <div className="pt-3 mt-3 border-t border-slate-100 dark:border-slate-800 flex flex-col space-y-2">
                         {session ? (

@@ -137,7 +137,7 @@ export default function OrgSettingsPage({
             </div>
 
             {/* Preview Card */}
-            <Card className="border-none shadow-sm mb-8 overflow-hidden">
+            <Card className="bg-slate-900 border-slate-800 mb-8 overflow-hidden">
                 <div
                     className="h-3 w-full"
                     style={{ backgroundColor: primaryColor }}

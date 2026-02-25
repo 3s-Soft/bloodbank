@@ -30,6 +30,9 @@ export default function Footer() {
                         <ul className="space-y-3 text-sm font-medium">
                             <li><Link href={`/${orgSlug}/donors`} className="text-slate-400 hover:text-white transition-colors">{t.nav.findDonors}</Link></li>
                             <li><Link href={`/${orgSlug}/requests`} className="text-slate-400 hover:text-white transition-colors">{t.nav.bloodRequests}</Link></li>
+                            <li><Link href={`/${orgSlug}/leaderboard`} className="text-slate-400 hover:text-white transition-colors">Leaderboard</Link></li>
+                            <li><Link href={`/${orgSlug}/events`} className="text-slate-400 hover:text-white transition-colors">Events</Link></li>
+                            <li><Link href={`/${orgSlug}/feedback`} className="text-slate-400 hover:text-white transition-colors">Feedback</Link></li>
                             <li><Link href={`/${orgSlug}/register`} className="text-slate-400 hover:text-white transition-colors">{t.register.title}</Link></li>
                         </ul>
                     </div>

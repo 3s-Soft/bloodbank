@@ -12,6 +12,12 @@ export enum UrgencyLevel {
     EMERGENCY = "emergency",
 }
 
+export interface IRequestFeedback {
+    rating: number;
+    notes?: string;
+    submittedAt: Date;
+}
+
 export interface IBloodRequest extends Document {
     patientName: string;
     bloodGroup: string;
@@ -25,6 +31,10 @@ export interface IBloodRequest extends Document {
     status: RequestStatus;
     requester: mongoose.Types.ObjectId;
     organization: mongoose.Types.ObjectId;
+    matchedDonors: mongoose.Types.ObjectId[];
+    escalatedAt?: Date;
+    fulfilledBy?: mongoose.Types.ObjectId;
+    feedback?: IRequestFeedback;
     createdAt: Date;
     updatedAt: Date;
 }
@@ -51,6 +61,16 @@ const BloodRequestSchema: Schema = new Schema(
         },
         requester: { type: Schema.Types.ObjectId, ref: "User", required: true },
         organization: { type: Schema.Types.ObjectId, ref: "Organization", required: true },
+        matchedDonors: [{ type: Schema.Types.ObjectId, ref: "DonorProfile" }],
+        escalatedAt: { type: Date },
+        fulfilledBy: { type: Schema.Types.ObjectId, ref: "DonorProfile" },
+        feedback: {
+            type: {
+                rating: { type: Number, min: 1, max: 5 },
+                notes: { type: String },
+                submittedAt: { type: Date, default: Date.now },
+            },
+        },
     },
     { timestamps: true }
 );

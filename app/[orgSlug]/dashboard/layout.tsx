@@ -10,6 +10,9 @@ import {
     UserCheck,
     Settings,
     ArrowLeft,
+    Shield,
+    Calendar,
+    MessageSquare,
 } from "lucide-react";
 
 const navItems = [
@@ -17,6 +20,7 @@ const navItems = [
     { href: "/donors", label: "Manage Donors", icon: UserCheck },
     { href: "/requests", label: "Blood Requests", icon: Droplet },
     { href: "/users", label: "User Management", icon: Users },
+    { href: "/audit-log", label: "Audit Log", icon: Shield },
     { href: "/settings", label: "Settings", icon: Settings },
 ];
 
@@ -70,9 +74,9 @@ export default function DashboardLayout({
                                     href={fullPath}
                                     className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all ${isActive
                                         ? "text-white shadow-lg"
-                                        : "text-slate-400 hover:text-white hover:bg-slate-800"
+                                        : "text-slate-400 hover:text-white hover:bg-slate-800/80"
                                         }`}
-                                    style={isActive ? { backgroundColor: primaryColor } : {}}
+                                    style={isActive ? { backgroundColor: primaryColor, color: '#fff' } : {}}
                                 >
                                     <Icon className="w-5 h-5" />
                                     {item.label}
@@ -108,9 +112,9 @@ export default function DashboardLayout({
                                 href={fullPath}
                                 className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-widest whitespace-nowrap transition-all ${isActive
                                     ? "text-white shadow-lg"
-                                    : "bg-slate-800 text-slate-400"
+                                    : "bg-slate-800 text-slate-400 hover:text-white"
                                     }`}
-                                style={isActive ? { backgroundColor: primaryColor } : {}}
+                                style={isActive ? { backgroundColor: primaryColor, color: '#fff' } : {}}
                             >
                                 <Icon className="w-4 h-4" />
                                 {item.label}

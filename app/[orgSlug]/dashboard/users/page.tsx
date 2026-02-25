@@ -1,6 +1,5 @@
 "use client";
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
     Users,
@@ -9,12 +8,9 @@ import {
     Shield,
     Droplet,
     Heart,
-    User as UserIcon,
     Phone,
     Mail,
-    MoreVertical,
     Trash2,
-    Edit,
     CheckCircle,
 } from "lucide-react";
 import { useState, useEffect, use } from "react";
@@ -45,12 +41,12 @@ interface UserStats {
     volunteers: number;
 }
 
-const roleColors: Record<string, { bg: string; text: string; icon: any }> = {
-    donor: { bg: "bg-red-100", text: "text-red-700", icon: Droplet },
-    admin: { bg: "bg-purple-100", text: "text-purple-700", icon: Shield },
-    patient: { bg: "bg-blue-100", text: "text-blue-700", icon: Heart },
-    volunteer: { bg: "bg-green-100", text: "text-green-700", icon: Users },
-    super_admin: { bg: "bg-yellow-100", text: "text-yellow-700", icon: Shield },
+const roleColors: Record<string, { bg: string; text: string; border: string; icon: any }> = {
+    donor: { bg: "bg-red-500/10", text: "text-red-400", border: "border-red-500/20", icon: Droplet },
+    admin: { bg: "bg-purple-500/10", text: "text-purple-400", border: "border-purple-500/20", icon: Shield },
+    patient: { bg: "bg-blue-500/10", text: "text-blue-400", border: "border-blue-500/20", icon: Heart },
+    volunteer: { bg: "bg-emerald-500/10", text: "text-emerald-400", border: "border-emerald-500/20", icon: Users },
+    super_admin: { bg: "bg-amber-500/10", text: "text-amber-400", border: "border-amber-500/20", icon: Shield },
 };
 
 export default function UsersManagementPage({
@@ -66,9 +62,8 @@ export default function UsersManagementPage({
     const [searchQuery, setSearchQuery] = useState("");
     const [roleFilter, setRoleFilter] = useState("all");
     const [showAddModal, setShowAddModal] = useState(false);
-    const [editingUser, setEditingUser] = useState<User | null>(null);
 
-    const primaryColor = org?.primaryColor || "#D32F2F";
+    const primaryColor = org?.primaryColor || "#dc2626";
 
     const fetchUsers = async () => {
         try {
@@ -88,19 +83,13 @@ export default function UsersManagementPage({
         }
     };
 
-    useEffect(() => {
-        fetchUsers();
-    }, [orgSlug, roleFilter, searchQuery]);
+    useEffect(() => { fetchUsers(); }, [orgSlug, roleFilter, searchQuery]);
 
     const handleDeleteUser = async (userId: string, userName: string) => {
-        if (!confirm(`Are you sure you want to delete "${userName}"? This action cannot be undone.`)) {
-            return;
-        }
-
+        if (!confirm(`Are you sure you want to delete "${userName}"? This action cannot be undone.`)) return;
         try {
             const res = await fetch(`/api/org/users/${userId}`, { method: "DELETE" });
             if (!res.ok) throw new Error("Failed to delete");
-
             toast.success("User deleted successfully");
             fetchUsers();
         } catch (error) {
@@ -116,7 +105,6 @@ export default function UsersManagementPage({
                 body: JSON.stringify({ role: newRole }),
             });
             if (!res.ok) throw new Error("Failed to update");
-
             toast.success("User role updated");
             fetchUsers();
         } catch (error) {
@@ -124,104 +112,74 @@ export default function UsersManagementPage({
         }
     };
 
-    const filteredUsers = users;
-
     if (loading) {
         return (
-            <div className="container mx-auto px-4 py-12">
-                <div className="animate-pulse space-y-8">
-                    <div className="h-10 w-64 bg-neutral-200 rounded"></div>
-                    <div className="grid grid-cols-5 gap-4">
+            <div className="p-6 lg:p-8">
+                <div className="animate-pulse space-y-6">
+                    <div className="h-10 w-64 bg-slate-800 rounded-xl" />
+                    <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
                         {[1, 2, 3, 4, 5].map((i) => (
-                            <div key={i} className="h-24 bg-neutral-200 rounded-2xl"></div>
+                            <div key={i} className="h-24 bg-slate-800/50 rounded-2xl" />
                         ))}
                     </div>
+                    <div className="h-96 bg-slate-800/30 rounded-2xl" />
                 </div>
             </div>
         );
     }
 
     return (
-        <div className="container mx-auto px-4 py-12">
+        <div className="p-6 lg:p-8 space-y-6">
             {/* Header */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
-                    <h1 className="text-4xl font-black text-neutral-900 mb-2">User Management</h1>
-                    <p className="text-neutral-500 font-medium">
-                        Manage all users in your organization.
-                    </p>
+                    <h1 className="text-3xl font-black text-white mb-1">User Management</h1>
+                    <p className="text-sm text-slate-500 font-medium">Manage all users in your organization</p>
                 </div>
-                <Button
-                    onClick={() => setShowAddModal(true)}
-                    style={{ backgroundColor: primaryColor }}
-                    className="text-white"
-                >
-                    <UserPlus className="w-5 h-5 mr-2" />
-                    Add User
+                <Button onClick={() => setShowAddModal(true)} style={{ backgroundColor: primaryColor }} className="text-white hover:opacity-90">
+                    <UserPlus className="w-4 h-4 mr-2" /> Add User
                 </Button>
             </div>
 
             {/* Stats */}
             {stats && (
-                <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
-                    <Card className="border-none shadow-sm">
-                        <CardContent className="p-4 text-center">
-                            <Users className="w-6 h-6 mx-auto mb-2 text-neutral-600" />
-                            <div className="text-2xl font-black text-neutral-900">{stats.total}</div>
-                            <div className="text-xs text-neutral-500 font-medium">Total Users</div>
-                        </CardContent>
-                    </Card>
-                    <Card className="border-none shadow-sm">
-                        <CardContent className="p-4 text-center">
-                            <Droplet className="w-6 h-6 mx-auto mb-2 text-red-600" />
-                            <div className="text-2xl font-black text-red-600">{stats.donors}</div>
-                            <div className="text-xs text-neutral-500 font-medium">Donors</div>
-                        </CardContent>
-                    </Card>
-                    <Card className="border-none shadow-sm">
-                        <CardContent className="p-4 text-center">
-                            <Shield className="w-6 h-6 mx-auto mb-2 text-purple-600" />
-                            <div className="text-2xl font-black text-purple-600">{stats.admins}</div>
-                            <div className="text-xs text-neutral-500 font-medium">Admins</div>
-                        </CardContent>
-                    </Card>
-                    <Card className="border-none shadow-sm">
-                        <CardContent className="p-4 text-center">
-                            <Heart className="w-6 h-6 mx-auto mb-2 text-blue-600" />
-                            <div className="text-2xl font-black text-blue-600">{stats.patients}</div>
-                            <div className="text-xs text-neutral-500 font-medium">Patients</div>
-                        </CardContent>
-                    </Card>
-                    <Card className="border-none shadow-sm">
-                        <CardContent className="p-4 text-center">
-                            <Users className="w-6 h-6 mx-auto mb-2 text-green-600" />
-                            <div className="text-2xl font-black text-green-600">{stats.volunteers}</div>
-                            <div className="text-xs text-neutral-500 font-medium">Volunteers</div>
-                        </CardContent>
-                    </Card>
+                <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+                    {[
+                        { label: "Total Users", value: stats.total, color: "text-blue-400", bg: "bg-blue-500/10", Icon: Users },
+                        { label: "Donors", value: stats.donors, color: "text-red-400", bg: "bg-red-500/10", Icon: Droplet },
+                        { label: "Admins", value: stats.admins, color: "text-purple-400", bg: "bg-purple-500/10", Icon: Shield },
+                        { label: "Patients", value: stats.patients, color: "text-cyan-400", bg: "bg-cyan-500/10", Icon: Heart },
+                        { label: "Volunteers", value: stats.volunteers, color: "text-emerald-400", bg: "bg-emerald-500/10", Icon: Users },
+                    ].map((s, i) => (
+                        <div key={i} className={`p-4 rounded-2xl ${s.bg} border border-slate-800 text-center`}>
+                            <s.Icon className={`w-5 h-5 mx-auto mb-2 ${s.color}`} />
+                            <div className={`text-2xl font-black ${s.color}`}>{s.value}</div>
+                            <div className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mt-1">{s.label}</div>
+                        </div>
+                    ))}
                 </div>
             )}
 
             {/* Filters */}
-            <div className="flex flex-col md:flex-row gap-4 mb-6">
+            <div className="flex flex-col md:flex-row gap-3">
                 <div className="relative flex-1 max-w-md">
-                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-neutral-400" />
+                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-600" />
                     <input
                         type="text"
                         placeholder="Search by name or phone..."
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        className="w-full h-12 pl-12 pr-4 rounded-xl border border-neutral-200 focus:ring-2 focus:ring-red-500 outline-none"
+                        className="w-full h-11 pl-12 pr-4 rounded-xl bg-slate-900 border border-slate-700 text-white placeholder:text-slate-500 focus:ring-2 focus:ring-red-500/50 outline-none text-sm"
                     />
                 </div>
-                <div className="flex gap-2">
+                <div className="flex gap-2 flex-wrap">
                     {["all", "donor", "admin", "patient", "volunteer"].map((role) => (
                         <button
                             key={role}
                             onClick={() => setRoleFilter(role)}
-                            className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors ${roleFilter === role
-                                    ? "text-white"
-                                    : "bg-neutral-100 text-neutral-600 hover:bg-neutral-200"
+                            className={`px-3 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all ${roleFilter === role
+                                    ? "text-white shadow-lg"
+                                    : "bg-slate-800 text-slate-400 hover:bg-slate-700 border border-slate-700"
                                 }`}
                             style={roleFilter === role ? { backgroundColor: primaryColor } : {}}
                         >
@@ -232,135 +190,126 @@ export default function UsersManagementPage({
             </div>
 
             {/* Users Table */}
-            <Card className="border-none shadow-sm">
-                <CardContent className="p-0">
-                    {filteredUsers.length === 0 ? (
-                        <div className="text-center py-16 text-neutral-500">
-                            <Users className="w-16 h-16 mx-auto mb-4 text-neutral-300" />
-                            <h3 className="text-lg font-bold text-neutral-900 mb-2">No users found</h3>
-                            <p className="text-sm">
-                                {searchQuery ? "Try a different search term" : "Add your first user to get started."}
-                            </p>
+            <div className="rounded-2xl bg-slate-900/50 border border-slate-800 overflow-hidden">
+                {users.length === 0 ? (
+                    <div className="text-center py-16">
+                        <div className="w-16 h-16 bg-slate-800/50 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                            <Users className="w-8 h-8 text-slate-600" />
                         </div>
-                    ) : (
-                        <div className="overflow-x-auto">
-                            <table className="w-full">
-                                <thead>
-                                    <tr className="border-b border-neutral-100 bg-neutral-50">
-                                        <th className="text-left py-4 px-6 text-xs font-bold text-neutral-500 uppercase">User</th>
-                                        <th className="text-left py-4 px-6 text-xs font-bold text-neutral-500 uppercase">Contact</th>
-                                        <th className="text-center py-4 px-6 text-xs font-bold text-neutral-500 uppercase">Role</th>
-                                        <th className="text-center py-4 px-6 text-xs font-bold text-neutral-500 uppercase">Blood Group</th>
-                                        <th className="text-center py-4 px-6 text-xs font-bold text-neutral-500 uppercase">Status</th>
-                                        <th className="text-left py-4 px-6 text-xs font-bold text-neutral-500 uppercase">Joined</th>
-                                        <th className="text-right py-4 px-6 text-xs font-bold text-neutral-500 uppercase">Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-neutral-50">
-                                    {filteredUsers.map((user) => {
-                                        const roleConfig = roleColors[user.role] || roleColors.patient;
-                                        const RoleIcon = roleConfig.icon;
-
-                                        return (
-                                            <tr key={user._id} className="hover:bg-neutral-50">
-                                                <td className="py-4 px-6">
-                                                    <div className="flex items-center gap-3">
-                                                        <div
-                                                            className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold"
-                                                            style={{ backgroundColor: primaryColor }}
-                                                        >
-                                                            {user.name.charAt(0).toUpperCase()}
-                                                        </div>
-                                                        <div>
-                                                            <div className="font-bold text-neutral-900">{user.name}</div>
-                                                            <div className="text-xs text-neutral-500">ID: {user._id.slice(-6)}</div>
-                                                        </div>
+                        <h3 className="text-lg font-bold text-white mb-2">No users found</h3>
+                        <p className="text-sm text-slate-500">{searchQuery ? "Try a different search term" : "Add your first user to get started."}</p>
+                    </div>
+                ) : (
+                    <div className="overflow-x-auto">
+                        <table className="w-full">
+                            <thead>
+                                <tr className="border-b border-slate-800 bg-slate-800/30">
+                                    <th className="text-left py-3.5 px-5 text-[10px] font-bold text-slate-500 uppercase tracking-widest">User</th>
+                                    <th className="text-left py-3.5 px-5 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Contact</th>
+                                    <th className="text-center py-3.5 px-5 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Role</th>
+                                    <th className="text-center py-3.5 px-5 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Blood</th>
+                                    <th className="text-center py-3.5 px-5 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Status</th>
+                                    <th className="text-left py-3.5 px-5 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Joined</th>
+                                    <th className="text-right py-3.5 px-5 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-800/50">
+                                {users.map((user) => {
+                                    const roleConfig = roleColors[user.role] || roleColors.patient;
+                                    const RoleIcon = roleConfig.icon;
+                                    return (
+                                        <tr key={user._id} className="hover:bg-slate-800/30 transition-colors">
+                                            <td className="py-3.5 px-5">
+                                                <div className="flex items-center gap-3">
+                                                    <div
+                                                        className="w-9 h-9 rounded-xl flex items-center justify-center text-white font-bold text-sm"
+                                                        style={{ backgroundColor: primaryColor }}
+                                                    >
+                                                        {user.name.charAt(0).toUpperCase()}
                                                     </div>
-                                                </td>
-                                                <td className="py-4 px-6">
-                                                    <div className="space-y-1">
-                                                        <div className="flex items-center gap-2 text-sm text-neutral-700">
-                                                            <Phone className="w-3.5 h-3.5" />
-                                                            {user.phone}
-                                                        </div>
-                                                        {user.email && (
-                                                            <div className="flex items-center gap-2 text-sm text-neutral-500">
-                                                                <Mail className="w-3.5 h-3.5" />
-                                                                {user.email}
-                                                            </div>
-                                                        )}
+                                                    <div>
+                                                        <div className="font-bold text-white text-sm">{user.name}</div>
+                                                        <div className="text-[10px] text-slate-600">ID: {user._id.slice(-6)}</div>
                                                     </div>
-                                                </td>
-                                                <td className="py-4 px-6 text-center">
-                                                    <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold ${roleConfig.bg} ${roleConfig.text}`}>
-                                                        <RoleIcon className="w-3.5 h-3.5" />
-                                                        {user.role.charAt(0).toUpperCase() + user.role.slice(1)}
+                                                </div>
+                                            </td>
+                                            <td className="py-3.5 px-5">
+                                                <div className="space-y-0.5">
+                                                    <div className="flex items-center gap-1.5 text-xs text-slate-400">
+                                                        <Phone className="w-3 h-3 opacity-50" /> {user.phone}
+                                                    </div>
+                                                    {user.email && (
+                                                        <div className="flex items-center gap-1.5 text-xs text-slate-500">
+                                                            <Mail className="w-3 h-3 opacity-50" /> {user.email}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </td>
+                                            <td className="py-3.5 px-5 text-center">
+                                                <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase border ${roleConfig.bg} ${roleConfig.text} ${roleConfig.border}`}>
+                                                    <RoleIcon className="w-3 h-3" />
+                                                    {user.role}
+                                                </span>
+                                            </td>
+                                            <td className="py-3.5 px-5 text-center">
+                                                {user.donorProfile ? (
+                                                    <span className="inline-flex items-center justify-center w-9 h-9 rounded-xl text-white font-bold text-xs" style={{ backgroundColor: primaryColor }}>
+                                                        {user.donorProfile.bloodGroup}
                                                     </span>
-                                                </td>
-                                                <td className="py-4 px-6 text-center">
-                                                    {user.donorProfile ? (
-                                                        <span
-                                                            className="inline-flex items-center justify-center w-10 h-10 rounded-full text-white font-bold text-sm"
-                                                            style={{ backgroundColor: primaryColor }}
-                                                        >
-                                                            {user.donorProfile.bloodGroup}
+                                                ) : (
+                                                    <span className="text-slate-600">—</span>
+                                                )}
+                                            </td>
+                                            <td className="py-3.5 px-5 text-center">
+                                                {user.donorProfile ? (
+                                                    user.donorProfile.isVerified ? (
+                                                        <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-emerald-500/10 text-emerald-400 text-[10px] font-bold rounded-full border border-emerald-500/20">
+                                                            <CheckCircle className="w-3 h-3" /> Verified
                                                         </span>
                                                     ) : (
-                                                        <span className="text-neutral-400">—</span>
-                                                    )}
-                                                </td>
-                                                <td className="py-4 px-6 text-center">
-                                                    {user.donorProfile ? (
-                                                        user.donorProfile.isVerified ? (
-                                                            <span className="inline-flex items-center gap-1 px-2 py-1 bg-green-100 text-green-700 text-xs font-bold rounded-full">
-                                                                <CheckCircle className="w-3.5 h-3.5" />
-                                                                Verified
-                                                            </span>
-                                                        ) : (
-                                                            <span className="inline-flex px-2 py-1 bg-yellow-100 text-yellow-700 text-xs font-bold rounded-full">
-                                                                Pending
-                                                            </span>
-                                                        )
-                                                    ) : (
-                                                        <span className="inline-flex px-2 py-1 bg-neutral-100 text-neutral-600 text-xs font-bold rounded-full">
-                                                            Active
+                                                        <span className="inline-flex px-2 py-0.5 bg-amber-500/10 text-amber-400 text-[10px] font-bold rounded-full border border-amber-500/20">
+                                                            Pending
                                                         </span>
-                                                    )}
-                                                </td>
-                                                <td className="py-4 px-6 text-sm text-neutral-600">
-                                                    {new Date(user.createdAt).toLocaleDateString()}
-                                                </td>
-                                                <td className="py-4 px-6 text-right">
-                                                    <div className="flex items-center justify-end gap-2">
-                                                        <select
-                                                            value={user.role}
-                                                            onChange={(e) => handleUpdateRole(user._id, e.target.value)}
-                                                            className="text-xs px-2 py-1 rounded border border-neutral-200 bg-white"
-                                                        >
-                                                            <option value="donor">Donor</option>
-                                                            <option value="patient">Patient</option>
-                                                            <option value="volunteer">Volunteer</option>
-                                                            <option value="admin">Admin</option>
-                                                        </select>
-                                                        <Button
-                                                            size="sm"
-                                                            variant="outline"
-                                                            className="text-red-600 hover:bg-red-50"
-                                                            onClick={() => handleDeleteUser(user._id, user.name)}
-                                                        >
-                                                            <Trash2 className="w-4 h-4" />
-                                                        </Button>
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        );
-                                    })}
-                                </tbody>
-                            </table>
-                        </div>
-                    )}
-                </CardContent>
-            </Card>
+                                                    )
+                                                ) : (
+                                                    <span className="inline-flex px-2 py-0.5 bg-slate-700/50 text-slate-400 text-[10px] font-bold rounded-full border border-slate-600">
+                                                        Active
+                                                    </span>
+                                                )}
+                                            </td>
+                                            <td className="py-3.5 px-5 text-xs text-slate-500">
+                                                {new Date(user.createdAt).toLocaleDateString()}
+                                            </td>
+                                            <td className="py-3.5 px-5 text-right">
+                                                <div className="flex items-center justify-end gap-2">
+                                                    <select
+                                                        value={user.role}
+                                                        onChange={(e) => handleUpdateRole(user._id, e.target.value)}
+                                                        className="text-xs px-2 py-1 rounded-lg border border-slate-700 bg-slate-800 text-slate-300 outline-none focus:border-slate-600"
+                                                    >
+                                                        <option value="donor">Donor</option>
+                                                        <option value="patient">Patient</option>
+                                                        <option value="volunteer">Volunteer</option>
+                                                        <option value="admin">Admin</option>
+                                                    </select>
+                                                    <Button
+                                                        size="sm"
+                                                        variant="outline"
+                                                        className="border-slate-700 text-red-400 hover:bg-red-500/10 hover:border-red-500/30"
+                                                        onClick={() => handleDeleteUser(user._id, user.name)}
+                                                    >
+                                                        <Trash2 className="w-3.5 h-3.5" />
+                                                    </Button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    );
+                                })}
+                            </tbody>
+                        </table>
+                    </div>
+                )}
+            </div>
 
             {/* Add User Modal */}
             {showAddModal && (
@@ -368,50 +317,32 @@ export default function UsersManagementPage({
                     orgSlug={orgSlug}
                     primaryColor={primaryColor}
                     onClose={() => setShowAddModal(false)}
-                    onSuccess={() => {
-                        setShowAddModal(false);
-                        fetchUsers();
-                    }}
+                    onSuccess={() => { setShowAddModal(false); fetchUsers(); }}
                 />
             )}
         </div>
     );
 }
 
-// Add User Modal Component
 function AddUserModal({
-    orgSlug,
-    primaryColor,
-    onClose,
-    onSuccess,
+    orgSlug, primaryColor, onClose, onSuccess,
 }: {
-    orgSlug: string;
-    primaryColor: string;
-    onClose: () => void;
-    onSuccess: () => void;
+    orgSlug: string; primaryColor: string; onClose: () => void; onSuccess: () => void;
 }) {
-    const [formData, setFormData] = useState({
-        name: "",
-        phone: "",
-        email: "",
-        role: "patient",
-    });
+    const [formData, setFormData] = useState({ name: "", phone: "", email: "", role: "patient" });
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsSubmitting(true);
-
         try {
             const res = await fetch("/api/org/users", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ ...formData, orgSlug }),
             });
-
             const data = await res.json();
             if (!res.ok) throw new Error(data.error);
-
             toast.success("User created successfully");
             onSuccess();
         } catch (error: any) {
@@ -421,51 +352,31 @@ function AddUserModal({
         }
     };
 
+    const inputClass = "w-full h-11 px-4 rounded-xl bg-slate-800 border border-slate-700 text-white placeholder:text-slate-500 focus:ring-2 focus:ring-red-500/50 outline-none text-sm";
+
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-            <Card className="w-full max-w-md mx-4 border-none shadow-2xl">
-                <CardHeader>
-                    <CardTitle className="text-xl font-bold">Add New User</CardTitle>
-                </CardHeader>
-                <CardContent>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+            <div className="w-full max-w-md mx-4 rounded-2xl bg-slate-900 border border-slate-700 shadow-2xl overflow-hidden">
+                <div className="p-6 border-b border-slate-800">
+                    <h2 className="text-xl font-black text-white">Add New User</h2>
+                </div>
+                <div className="p-6">
                     <form onSubmit={handleSubmit} className="space-y-4">
                         <div>
-                            <label className="block text-sm font-medium text-neutral-700 mb-1">Name *</label>
-                            <input
-                                type="text"
-                                value={formData.name}
-                                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                                className="w-full h-11 px-4 rounded-xl border border-neutral-200 focus:ring-2 focus:ring-red-500 outline-none"
-                                required
-                            />
+                            <label className="block text-xs font-bold text-slate-400 mb-1.5 uppercase tracking-wider">Name *</label>
+                            <input type="text" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} className={inputClass} required />
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-neutral-700 mb-1">Phone *</label>
-                            <input
-                                type="text"
-                                value={formData.phone}
-                                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                                placeholder="017XXXXXXXX"
-                                className="w-full h-11 px-4 rounded-xl border border-neutral-200 focus:ring-2 focus:ring-red-500 outline-none"
-                                required
-                            />
+                            <label className="block text-xs font-bold text-slate-400 mb-1.5 uppercase tracking-wider">Phone *</label>
+                            <input type="text" value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value })} placeholder="017XXXXXXXX" className={inputClass} required />
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-neutral-700 mb-1">Email</label>
-                            <input
-                                type="email"
-                                value={formData.email}
-                                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                                className="w-full h-11 px-4 rounded-xl border border-neutral-200 focus:ring-2 focus:ring-red-500 outline-none"
-                            />
+                            <label className="block text-xs font-bold text-slate-400 mb-1.5 uppercase tracking-wider">Email</label>
+                            <input type="email" value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} className={inputClass} />
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-neutral-700 mb-1">Role *</label>
-                            <select
-                                value={formData.role}
-                                onChange={(e) => setFormData({ ...formData, role: e.target.value })}
-                                className="w-full h-11 px-4 rounded-xl border border-neutral-200 focus:ring-2 focus:ring-red-500 outline-none"
-                            >
+                            <label className="block text-xs font-bold text-slate-400 mb-1.5 uppercase tracking-wider">Role *</label>
+                            <select value={formData.role} onChange={(e) => setFormData({ ...formData, role: e.target.value })} className={inputClass}>
                                 <option value="patient">Patient</option>
                                 <option value="donor">Donor</option>
                                 <option value="volunteer">Volunteer</option>
@@ -473,21 +384,16 @@ function AddUserModal({
                             </select>
                         </div>
                         <div className="flex gap-3 pt-4">
-                            <Button type="button" variant="outline" className="flex-1" onClick={onClose}>
+                            <Button type="button" variant="outline" className="flex-1 border-slate-700 text-slate-300 hover:bg-slate-800" onClick={onClose}>
                                 Cancel
                             </Button>
-                            <Button
-                                type="submit"
-                                className="flex-1 text-white"
-                                style={{ backgroundColor: primaryColor }}
-                                disabled={isSubmitting}
-                            >
+                            <Button type="submit" className="flex-1 text-white hover:opacity-90" style={{ backgroundColor: primaryColor }} disabled={isSubmitting}>
                                 {isSubmitting ? "Creating..." : "Create User"}
                             </Button>
                         </div>
                     </form>
-                </CardContent>
-            </Card>
+                </div>
+            </div>
         </div>
     );
 }

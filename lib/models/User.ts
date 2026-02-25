@@ -8,6 +8,13 @@ export enum UserRole {
     SUPER_ADMIN = "super_admin",
 }
 
+export interface INotificationPreferences {
+    emailDonationReminders: boolean;
+    emailNewRequests: boolean;
+    emailEventUpdates: boolean;
+    inAppAlerts: boolean;
+}
+
 export interface IUser extends Document {
     name: string;
     phone?: string;
@@ -16,6 +23,8 @@ export interface IUser extends Document {
     role: UserRole;
     organization?: mongoose.Types.ObjectId;
     image?: string;
+    onboardingCompleted: boolean;
+    notificationPreferences: INotificationPreferences;
     createdAt: Date;
     updatedAt: Date;
 }
@@ -33,6 +42,21 @@ const UserSchema: Schema = new Schema(
         },
         organization: { type: Schema.Types.ObjectId, ref: "Organization" },
         image: { type: String },
+        onboardingCompleted: { type: Boolean, default: false },
+        notificationPreferences: {
+            type: {
+                emailDonationReminders: { type: Boolean, default: true },
+                emailNewRequests: { type: Boolean, default: true },
+                emailEventUpdates: { type: Boolean, default: true },
+                inAppAlerts: { type: Boolean, default: true },
+            },
+            default: {
+                emailDonationReminders: true,
+                emailNewRequests: true,
+                emailEventUpdates: true,
+                inAppAlerts: true,
+            },
+        },
     },
     { timestamps: true }
 );
@@ -47,6 +71,9 @@ export interface IDonorProfile extends Document {
     lastDonationDate?: Date;
     isAvailable: boolean;
     isVerified: boolean;
+    totalDonations: number;
+    points: number;
+    badges: string[];
 }
 
 const DonorProfileSchema: Schema = new Schema(
@@ -60,12 +87,17 @@ const DonorProfileSchema: Schema = new Schema(
         lastDonationDate: { type: Date },
         isAvailable: { type: Boolean, default: true },
         isVerified: { type: Boolean, default: false },
+        totalDonations: { type: Number, default: 0 },
+        points: { type: Number, default: 0 },
+        badges: { type: [String], default: [] },
     },
     { timestamps: true }
 );
 
 // Allow one donor profile per user PER organization
 DonorProfileSchema.index({ user: 1, organization: 1 }, { unique: true });
+DonorProfileSchema.index({ points: -1 });
+DonorProfileSchema.index({ totalDonations: -1 });
 
 // In development, handle hot-reloading by clearing the model if schema changed
 if (process.env.NODE_ENV === "development" && mongoose.models.User) {
