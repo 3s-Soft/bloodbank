@@ -29,14 +29,21 @@ export async function GET(req: Request) {
             status: "completed"
         });
 
-        // Mock lives helped (e.g., 3x completed requests)
+        // 1. Dynamic Villages Count
+        const uniqueVillages = await DonorProfile.distinct("village", {
+            organization: organization._id,
+            village: { $ne: null, $exists: true }
+        });
+
+        // 2. Lives Helped (Calculated from completed requests + donor impact)
+        // This is still a heuristic but based on real data
         const livesHelped = completedRequests * 3 + Math.floor(donorCount / 2);
 
         return NextResponse.json({
-            donorsCount: donorCount || "250+", // Fallback for empty DBs
-            livesHelped: livesHelped || "1,200+",
-            activeRequests: activeRequests || "12",
-            villagesCovered: 45 // Static for now or calculated from donor profiles
+            donorsCount: donorCount || 0,
+            livesHelped: livesHelped || 0,
+            activeRequests: activeRequests || 0,
+            villagesCovered: uniqueVillages.length || 0
         });
     } catch (error: any) {
         console.error("Fetch stats error:", error);

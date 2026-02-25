@@ -217,7 +217,9 @@ export default function OrganizationLanding() {
                                 <div className={`absolute inset-0 bg-gradient-to-br ${stat.accent} opacity-0 group-hover:opacity-100 transition-opacity`} />
                                 <div className="relative">
                                     <stat.icon className={`w-6 h-6 ${stat.iconColor} mb-4`} />
-                                    <div className="text-3xl md:text-4xl font-black text-white mb-1">{stat.value}</div>
+                                    <div className="text-3xl md:text-4xl font-black text-white mb-1">
+                                        {typeof stat.value === "number" ? stat.value.toLocaleString() : stat.value}
+                                    </div>
                                     <div className="text-[10px] md:text-xs font-bold text-slate-500 uppercase tracking-widest">{stat.label}</div>
                                 </div>
                             </div>
