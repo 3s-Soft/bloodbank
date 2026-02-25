@@ -19,7 +19,7 @@ export default function Navbar() {
     const primaryColor = organization.primaryColor || "#dc2626";
 
     return (
-        <nav className="sticky top-0 z-50 w-full border-b border-slate-200 dark:border-slate-800 bg-white/90 dark:bg-slate-900/90 backdrop-blur-lg">
+        <nav className="sticky top-0 z-50 w-full border-b border-slate-800 bg-slate-900/90 backdrop-blur-lg">
             <div className="container mx-auto px-4 h-16 flex items-center justify-between">
                 {/* Logo */}
                 <Link href={`/${orgSlug}`} className="flex items-center space-x-3 group">
@@ -30,7 +30,7 @@ export default function Navbar() {
                             className="w-full h-full object-cover"
                         />
                     </div>
-                    <span className="text-xl font-bold text-slate-900 dark:text-white tracking-tight">
+                    <span className="text-xl font-bold text-white tracking-tight">
                         {organization.name.split(' ')[0]}<span style={{ color: primaryColor }}>{organization.name.split(' ').slice(1).join(' ')}</span>
                     </span>
                 </Link>
@@ -39,38 +39,38 @@ export default function Navbar() {
                 <div className="hidden md:flex items-center space-x-1">
                     <Link
                         href={`/${orgSlug}/donors`}
-                        className="px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
+                        className="px-4 py-2 text-sm font-medium text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors"
                     >
                         {t.nav.findDonors}
                     </Link>
                     <Link
                         href={`/${orgSlug}/requests`}
-                        className="px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
+                        className="px-4 py-2 text-sm font-medium text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors"
                     >
                         {t.nav.bloodRequests}
                     </Link>
                     <Link
                         href={`/${orgSlug}/leaderboard`}
-                        className="px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
+                        className="px-4 py-2 text-sm font-medium text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors"
                     >
                         Leaderboard
                     </Link>
                     <Link
                         href={`/${orgSlug}/events`}
-                        className="px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
+                        className="px-4 py-2 text-sm font-medium text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors"
                     >
                         Events
                     </Link>
 
-                    <div className="w-px h-6 bg-slate-200 dark:bg-slate-700 mx-2" />
+                    <div className="w-px h-6 bg-slate-700 mx-2" />
 
                     {session ? (
                         <div className="flex items-center space-x-2">
                             <Link href={`/${orgSlug}/dashboard`}>
                                 <Button
                                     size="sm"
-                                    variant="ghost"
-                                    className="text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white"
+                                    className="text-white font-bold hover:opacity-90"
+                                    style={{ backgroundColor: primaryColor }}
                                 >
                                     {t.nav.dashboard}
                                 </Button>
@@ -79,7 +79,7 @@ export default function Navbar() {
                                 size="sm"
                                 variant="outline"
                                 onClick={() => signOut()}
-                                className="border-slate-200 dark:border-slate-700"
+                                className="border-slate-700 text-slate-400 hover:text-white hover:bg-slate-800"
                             >
                                 {t.nav.logout}
                             </Button>
@@ -90,7 +90,7 @@ export default function Navbar() {
                                 <Button
                                     size="sm"
                                     variant="ghost"
-                                    className="text-slate-600 dark:text-slate-300"
+                                    className="text-slate-400 hover:text-white hover:bg-slate-800"
                                 >
                                     {t.nav.login}
                                 </Button>
@@ -111,7 +111,7 @@ export default function Navbar() {
                 {/* Mobile Menu Toggle */}
                 <div className="md:hidden flex items-center gap-1">
                     <button
-                        className="p-2 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg"
+                        className="p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors"
                         onClick={() => setIsMenuOpen(!isMenuOpen)}
                     >
                         {isMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
@@ -121,41 +121,41 @@ export default function Navbar() {
 
             {/* Mobile Navigation */}
             {isMenuOpen && (
-                <div className="md:hidden absolute top-16 left-0 w-full bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 p-4 space-y-2 shadow-xl">
+                <div className="md:hidden absolute top-16 left-0 w-full bg-slate-900 border-b border-slate-800 p-4 space-y-2 shadow-xl">
                     <Link
                         href={`/${orgSlug}/donors`}
-                        className="block px-4 py-3 text-lg font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl"
+                        className="block px-4 py-3 text-lg font-medium text-slate-400 hover:text-white hover:bg-slate-800 rounded-xl transition-colors"
                         onClick={() => setIsMenuOpen(false)}
                     >
                         {t.nav.findDonors}
                     </Link>
                     <Link
                         href={`/${orgSlug}/requests`}
-                        className="block px-4 py-3 text-lg font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl"
+                        className="block px-4 py-3 text-lg font-medium text-slate-400 hover:text-white hover:bg-slate-800 rounded-xl transition-colors"
                         onClick={() => setIsMenuOpen(false)}
                     >
                         {t.nav.bloodRequests}
                     </Link>
                     <Link
                         href={`/${orgSlug}/leaderboard`}
-                        className="block px-4 py-3 text-lg font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl"
+                        className="block px-4 py-3 text-lg font-medium text-slate-400 hover:text-white hover:bg-slate-800 rounded-xl transition-colors"
                         onClick={() => setIsMenuOpen(false)}
                     >
                         Leaderboard
                     </Link>
                     <Link
                         href={`/${orgSlug}/events`}
-                        className="block px-4 py-3 text-lg font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl"
+                        className="block px-4 py-3 text-lg font-medium text-slate-400 hover:text-white hover:bg-slate-800 rounded-xl transition-colors"
                         onClick={() => setIsMenuOpen(false)}
                     >
                         Events
                     </Link>
-                    <div className="pt-3 mt-3 border-t border-slate-100 dark:border-slate-800 flex flex-col space-y-2">
+                    <div className="pt-3 mt-3 border-t border-slate-800 flex flex-col space-y-2">
                         {session ? (
                             <>
                                 <Link href={`/${orgSlug}/dashboard`} onClick={() => setIsMenuOpen(false)}>
                                     <Button
-                                        className="w-full text-white shadow-lg"
+                                        className="w-full text-white shadow-lg font-bold"
                                         style={{ backgroundColor: primaryColor }}
                                     >
                                         {t.nav.dashboard}
@@ -163,7 +163,7 @@ export default function Navbar() {
                                 </Link>
                                 <Button
                                     variant="outline"
-                                    className="w-full border-slate-200 dark:border-slate-700"
+                                    className="w-full border-slate-700 text-slate-400 hover:text-white hover:bg-slate-800"
                                     onClick={() => signOut()}
                                 >
                                     {t.nav.logout}
@@ -172,7 +172,7 @@ export default function Navbar() {
                         ) : (
                             <>
                                 <Link href={`/login?org=${orgSlug}`} onClick={() => setIsMenuOpen(false)}>
-                                    <Button variant="outline" className="w-full border-slate-200 dark:border-slate-700">
+                                    <Button variant="outline" className="w-full border-slate-700 text-slate-400 hover:text-white hover:bg-slate-800">
                                         {t.nav.login}
                                     </Button>
                                 </Link>

@@ -11,6 +11,7 @@ import {
     Settings,
     ArrowLeft,
     Shield,
+    Book,
     Calendar,
     MessageSquare,
 } from "lucide-react";
@@ -22,6 +23,7 @@ const navItems = [
     { href: "/users", label: "User Management", icon: Users },
     { href: "/audit-log", label: "Audit Log", icon: Shield },
     { href: "/settings", label: "Settings", icon: Settings },
+    { href: "/docs", label: "Help Center", icon: Book, absolute: true },
 ];
 
 export default function DashboardLayout({
@@ -61,10 +63,9 @@ export default function DashboardLayout({
                         </div>
                     </div>
 
-                    {/* Navigation */}
                     <nav className="space-y-1">
                         {navItems.map((item) => {
-                            const fullPath = item.href ? `${basePath}${item.href}` : basePath;
+                            const fullPath = (item as any).absolute ? `/${orgSlug}${item.href}` : (item.href ? `${basePath}${item.href}` : basePath);
                             const isActive = pathname === fullPath;
                             const Icon = item.icon;
 
@@ -74,7 +75,7 @@ export default function DashboardLayout({
                                     href={fullPath}
                                     className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all ${isActive
                                         ? "text-white shadow-lg"
-                                        : "text-slate-400 hover:text-white hover:bg-slate-800/80"
+                                        : "text-slate-500 hover:text-white hover:bg-slate-700"
                                         }`}
                                     style={isActive ? { backgroundColor: primaryColor, color: '#fff' } : {}}
                                 >
@@ -102,7 +103,7 @@ export default function DashboardLayout({
             <div className="lg:hidden fixed top-16 left-0 right-0 z-30 bg-slate-900 border-b border-slate-800">
                 <div className="flex items-center gap-2 px-4 py-3 overflow-x-auto">
                     {navItems.map((item) => {
-                        const fullPath = item.href ? `${basePath}${item.href}` : basePath;
+                        const fullPath = (item as any).absolute ? `/${orgSlug}${item.href}` : (item.href ? `${basePath}${item.href}` : basePath);
                         const isActive = pathname === fullPath;
                         const Icon = item.icon;
 

@@ -33,6 +33,7 @@ export default function Footer() {
                             <li><Link href={`/${orgSlug}/leaderboard`} className="text-slate-400 hover:text-white transition-colors">Leaderboard</Link></li>
                             <li><Link href={`/${orgSlug}/events`} className="text-slate-400 hover:text-white transition-colors">Events</Link></li>
                             <li><Link href={`/${orgSlug}/feedback`} className="text-slate-400 hover:text-white transition-colors">Feedback</Link></li>
+                            <li><Link href={`/${orgSlug}/docs`} className="text-slate-400 hover:text-white transition-colors">Documentation</Link></li>
                             <li><Link href={`/${orgSlug}/register`} className="text-slate-400 hover:text-white transition-colors">{t.register.title}</Link></li>
                         </ul>
                     </div>
@@ -53,8 +54,8 @@ export default function Footer() {
                         © {new Date().getFullYear()} {organization.name}. {t.footer.allRightsReserved}.
                     </p>
                     <div className="flex space-x-6 text-xs font-bold text-slate-500 uppercase tracking-widest">
-                        <Link href="#" className="hover:text-white transition-colors">{t.footer.privacyPolicy}</Link>
-                        <Link href="#" className="hover:text-white transition-colors">{t.footer.termsOfService}</Link>
+                        <Link href={`/${orgSlug}/privacy`} className="hover:text-white transition-colors">{t.footer.privacyPolicy}</Link>
+                        <Link href={`/${orgSlug}/terms`} className="hover:text-white transition-colors">{t.footer.termsOfService}</Link>
                     </div>
                 </div>
             </div>

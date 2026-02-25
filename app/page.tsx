@@ -69,6 +69,11 @@ export default function Home() {
               Blood<span className="text-red-500">Bank</span>
             </span>
           </Link>
+          <div className="hidden lg:flex items-center space-x-8">
+            <Link href="#features" className="text-sm font-bold text-slate-400 hover:text-white transition-colors">How It Works</Link>
+            <Link href="#organizations" className="text-sm font-bold text-slate-400 hover:text-white transition-colors">Find Blood Banks</Link>
+            <Link href="/docs" className="text-sm font-bold text-slate-400 hover:text-white transition-colors">Documentation</Link>
+          </div>
           <div className="flex items-center space-x-3">
             {status === "loading" ? (
               <div className="w-24 h-10 bg-slate-800/50 rounded-xl animate-pulse" />
@@ -459,6 +464,7 @@ export default function Home() {
               <ul className="space-y-3 text-sm font-medium">
                 <li><Link href="#organizations" className="text-slate-400 hover:text-white transition-colors">Find Blood Banks</Link></li>
                 <li><Link href="#features" className="text-slate-400 hover:text-white transition-colors">How It Works</Link></li>
+                <li><Link href="/docs" className="text-slate-400 hover:text-white transition-colors">Documentation</Link></li>
                 <li><Link href="/login" className="text-slate-400 hover:text-white transition-colors">Login</Link></li>
                 <li><Link href="/organizations/new" className="text-slate-400 hover:text-white transition-colors">Request a Blood Bank</Link></li>
               </ul>
@@ -481,8 +487,8 @@ export default function Home() {
               © {new Date().getFullYear()} Bangladesh Blood Bank. All rights reserved.
             </p>
             <div className="flex space-x-6 text-xs font-bold text-slate-500 uppercase tracking-widest">
-              <Link href="#" className="hover:text-white transition-colors">Data Privacy</Link>
-              <Link href="#" className="hover:text-white transition-colors">Platform Terms</Link>
+              <Link href="/docs#safety" className="hover:text-white transition-colors">Data Privacy</Link>
+              <Link href="/docs#vision" className="hover:text-white transition-colors">Platform Terms</Link>
             </div>
           </div>
         </div>
