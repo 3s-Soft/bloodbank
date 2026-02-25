@@ -13,6 +13,8 @@ import connectToDatabase from "@/lib/db/mongodb";
 import { Organization } from "@/lib/models/Organization";
 import LandingNav from "@/components/LandingNav";
 
+export const dynamic = "force-dynamic";
+
 interface OrganizationData {
   _id: string;
   name: string;
