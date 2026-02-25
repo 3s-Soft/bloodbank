@@ -11,6 +11,7 @@ const pwaConfig = withPWA({
 
 const nextConfig: NextConfig = {
   /* config options here */
+  output: "standalone",
   turbopack: {},
   images: {
     formats: ["image/avif", "image/webp"],

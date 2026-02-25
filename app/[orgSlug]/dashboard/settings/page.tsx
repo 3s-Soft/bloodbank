@@ -15,6 +15,7 @@ import {
     Image,
     Eye,
     RefreshCw,
+    AlertCircle,
 } from "lucide-react";
 import { useState, useEffect, use } from "react";
 import { useOrganization } from "@/lib/context/OrganizationContext";
@@ -26,6 +27,9 @@ import * as z from "zod";
 
 const settingsSchema = z.object({
     name: z.string().min(2, "Name must be at least 2 characters"),
+    slug: z.string()
+        .min(2, "Slug must be at least 2 characters")
+        .regex(/^[a-z0-9-]+$/, "Slug can only contain lowercase letters, numbers, and hyphens"),
     logo: z.string().url("Must be a valid URL").optional().or(z.literal("")),
     primaryColor: z.string().regex(/^#[0-9A-Fa-f]{6}$/, "Must be a valid hex color"),
     contactEmail: z.string().email("Must be a valid email").optional().or(z.literal("")),
@@ -71,6 +75,7 @@ export default function OrgSettingsPage({
                 const data = await res.json();
                 reset({
                     name: data.name || "",
+                    slug: data.slug || "",
                     logo: data.logo || "",
                     primaryColor: data.primaryColor || "#D32F2F",
                     contactEmail: data.contactEmail || "",
@@ -98,7 +103,14 @@ export default function OrgSettingsPage({
             const result = await res.json();
             if (!res.ok) throw new Error(result.error);
 
-            toast.success("Settings saved successfully! Refresh to see changes.");
+            if (data.slug !== orgSlug) {
+                toast.success("Slug updated! Redirecting to new URL...");
+                setTimeout(() => {
+                    window.location.href = `/${data.slug}/dashboard/settings`;
+                }, 2000);
+            } else {
+                toast.success("Settings saved successfully! Refresh to see changes.");
+            }
             reset(data); // Reset form state to mark as not dirty
         } catch (error: any) {
             toast.error(error.message || "Failed to save settings");
@@ -200,6 +212,21 @@ export default function OrgSettingsPage({
                                 {...register("name")}
                                 error={errors.name?.message}
                             />
+
+                            <div className="space-y-1">
+                                <Input
+                                    label="URL Slug *"
+                                    placeholder="e.g. savar-blood-bank"
+                                    {...register("slug")}
+                                    error={errors.slug?.message}
+                                />
+                                <div className="flex items-start gap-2 p-3 bg-amber-500/10 rounded-xl border border-amber-500/20 mt-1">
+                                    <AlertCircle className="w-4 h-4 text-amber-500 mt-0.5 shrink-0" />
+                                    <p className="text-[11px] text-amber-500 font-medium">
+                                        Changing your slug will change your organization's URL. Existing links will be broken.
+                                    </p>
+                                </div>
+                            </div>
 
                             <Input
                                 label="Logo URL"

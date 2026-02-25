@@ -1,0 +1,12 @@
+node_modules
+.next
+.git
+.github
+out
+build
+build_error.txt
+.env*.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.vercel

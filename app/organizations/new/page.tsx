@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Building2, ArrowLeft, Send, Loader2, CheckCircle } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { useForm } from "react-hook-form";
@@ -36,11 +36,28 @@ export default function RequestOrganizationPage() {
         handleSubmit,
         formState: { errors },
         watch,
+        setValue,
+        trigger,
     } = useForm<OrganizationFormValues>({
         resolver: zodResolver(organizationSchema),
     });
 
     const name = watch("name");
+
+    // Auto-generate slug from name
+    useEffect(() => {
+        if (name) {
+            const generatedSlug = name
+                .toLowerCase()
+                .trim()
+                .replace(/[^\a-z0-9\s-]/g, '') // remove non-alphanumeric except space and hyphen
+                .replace(/[\s_]+/g, '-')       // replace spaces and underscores with hyphen
+                .replace(/^-+|-+$/g, '');     // trim leading/trailing hyphens
+
+            setValue("slug", generatedSlug);
+            trigger("slug");
+        }
+    }, [name, setValue, trigger]);
 
     const onSubmit = async (data: OrganizationFormValues) => {
         setIsSubmitting(true);

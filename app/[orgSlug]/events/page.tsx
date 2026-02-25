@@ -4,6 +4,8 @@ import { useState, useEffect, use } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useOrganization } from "@/lib/context/OrganizationContext";
+import { useSession } from "next-auth/react";
+import Link from "next/link";
 import {
     Calendar,
     MapPin,
@@ -13,6 +15,7 @@ import {
     Plus,
     Filter,
     ChevronRight,
+    Settings,
 } from "lucide-react";
 
 interface EventData {
@@ -37,7 +40,11 @@ export default function EventsPage({
 }) {
     const { orgSlug } = use(params);
     const org = useOrganization();
+    const { data: session } = useSession();
     const primaryColor = org?.primaryColor || "#D32F2F";
+
+    const userRole = (session?.user as any)?.role;
+    const canManage = userRole === "admin" || userRole === "super_admin" || userRole === "volunteer";
 
     const [events, setEvents] = useState<EventData[]>([]);
     const [loading, setLoading] = useState(true);
@@ -107,7 +114,21 @@ export default function EventsPage({
         <div className="min-h-screen bg-slate-950 p-6 lg:p-8">
             <div className="max-w-4xl mx-auto space-y-6">
                 {/* Header */}
-                <div className="text-center space-y-3">
+                <div className="text-center space-y-3 relative">
+                    {canManage && (
+                        <div className="absolute top-0 right-0">
+                            <Link href={`/${orgSlug}/dashboard/events`}>
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="border-slate-800 text-slate-400 hover:text-white hover:bg-slate-800 rounded-xl"
+                                >
+                                    <Settings className="w-4 h-4 mr-2" />
+                                    Manage Events
+                                </Button>
+                            </Link>
+                        </div>
+                    )}
                     <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-blue-500/10 mx-auto">
                         <Calendar className="w-8 h-8 text-blue-400" />
                     </div>
@@ -124,8 +145,8 @@ export default function EventsPage({
                             key={f}
                             onClick={() => setFilter(f)}
                             className={`px-4 py-2 rounded-xl text-sm font-bold transition-all ${filter === f
-                                    ? "text-white shadow-lg"
-                                    : "bg-slate-800 text-slate-400 hover:text-white"
+                                ? "text-white shadow-lg"
+                                : "bg-slate-800 text-slate-400 hover:text-white"
                                 }`}
                             style={filter === f ? { backgroundColor: primaryColor } : {}}
                         >

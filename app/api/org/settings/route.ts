@@ -30,22 +30,35 @@ export async function PUT(req: Request) {
     try {
         await connectDB();
         const body = await req.json();
-        const { orgSlug, name, logo, primaryColor, contactEmail, contactPhone, address } = body;
+        const { orgSlug, name, slug, logo, primaryColor, contactEmail, contactPhone, address } = body;
 
         if (!orgSlug) {
             return NextResponse.json({ error: "Organization slug is required" }, { status: 400 });
         }
 
+        const updateData: any = {
+            name,
+            logo,
+            primaryColor,
+            contactEmail,
+            contactPhone,
+            address,
+        };
+
+        // If slug is being updated
+        if (slug && slug !== orgSlug) {
+            const normalizedSlug = slug.toLowerCase().trim();
+            // Check if new slug is already taken
+            const existing = await Organization.findOne({ slug: normalizedSlug });
+            if (existing) {
+                return NextResponse.json({ error: "This URL slug is already taken" }, { status: 400 });
+            }
+            updateData.slug = normalizedSlug;
+        }
+
         const organization = await Organization.findOneAndUpdate(
             { slug: orgSlug },
-            {
-                name,
-                logo,
-                primaryColor,
-                contactEmail,
-                contactPhone,
-                address,
-            },
+            updateData,
             { new: true }
         );
 

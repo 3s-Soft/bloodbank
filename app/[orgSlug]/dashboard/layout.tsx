@@ -20,6 +20,7 @@ const navItems = [
     { href: "", label: "Overview", icon: LayoutDashboard },
     { href: "/donors", label: "Manage Donors", icon: UserCheck },
     { href: "/requests", label: "Blood Requests", icon: Droplet },
+    { href: "/events", label: "Manage Events", icon: Calendar },
     { href: "/users", label: "User Management", icon: Users },
     { href: "/audit-log", label: "Audit Log", icon: Shield },
     { href: "/settings", label: "Settings", icon: Settings },
