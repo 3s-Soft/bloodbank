@@ -89,7 +89,7 @@ export default function ManageEventsPage({
         const body = {
             ...formData,
             orgSlug,
-            createdBy: (session.user as any).id,
+            createdBy: session.user.id,
             eventId: editingId,
             maxParticipants: formData.maxParticipants ? parseInt(formData.maxParticipants) : undefined,
         };
@@ -129,7 +129,7 @@ export default function ManageEventsPage({
         if (!confirm("Are you sure you want to delete this event?")) return;
 
         try {
-            const res = await fetch(`/api/events?eventId=${eventId}&performedBy=${(session?.user as any).id}`, {
+            const res = await fetch(`/api/events?eventId=${eventId}&performedBy=${session?.user.id}`, {
                 method: "DELETE",
             });
 

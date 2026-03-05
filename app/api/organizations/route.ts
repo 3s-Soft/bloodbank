@@ -38,7 +38,7 @@ export async function POST(request: NextRequest) {
             primaryColor: primaryColor || "#D32F2F",
             isActive: true,
             isVerified: false,
-            createdBy: (session.user as any).id,
+            createdBy: session.user.id,
         });
 
         return NextResponse.json({
