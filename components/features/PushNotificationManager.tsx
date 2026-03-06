@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { Bell, BellOff } from "lucide-react";
 import { toast } from "sonner";
+import { urlBase64ToUint8Array } from "@/lib/utils/vapid";
 
 interface PushNotificationManagerProps {
     orgSlug: string;
@@ -12,16 +13,6 @@ interface PushNotificationManagerProps {
     bloodGroup?: string;
 }
 
-function urlBase64ToUint8Array(base64String: string): ArrayBuffer {
-    const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
-    const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
-    const rawData = atob(base64);
-    const outputArray = new Uint8Array(rawData.length);
-    for (let i = 0; i < rawData.length; ++i) {
-        outputArray[i] = rawData.charCodeAt(i);
-    }
-    return outputArray.buffer as ArrayBuffer;
-}
 
 /**
  * Renders a small toggle button that lets a user subscribe to or

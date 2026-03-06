@@ -36,9 +36,9 @@ export async function POST(req: Request) {
                     auth: subscription.keys.auth,
                 },
                 organization: organization._id,
-                user: session?.user?.id ?? undefined,
-                district: district ?? undefined,
-                bloodGroup: bloodGroup ?? undefined,
+                user: session?.user?.id,
+                district,
+                bloodGroup,
             },
             { upsert: true, new: true }
         );

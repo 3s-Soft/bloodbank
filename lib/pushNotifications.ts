@@ -80,12 +80,13 @@ export function buildBloodRequestPayload(
     orgSlug: string,
     requestId: string
 ): PushNotificationPayload {
+    const urgencyLabel = urgency.charAt(0).toUpperCase() + urgency.slice(1).toLowerCase();
     const isEmergency = urgency === UrgencyLevel.EMERGENCY;
     return {
         title: isEmergency
             ? `🚨 Emergency: ${bloodGroup} Blood Needed`
             : `⚠️ Urgent: ${bloodGroup} Blood Needed`,
-        body: `An ${urgency} blood request for ${bloodGroup} has been posted in ${district}. Tap to view details.`,
+        body: `${urgencyLabel} blood request for ${bloodGroup} has been posted in ${district}. Tap to view details.`,
         icon: "/assets/favicon.png",
         badge: "/assets/favicon.png",
         url: `/${orgSlug}/requests`,

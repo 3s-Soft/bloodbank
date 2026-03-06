@@ -8,6 +8,10 @@ declare const self: ServiceWorkerGlobalScope;
  * @ducanh2912/next-pwa (customWorkerSrc = "worker").
  */
 
+const DEFAULT_ICON = "/assets/favicon.png";
+const DEFAULT_BADGE = "/assets/favicon.png";
+const DEFAULT_TAG = "blood-request";
+
 self.addEventListener("push", (event: PushEvent) => {
     if (!event.data) return;
 
@@ -29,9 +33,9 @@ self.addEventListener("push", (event: PushEvent) => {
     const title = payload.title ?? "Blood Request Alert";
     const options: NotificationOptions = {
         body: payload.body ?? "",
-        icon: payload.icon ?? "/assets/favicon.png",
-        badge: payload.badge ?? "/assets/favicon.png",
-        tag: payload.tag ?? "blood-request",
+        icon: payload.icon ?? DEFAULT_ICON,
+        badge: payload.badge ?? DEFAULT_BADGE,
+        tag: payload.tag ?? DEFAULT_TAG,
         renotify: true,
         data: { url: payload.url ?? "/" },
     };
@@ -43,14 +47,18 @@ self.addEventListener("notificationclick", (event: NotificationEvent) => {
     event.notification.close();
     const url: string = event.notification.data?.url ?? "/";
     event.waitUntil(
-        (self.clients as Clients).matchAll({ type: "window", includeUncontrolled: true }).then((clientList) => {
-            for (const client of clientList) {
-                if ("focus" in client) {
-                    (client as WindowClient).navigate(url);
-                    return (client as WindowClient).focus();
+        (self.clients as Clients)
+            .matchAll({ type: "window", includeUncontrolled: true })
+            .then((clientList) => {
+                for (const client of clientList) {
+                    if ("focus" in client) {
+                        return (client as WindowClient)
+                            .navigate(url)
+                            .then((c) => c?.focus())
+                            .catch(() => (self.clients as Clients).openWindow(url));
+                    }
                 }
-            }
-            return (self.clients as Clients).openWindow(url);
-        })
+                return (self.clients as Clients).openWindow(url);
+            })
     );
 });
