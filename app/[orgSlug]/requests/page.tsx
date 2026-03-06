@@ -14,13 +14,26 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useState, useEffect } from "react";
+import PushNotificationManager from "@/components/features/PushNotificationManager";
+
+interface BloodRequestItem {
+    _id: string;
+    patientName: string;
+    bloodGroup: string;
+    location: string;
+    upazila: string;
+    district: string;
+    urgency: string;
+    requiredDate: string;
+    contactNumber: string;
+}
 
 export default function BloodRequestsListing() {
     const organization = useOrganization();
     const orgSlug = organization.slug;
     const primaryColor = organization.primaryColor || "#dc2626";
 
-    const [requests, setRequests] = useState<any[]>([]);
+    const [requests, setRequests] = useState<BloodRequestItem[]>([]);
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
@@ -83,16 +96,19 @@ export default function BloodRequestsListing() {
                                 Active requests in your community. Your small act of kindness can save a life.
                             </p>
                         </div>
-                        <Link href={`/${orgSlug}/requests/new`}>
-                            <Button
-                                size="lg"
-                                className="text-white shadow-lg hover:opacity-90 transition-opacity px-8 h-12 text-base font-bold"
-                                style={{ backgroundColor: primaryColor }}
-                            >
-                                <Plus className="w-5 h-5 mr-2" />
-                                Post New Request
-                            </Button>
-                        </Link>
+                        <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
+                            <PushNotificationManager orgSlug={orgSlug} />
+                            <Link href={`/${orgSlug}/requests/new`}>
+                                <Button
+                                    size="lg"
+                                    className="text-white shadow-lg hover:opacity-90 transition-opacity px-8 h-12 text-base font-bold"
+                                    style={{ backgroundColor: primaryColor }}
+                                >
+                                    <Plus className="w-5 h-5 mr-2" />
+                                    Post New Request
+                                </Button>
+                            </Link>
+                        </div>
                     </div>
 
                     {/* Quick Stats Bar */}

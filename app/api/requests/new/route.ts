@@ -1,9 +1,10 @@
 import { NextResponse } from "next/server";
 import connectDB from "@/lib/db/mongodb";
-import { BloodRequest } from "@/lib/models/BloodRequest";
+import { BloodRequest, UrgencyLevel } from "@/lib/models/BloodRequest";
 import { Organization } from "@/lib/models/Organization";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/authOptions";
+import { sendPushNotifications, buildBloodRequestPayload } from "@/lib/pushNotifications";
 
 export async function POST(req: Request) {
     try {
@@ -45,9 +46,24 @@ export async function POST(req: Request) {
             organization: organization._id,
         });
 
+        // Send push notifications for urgent and emergency requests (fire-and-forget)
+        if (urgency === UrgencyLevel.URGENT || urgency === UrgencyLevel.EMERGENCY) {
+            const payload = buildBloodRequestPayload(
+                urgency as UrgencyLevel,
+                bloodGroup,
+                district,
+                orgSlug,
+                String(newRequest._id)
+            );
+            sendPushNotifications(String(organization._id), payload, { district, bloodGroup }).catch(
+                (err) => console.error("Push notification error:", err)
+            );
+        }
+
         return NextResponse.json({ message: "Request posted successfully", request: newRequest }, { status: 201 });
-    } catch (error: any) {
+    } catch (error) {
         console.error("Blood request creation error:", error);
-        return NextResponse.json({ error: error.message || "Internal Server Error" }, { status: 500 });
+        const message = error instanceof Error ? error.message : "Internal Server Error";
+        return NextResponse.json({ error: message }, { status: 500 });
     }
 }
