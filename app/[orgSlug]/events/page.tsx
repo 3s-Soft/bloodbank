@@ -43,7 +43,7 @@ export default function EventsPage({
     const { data: session } = useSession();
     const primaryColor = org?.primaryColor || "#D32F2F";
 
-    const userRole = (session?.user as any)?.role;
+    const userRole = session?.user?.role;
     const canManage = userRole === "admin" || userRole === "super_admin" || userRole === "volunteer";
 
     const [events, setEvents] = useState<EventData[]>([]);

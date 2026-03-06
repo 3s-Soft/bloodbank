@@ -41,7 +41,7 @@ export async function POST(req: Request) {
             requiredDate: new Date(requiredDate),
             contactNumber,
             additionalNotes,
-            requester: session?.user ? (session.user as any).id : undefined, // Optional if not logged in
+            requester: session?.user ? session.user.id : undefined, // Optional if not logged in
             organization: organization._id,
         });
 

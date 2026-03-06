@@ -38,7 +38,7 @@ export default function LandingNav() {
                                     {session.user.name || session.user.email}
                                 </span>
                             </div>
-                            {(session.user as any).role === "super_admin" && (
+                            {session.user.role === "super_admin" && (
                                 <Link
                                     href="/admin"
                                     className="text-sm font-bold text-red-400 hover:text-red-300 transition-colors"

@@ -12,7 +12,7 @@ export async function PATCH(
     try {
         const session = await getServerSession(authOptions);
 
-        if (!session?.user || (session.user as any).role !== "super_admin") {
+        if (!session?.user || session.user.role !== "super_admin") {
             return NextResponse.json({ error: "Unauthorized - Super Admin access required" }, { status: 403 });
         }
 
