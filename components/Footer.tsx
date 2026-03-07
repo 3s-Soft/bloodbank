@@ -3,6 +3,7 @@
 import { useOrganization } from "@/lib/context/OrganizationContext";
 import Link from "next/link";
 import { useLanguage } from "@/lib/i18n";
+import { APP_VERSION_STRING } from "@/lib/config/version";
 
 export default function Footer() {
     const organization = useOrganization();
@@ -43,8 +44,9 @@ export default function Footer() {
                         <p className="text-sm text-slate-400 leading-relaxed">
                             {organization.contactEmail || "Connecting life-savers across Bangladesh."}
                         </p>
-                        <div className="pt-2 text-[10px] font-black uppercase tracking-widest text-slate-600">
-                            Powered by Bangladesh Bloodbank
+                        <div className="pt-2 text-[10px] font-black uppercase tracking-widest text-slate-600 flex items-center justify-between">
+                            <span>Powered by Bangladesh Bloodbank</span>
+                            <span className="bg-slate-800/50 px-2 py-0.5 rounded-full text-slate-400">{APP_VERSION_STRING}</span>
                         </div>
                     </div>
                 </div>
