@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Bell, Mail, Smartphone, Calendar, Droplet, Save } from "lucide-react";
 import { toast } from "sonner";
+import PushNotificationManager from "@/components/features/PushNotificationManager";
 
 interface NotificationPreference {
     id: string;
@@ -16,6 +17,7 @@ interface NotificationPreference {
 
 interface NotificationPreferencesProps {
     userId: string;
+    orgSlug: string;
     preferences?: {
         emailDonationReminders: boolean;
         emailNewRequests: boolean;
@@ -24,7 +26,7 @@ interface NotificationPreferencesProps {
     };
 }
 
-export default function NotificationPreferences({ userId, preferences }: NotificationPreferencesProps) {
+export default function NotificationPreferences({ userId, orgSlug, preferences }: NotificationPreferencesProps) {
     const [prefs, setPrefs] = useState<NotificationPreference[]>([
         {
             id: "emailDonationReminders",
@@ -125,6 +127,20 @@ export default function NotificationPreferences({ userId, preferences }: Notific
                             </button>
                         </div>
                     ))}
+
+                    {/* Push Notification row */}
+                    <div className="flex items-center justify-between p-4 rounded-xl bg-slate-800/50 border border-slate-700 hover:border-slate-600 transition-all">
+                        <div className="flex items-center gap-3">
+                            <Smartphone className="w-5 h-5 text-purple-400" />
+                            <div>
+                                <p className="text-sm font-bold text-white">Push Notifications</p>
+                                <p className="text-xs text-slate-500">
+                                    Receive browser push alerts for urgent &amp; emergency blood requests
+                                </p>
+                            </div>
+                        </div>
+                        <PushNotificationManager orgSlug={orgSlug} />
+                    </div>
                 </div>
                 <div className="mt-6 flex justify-end">
                     <Button
