@@ -50,7 +50,7 @@ AuditLogSchema.index({ organization: 1, createdAt: -1 });
 AuditLogSchema.index({ action: 1 });
 
 if (process.env.NODE_ENV === "development" && mongoose.models.AuditLog) {
-    delete (mongoose.models as any).AuditLog;
+    delete (mongoose.models as Record<string, unknown>).AuditLog;
 }
 
 export const AuditLog: Model<IAuditLog> =

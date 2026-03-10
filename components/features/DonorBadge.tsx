@@ -1,6 +1,6 @@
 "use client";
 
-import { BADGES, getBadgeDetails } from "@/lib/gamification";
+import { getBadgeDetails } from "@/lib/gamification";
 
 interface DonorBadgeProps {
     badges: string[];
@@ -87,7 +87,7 @@ interface EligibilityBadgeProps {
     message: string;
 }
 
-export function EligibilityBadge({ eligible, daysRemaining, message }: EligibilityBadgeProps) {
+export function EligibilityBadge({ eligible, daysRemaining }: EligibilityBadgeProps) {
     return (
         <div
             className={`inline-flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-bold ${eligible

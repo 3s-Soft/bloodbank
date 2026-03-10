@@ -54,7 +54,7 @@ RiderProfileSchema.index({ coverageUpazila: 1 });
 RiderProfileSchema.index({ availabilityStatus: 1 });
 
 if (process.env.NODE_ENV === "development" && mongoose.models.RiderProfile) {
-    delete (mongoose.models as any).RiderProfile;
+    delete (mongoose.models as Record<string, unknown>).RiderProfile;
 }
 
 export const RiderProfile: Model<IRiderProfile> =

@@ -11,13 +11,10 @@ import {
     MapPin,
     Clock,
     Users,
-    Phone,
     Plus,
     Trash2,
     Edit2,
     X,
-    Check,
-    AlertCircle
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -78,6 +75,7 @@ export default function ManageEventsPage({
 
     useEffect(() => {
         fetchEvents();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [orgSlug]);
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -117,10 +115,10 @@ export default function ManageEventsPage({
                 });
                 fetchEvents();
             } else {
-                const error = await res.json();
-                toast.error(error.error || "Failed to save event");
+                const errorData = await res.json();
+                toast.error(errorData.error || "Failed to save event");
             }
-        } catch (error) {
+        } catch {
             toast.error("An error occurred");
         }
     };
@@ -139,7 +137,7 @@ export default function ManageEventsPage({
             } else {
                 toast.error("Failed to delete event");
             }
-        } catch (error) {
+        } catch {
             toast.error("An error occurred");
         }
     };

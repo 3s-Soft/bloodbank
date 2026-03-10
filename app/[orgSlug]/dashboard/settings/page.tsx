@@ -8,11 +8,9 @@ import {
     Building2,
     Palette,
     Phone,
-    Mail,
     MapPin,
     Save,
     Loader2,
-    Image,
     Eye,
     RefreshCw,
     AlertCircle,
@@ -45,7 +43,7 @@ export default function OrgSettingsPage({
     params: Promise<{ orgSlug: string }>;
 }) {
     const { orgSlug } = use(params);
-    const org = useOrganization();
+    useOrganization();
     const [loading, setLoading] = useState(true);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -82,7 +80,7 @@ export default function OrgSettingsPage({
                     contactPhone: data.contactPhone || "",
                     address: data.address || "",
                 });
-            } catch (error) {
+            } catch {
                 toast.error("Failed to load settings");
             } finally {
                 setLoading(false);
@@ -112,8 +110,8 @@ export default function OrgSettingsPage({
                 toast.success("Settings saved successfully! Refresh to see changes.");
             }
             reset(data); // Reset form state to mark as not dirty
-        } catch (error: any) {
-            toast.error(error.message || "Failed to save settings");
+        } catch (error: unknown) {
+            toast.error(error instanceof Error ? error.message : "Failed to save settings");
         } finally {
             setIsSubmitting(false);
         }
@@ -143,7 +141,7 @@ export default function OrgSettingsPage({
                 <div>
                     <h1 className="text-4xl font-black text-white tracking-tight">Organization Settings</h1>
                     <p className="text-slate-400 font-medium">
-                        Customize your organization's appearance and contact information.
+                        Customize your organization&apos;s appearance and contact information.
                     </p>
                 </div>
             </div>
@@ -223,7 +221,7 @@ export default function OrgSettingsPage({
                                 <div className="flex items-start gap-2 p-3 bg-amber-500/10 rounded-xl border border-amber-500/20 mt-1">
                                     <AlertCircle className="w-4 h-4 text-amber-500 mt-0.5 shrink-0" />
                                     <p className="text-[11px] text-amber-500 font-medium">
-                                        Changing your slug will change your organization's URL. Existing links will be broken.
+                                        Changing your slug will change your organization&apos;s URL. Existing links will be broken.
                                     </p>
                                 </div>
                             </div>
@@ -260,7 +258,7 @@ export default function OrgSettingsPage({
                                     )}
                                 />
                                 <p className="text-xs text-slate-500 ml-1 mt-2 italic">
-                                    This color will be used throughout your organization's pages.
+                                    This color will be used throughout your organization&apos;s pages.
                                 </p>
                             </div>
                         </div>

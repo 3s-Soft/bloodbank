@@ -23,7 +23,7 @@ export async function POST(req: Request) {
         }
 
         return NextResponse.json({ message: "Donor status updated", donor });
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error("Donor verification error:", error);
         return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
     }

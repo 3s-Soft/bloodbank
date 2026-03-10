@@ -3,13 +3,10 @@
 import { useState, useEffect } from "react";
 import {
     MapPin,
-    Clock,
     Phone,
     ArrowLeft,
     CheckCircle2,
     AlertCircle,
-    Bike,
-    Building2,
     MessageSquare,
     Navigation,
     Droplet,
@@ -25,7 +22,19 @@ export default function TaskDetailsPage() {
     const { orgSlug, taskId } = params;
 
     // In a real app, we'd fetch the task details here
-    const [task, setTask] = useState<any>(null);
+    interface TaskData {
+        id: string | string[] | undefined;
+        status: string;
+        sourceName: string;
+        sourceAddress: string;
+        destinationName: string;
+        destinationAddress: string;
+        contactPhone: string;
+        bloodGroup: string;
+        urgency: string;
+        notes: string;
+    }
+    const [task, setTask] = useState<TaskData | null>(null);
     const [loading, setLoading] = useState(true);
     const [updating, setUpdating] = useState(false);
 
@@ -60,14 +69,14 @@ export default function TaskDetailsPage() {
 
             if (!res.ok) throw new Error("Failed to update status");
 
-            setTask({ ...task, status: newStatus });
+            setTask((prev) => prev ? { ...prev, status: newStatus } : null);
             toast.success(`Mission status: ${newStatus.replace("_", " ")}`);
 
             if (newStatus === "delivered") {
                 router.push(`/${orgSlug}/rider`);
             }
-        } catch (error: any) {
-            toast.error(error.message);
+        } catch (error: unknown) {
+            toast.error(error instanceof Error ? error.message : "Failed to update");
         } finally {
             setUpdating(false);
         }
@@ -76,7 +85,7 @@ export default function TaskDetailsPage() {
     if (loading) return <div className="p-8 text-center text-slate-500 font-bold animate-pulse">Loading mission details...</div>;
     if (!task) return <div className="p-8 text-center text-red-500 font-bold">Mission not found.</div>;
 
-    const statusColors: any = {
+    const statusColors: Record<string, string> = {
         pending: "bg-amber-500/10 text-amber-500",
         accepted: "bg-blue-500/10 text-blue-500",
         picked_up: "bg-purple-500/10 text-purple-500",

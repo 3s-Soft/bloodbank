@@ -76,8 +76,8 @@ export default function RequestOrganizationPage() {
 
             setIsSuccess(true);
             toast.success("Request submitted successfully!");
-        } catch (error: any) {
-            toast.error(error.message);
+        } catch (error: unknown) {
+            toast.error(error instanceof Error ? error.message : "An error occurred");
         } finally {
             setIsSubmitting(false);
         }

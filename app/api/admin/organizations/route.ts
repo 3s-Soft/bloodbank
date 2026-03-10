@@ -13,7 +13,7 @@ export async function GET() {
             .sort({ createdAt: -1 });
 
         return NextResponse.json(organizations);
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error("Fetch organizations error:", error);
         return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
     }
@@ -56,8 +56,8 @@ export async function POST(req: Request) {
         });
 
         return NextResponse.json({ message: "Organization created successfully", organization }, { status: 201 });
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error("Create organization error:", error);
-        return NextResponse.json({ error: error.message || "Internal Server Error" }, { status: 500 });
+        return NextResponse.json({ error: (error instanceof Error ? error.message : "Internal Server Error") }, { status: 500 });
     }
 }

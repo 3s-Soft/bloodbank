@@ -77,7 +77,7 @@ const BloodRequestSchema: Schema = new Schema(
 
 // In development, handle hot-reloading by clearing the model if schema changed
 if (process.env.NODE_ENV === "development" && mongoose.models.BloodRequest) {
-    delete (mongoose.models as any).BloodRequest;
+    delete (mongoose.models as Record<string, unknown>).BloodRequest;
 }
 
 export const BloodRequest: Model<IBloodRequest> =

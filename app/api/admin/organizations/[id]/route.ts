@@ -36,7 +36,7 @@ export async function GET(
                 activeRequests
             }
         });
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error("Fetch organization error:", error);
         return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
     }
@@ -85,9 +85,9 @@ export async function PUT(
         }
 
         return NextResponse.json({ message: "Organization updated successfully", organization });
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error("Update organization error:", error);
-        return NextResponse.json({ error: error.message || "Internal Server Error" }, { status: 500 });
+        return NextResponse.json({ error: (error instanceof Error ? error.message : "Internal Server Error") }, { status: 500 });
     }
 }
 
@@ -111,7 +111,7 @@ export async function DELETE(
         // await BloodRequest.deleteMany({ organization: id });
 
         return NextResponse.json({ message: "Organization deleted successfully" });
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error("Delete organization error:", error);
         return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
     }

@@ -13,10 +13,10 @@ import {
     Shield,
     Book,
     Calendar,
-    MessageSquare,
 } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 
-const navItems = [
+const navItems: { href: string; label: string; icon: LucideIcon; absolute?: boolean }[] = [
     { href: "", label: "Overview", icon: LayoutDashboard },
     { href: "/donors", label: "Manage Donors", icon: UserCheck },
     { href: "/requests", label: "Blood Requests", icon: Droplet },
@@ -29,10 +29,8 @@ const navItems = [
 
 export default function DashboardLayout({
     children,
-    params,
 }: {
     children: React.ReactNode;
-    params: Promise<{ orgSlug: string }>;
 }) {
     const pathname = usePathname();
     const org = useOrganization();
@@ -66,7 +64,7 @@ export default function DashboardLayout({
 
                     <nav className="space-y-1">
                         {navItems.map((item) => {
-                            const fullPath = (item as any).absolute ? `/${orgSlug}${item.href}` : (item.href ? `${basePath}${item.href}` : basePath);
+                            const fullPath = item.absolute ? `/${orgSlug}${item.href}` : (item.href ? `${basePath}${item.href}` : basePath);
                             const isActive = pathname === fullPath;
                             const Icon = item.icon;
 
@@ -104,7 +102,7 @@ export default function DashboardLayout({
             <div className="lg:hidden fixed top-16 left-0 right-0 z-30 bg-slate-900 border-b border-slate-800">
                 <div className="flex items-center gap-2 px-4 py-3 overflow-x-auto">
                     {navItems.map((item) => {
-                        const fullPath = (item as any).absolute ? `/${orgSlug}${item.href}` : (item.href ? `${basePath}${item.href}` : basePath);
+                        const fullPath = item.absolute ? `/${orgSlug}${item.href}` : (item.href ? `${basePath}${item.href}` : basePath);
                         const isActive = pathname === fullPath;
                         const Icon = item.icon;
 

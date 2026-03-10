@@ -98,14 +98,13 @@ function BarChart({ data, maxValue, color = "#D32F2F" }: { data: { label: string
 // Donut Chart Component
 function DonutChart({ data, colors }: { data: { label: string; value: number }[]; colors: string[] }) {
     const total = data.reduce((sum, item) => sum + item.value, 0);
-    let cumulativePercent = 0;
 
-    const segments = data.map((item, idx) => {
+    const segments = data.reduce<{ label: string; value: number; percent: number; startPercent: number; color: string }[]>((acc, item, idx) => {
         const percent = total > 0 ? (item.value / total) * 100 : 0;
-        const startPercent = cumulativePercent;
-        cumulativePercent += percent;
-        return { ...item, percent, startPercent, color: colors[idx % colors.length] };
-    });
+        const startPercent = acc.length > 0 ? acc[acc.length - 1].startPercent + acc[acc.length - 1].percent : 0;
+        acc.push({ ...item, percent, startPercent, color: colors[idx % colors.length] });
+        return acc;
+    }, []);
 
     // Create conic gradient
     const gradientParts = segments.map(seg =>

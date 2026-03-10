@@ -45,9 +45,9 @@ export async function POST(request: NextRequest) {
             message: "Organization created successfully! It will be reviewed by an admin.",
             organization,
         }, { status: 201 });
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error("Error creating organization:", error);
-        return NextResponse.json({ error: error.message || "Failed to create organization" }, { status: 500 });
+        return NextResponse.json({ error: (error instanceof Error ? error.message : "Failed to create organization") }, { status: 500 });
     }
 }
 
@@ -59,7 +59,7 @@ export async function GET(request: NextRequest) {
         const { searchParams } = new URL(request.url);
         const includeUnverified = searchParams.get("includeUnverified") === "true";
 
-        const filter: any = { isActive: true };
+        const filter: Record<string, unknown> = { isActive: true };
         if (!includeUnverified) {
             // Include organizations that are verified OR don't have isVerified field yet (legacy data)
             filter.$or = [
@@ -73,12 +73,12 @@ export async function GET(request: NextRequest) {
             .lean();
 
         return NextResponse.json(organizations);
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error("Error fetching organizations:", error);
         return NextResponse.json({
             error: "Internal Server Error",
-            message: error.message,
-            stack: process.env.NODE_ENV === "development" ? error.stack : undefined
+            message: error instanceof Error ? error.message : "Unknown error",
+            stack: process.env.NODE_ENV === "development" && error instanceof Error ? error.stack : undefined
         }, { status: 500 });
     }
 }

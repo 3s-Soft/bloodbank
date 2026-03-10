@@ -69,7 +69,7 @@ DeliveryTaskSchema.index({ rider: 1, status: 1 });
 DeliveryTaskSchema.index({ bloodRequest: 1 });
 
 if (process.env.NODE_ENV === "development" && mongoose.models.DeliveryTask) {
-    delete (mongoose.models as any).DeliveryTask;
+    delete (mongoose.models as Record<string, unknown>).DeliveryTask;
 }
 
 export const DeliveryTask: Model<IDeliveryTask> =

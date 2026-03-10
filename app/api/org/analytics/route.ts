@@ -117,7 +117,7 @@ export async function GET(req: Request) {
             recentDonors: recentDonorsList,
             recentRequests: recentRequestsList,
         });
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error("Fetch org analytics error:", error);
         return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
     }

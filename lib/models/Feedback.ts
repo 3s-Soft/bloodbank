@@ -54,7 +54,7 @@ FeedbackSchema.index({ organization: 1, createdAt: -1 });
 FeedbackSchema.index({ status: 1 });
 
 if (process.env.NODE_ENV === "development" && mongoose.models.Feedback) {
-    delete (mongoose.models as any).Feedback;
+    delete (mongoose.models as Record<string, unknown>).Feedback;
 }
 
 export const Feedback: Model<IFeedback> =

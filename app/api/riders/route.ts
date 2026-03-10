@@ -49,9 +49,9 @@ export async function POST(req: Request) {
         );
 
         return NextResponse.json(profile);
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error("Error in Rider POST:", error);
-        return NextResponse.json({ error: error.message }, { status: 500 });
+        return NextResponse.json({ error: error instanceof Error ? error.message : "Internal Server Error" }, { status: 500 });
     }
 }
 
@@ -64,7 +64,7 @@ export async function GET(req: Request) {
 
         await connectToDatabase();
 
-        let query: any = { availabilityStatus: "available" };
+        const query: Record<string, unknown> = { availabilityStatus: "available" };
 
         if (orgSlug) {
             // We would need to resolve orgSlug to ID if we didn't have it
@@ -77,7 +77,7 @@ export async function GET(req: Request) {
         const riders = await RiderProfile.find(query).populate("user", "name phone image").lean();
 
         return NextResponse.json(riders);
-    } catch (error: any) {
-        return NextResponse.json({ error: error.message }, { status: 500 });
+    } catch (error: unknown) {
+        return NextResponse.json({ error: error instanceof Error ? error.message : "Internal Server Error" }, { status: 500 });
     }
 }

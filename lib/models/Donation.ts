@@ -31,7 +31,7 @@ DonationSchema.index({ donor: 1, organization: 1 });
 DonationSchema.index({ donationDate: -1 });
 
 if (process.env.NODE_ENV === "development" && mongoose.models.Donation) {
-    delete (mongoose.models as any).Donation;
+    delete (mongoose.models as Record<string, unknown>).Donation;
 }
 
 export const Donation: Model<IDonation> =

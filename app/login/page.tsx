@@ -51,7 +51,7 @@ function LoginForm() {
             } else {
                 toast.error("Login failed - unexpected response");
             }
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error("Login error:", error);
             toast.error("An error occurred during login");
         } finally {
@@ -74,9 +74,10 @@ function LoginForm() {
                     callbackUrl: orgSlug ? `/${orgSlug}/dashboard` : "/",
                 });
             }
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error("Firebase Auth Error:", error);
-            if (error.code === "auth/operation-not-allowed") {
+            const firebaseError = error as { code?: string };
+            if (firebaseError.code === "auth/operation-not-allowed") {
                 toast.error("Google login is not enabled in Firebase Console.");
             } else {
                 toast.error("Google sign-in failed. Please try again.");

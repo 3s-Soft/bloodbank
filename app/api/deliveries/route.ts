@@ -16,7 +16,7 @@ export async function GET(req: Request) {
 
         await connectToDatabase();
 
-        let query: any = {};
+        const query: Record<string, unknown> = {};
 
         if (available) {
             query.status = TaskStatus.PENDING;
@@ -33,8 +33,8 @@ export async function GET(req: Request) {
             .lean();
 
         return NextResponse.json(tasks);
-    } catch (error: any) {
-        return NextResponse.json({ error: error.message }, { status: 500 });
+    } catch (error: unknown) {
+        return NextResponse.json({ error: error instanceof Error ? error.message : "Internal Server Error" }, { status: 500 });
     }
 }
 
@@ -73,8 +73,8 @@ export async function POST(req: Request) {
         });
 
         return NextResponse.json(task);
-    } catch (error: any) {
-        return NextResponse.json({ error: error.message }, { status: 500 });
+    } catch (error: unknown) {
+        return NextResponse.json({ error: error instanceof Error ? error.message : "Internal Server Error" }, { status: 500 });
     }
 }
 
@@ -122,7 +122,7 @@ export async function PATCH(req: Request) {
         await task.save();
 
         return NextResponse.json(task);
-    } catch (error: any) {
-        return NextResponse.json({ error: error.message }, { status: 500 });
+    } catch (error: unknown) {
+        return NextResponse.json({ error: error instanceof Error ? error.message : "Internal Server Error" }, { status: 500 });
     }
 }

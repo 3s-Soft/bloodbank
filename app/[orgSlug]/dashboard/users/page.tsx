@@ -41,7 +41,9 @@ interface UserStats {
     volunteers: number;
 }
 
-const roleColors: Record<string, { bg: string; text: string; border: string; icon: any }> = {
+import type { LucideIcon } from "lucide-react";
+
+const roleColors: Record<string, { bg: string; text: string; border: string; icon: LucideIcon }> = {
     donor: { bg: "bg-red-500/10", text: "text-red-400", border: "border-red-500/20", icon: Droplet },
     admin: { bg: "bg-purple-500/10", text: "text-purple-400", border: "border-purple-500/20", icon: Shield },
     patient: { bg: "bg-blue-500/10", text: "text-blue-400", border: "border-blue-500/20", icon: Heart },
@@ -83,6 +85,7 @@ export default function UsersManagementPage({
         }
     };
 
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     useEffect(() => { fetchUsers(); }, [orgSlug, roleFilter, searchQuery]);
 
     const handleDeleteUser = async (userId: string, userName: string) => {
@@ -92,7 +95,7 @@ export default function UsersManagementPage({
             if (!res.ok) throw new Error("Failed to delete");
             toast.success("User deleted successfully");
             fetchUsers();
-        } catch (error) {
+        } catch {
             toast.error("Failed to delete user");
         }
     };
@@ -107,7 +110,7 @@ export default function UsersManagementPage({
             if (!res.ok) throw new Error("Failed to update");
             toast.success("User role updated");
             fetchUsers();
-        } catch (error) {
+        } catch {
             toast.error("Failed to update user");
         }
     };
@@ -345,8 +348,8 @@ function AddUserModal({
             if (!res.ok) throw new Error(data.error);
             toast.success("User created successfully");
             onSuccess();
-        } catch (error: any) {
-            toast.error(error.message || "Failed to create user");
+        } catch (error: unknown) {
+            toast.error(error instanceof Error ? error.message : "Failed to create user");
         } finally {
             setIsSubmitting(false);
         }

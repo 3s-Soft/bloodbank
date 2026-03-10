@@ -21,7 +21,7 @@ export async function GET(req: Request) {
             return NextResponse.json({ error: "Organization not found" }, { status: 404 });
         }
 
-        let query: any = { organization: organization._id };
+        const query: Record<string, unknown> = { organization: organization._id };
 
         if (bloodGroup) query.bloodGroup = bloodGroup;
         if (district) query.district = new RegExp(district, "i");
@@ -32,7 +32,7 @@ export async function GET(req: Request) {
             .sort({ createdAt: -1 });
 
         return NextResponse.json(donors);
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error("Fetch donors error:", error);
         return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
     }

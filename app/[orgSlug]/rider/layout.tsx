@@ -1,19 +1,15 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import {
     Bike,
-    MapPin,
     Package,
-    ChevronRight,
     History,
-    Settings,
     LogOut,
     Menu,
     X,
     Bell,
     User as UserIcon,
-    Droplet
 } from "lucide-react";
 import Link from "next/link";
 import { useParams, usePathname } from "next/navigation";

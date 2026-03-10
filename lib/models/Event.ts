@@ -50,7 +50,7 @@ EventSchema.index({ organization: 1, date: -1 });
 EventSchema.index({ status: 1 });
 
 if (process.env.NODE_ENV === "development" && mongoose.models.Event) {
-    delete (mongoose.models as any).Event;
+    delete (mongoose.models as Record<string, unknown>).Event;
 }
 
 export const Event: Model<IEvent> =

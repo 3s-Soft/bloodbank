@@ -14,7 +14,6 @@ import {
     FileText,
     Filter,
     Clock,
-    ChevronDown,
 } from "lucide-react";
 
 interface AuditLogEntry {

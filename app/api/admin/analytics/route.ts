@@ -100,7 +100,7 @@ export async function GET() {
                 newRequests: recentRequests,
             },
         });
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error("Fetch analytics error:", error);
         return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
     }

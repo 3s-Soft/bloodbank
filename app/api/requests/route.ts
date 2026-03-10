@@ -20,7 +20,7 @@ export async function GET(req: Request) {
             return NextResponse.json({ error: "Organization not found" }, { status: 404 });
         }
 
-        let query: any = { organization: organization._id, status };
+        const query: Record<string, unknown> = { organization: organization._id, status };
 
         if (urgency) query.urgency = urgency;
 
@@ -29,7 +29,7 @@ export async function GET(req: Request) {
             .sort({ urgency: -1, createdAt: -1 });
 
         return NextResponse.json(requests);
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error("Fetch requests error:", error);
         return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
     }

@@ -1,0 +1,212 @@
+# Rural Blood Bank – AI Context File
+# This file helps AI assistants understand the project quickly and reduce token usage.
+# Last updated: 2026-03-08
+
+## Identity
+- **Name**: Rural Blood Bank
+- **Repo**: 3s-Soft/bloodbank
+- **Purpose**: Community-powered, multi-tenant blood donation platform for rural Bangladesh
+- **Version**: 0.1.0
+
+## Tech Stack
+| Layer          | Technology                                    |
+|----------------|-----------------------------------------------|
+| Framework      | Next.js 16.1.5 (App Router, Turbopack)        |
+| Language       | TypeScript 5.x (strict mode)                  |
+| Database       | MongoDB via Mongoose 9                         |
+| Auth           | NextAuth.js 4 (JWT strategy, Credentials + Firebase Google) |
+| Styling        | Tailwind CSS 4 (PostCSS plugin)                |
+| Forms          | React Hook Form + Zod 4 validation            |
+| Notifications  | Sonner (toasts), Web Push API (push notifs)    |
+| Icons          | Lucide React                                   |
+| PWA            | @ducanh2912/next-pwa                           |
+| i18n           | Custom (English + Bangla), context-based       |
+| Containerization | Docker + docker-compose                      |
+
+## Path Aliases
+- `@/*` → project root (e.g., `@/lib/db/mongodb`, `@/components/ui/button`)
+
+## Project Structure (Key Directories)
+```
+bloodbank/
+├── app/
+│   ├── (auth)/                 # Auth route group
+│   ├── (dashboard)/            # Dashboard route group
+│   ├── [orgSlug]/              # Multi-tenant org pages (dynamic route)
+│   │   ├── dashboard/          # Org admin dashboard (donors, requests, users, settings)
+│   │   ├── donors/             # Public donor discovery
+│   │   ├── register/           # Donor registration
+│   │   ├── requests/           # Blood requests (list + new)
+│   │   ├── events/             # Org events
+│   │   ├── feedback/           # Org feedback
+│   │   ├── rider/              # Rider dashboard (delivery logistics)
+│   │   ├── leaderboard/        # Gamification leaderboard
+│   │   ├── about/, docs/, privacy/, terms/
+│   │   ├── layout.tsx          # Org layout (Navbar + Footer)
+│   │   └── page.tsx            # Org landing page
+│   ├── admin/                  # Super admin dashboard
+│   ├── api/                    # API routes (12 groups)
+│   │   ├── auth/[...nextauth]/ # NextAuth handler
+│   │   ├── donors/             # register, verify, list
+│   │   ├── requests/           # new, status, list
+│   │   ├── org/                # stats, analytics, settings, users
+│   │   ├── admin/              # organizations CRUD, stats, analytics
+│   │   ├── organizations/      # Public org request/list
+│   │   ├── riders/             # Rider management
+│   │   ├── deliveries/         # Delivery task management
+│   │   ├── donations/          # Donation tracking
+│   │   ├── events/             # Event management
+│   │   ├── feedback/           # Feedback system
+│   │   └── push/               # Push notification subscriptions
+│   ├── docs/                   # Global documentation page
+│   ├── donors/                 # Global donors page
+│   ├── login/                  # Login page
+│   ├── organizations/          # Public org request flow
+│   ├── requests/               # Global requests page
+│   └── page.tsx                # Main landing page
+├── components/
+│   ├── AuthProvider.tsx         # NextAuth session provider
+│   ├── Navbar.tsx               # Org-aware navbar
+│   ├── LandingNav.tsx           # Landing page navbar
+│   ├── Footer.tsx               # Org-aware footer
+│   ├── DocSearch.tsx            # Documentation search
+│   ├── ui/                      # Reusable UI primitives
+│   │   ├── button.tsx, card.tsx, input.tsx
+│   │   ├── color-picker.tsx, theme-toggle.tsx
+│   │   ├── language-toggle.tsx, location-select.tsx
+│   └── features/               # Feature-specific components
+│       ├── DonorBadge.tsx, OnboardingWizard.tsx
+│       ├── PushNotificationManager.tsx
+│       └── NotificationPreferences.tsx
+├── lib/
+│   ├── authOptions.ts           # NextAuth config (Credentials + Firebase)
+│   ├── firebase.ts              # Firebase client init
+│   ├── gamification.ts          # Badge/points system
+│   ├── orgUtils.ts              # getOrganizationBySlug()
+│   ├── riderUtils.ts            # Rider helper functions
+│   ├── pushNotifications.ts     # Web Push server-side logic
+│   ├── config/version.ts        # App version info
+│   ├── context/OrganizationContext.tsx  # Org React context provider
+│   ├── db/mongodb.ts            # Mongoose connection (cached, singleton)
+│   ├── i18n/                    # Translations (en.ts, bn.ts, context index)
+│   ├── models/                  # Mongoose models (10 models)
+│   │   ├── User.ts              # User + DonorProfile schemas
+│   │   ├── BloodRequest.ts      # Blood request schema
+│   │   ├── Organization.ts      # Org schema (slug, branding, contacts)
+│   │   ├── RiderProfile.ts      # Volunteer rider schema
+│   │   ├── DeliveryTask.ts      # Blood delivery logistics
+│   │   ├── Donation.ts          # Donation tracking
+│   │   ├── Event.ts             # Community events
+│   │   ├── Feedback.ts          # User feedback
+│   │   ├── AuditLog.ts          # Action audit trail
+│   │   └── PushSubscription.ts  # Web push subscriptions
+│   ├── data/                    # Static data (location dropdowns etc.)
+│   └── utils/vapid.ts           # VAPID key utility
+├── types/
+│   └── next-auth.d.ts           # NextAuth session type augmentation
+├── worker/
+│   └── index.ts                 # Background worker
+├── scripts/
+│   └── seed.ts                  # Database seeder
+└── public/                      # Static assets, PWA manifest
+```
+
+## Database Models (Mongoose)
+| Model            | File                        | Key Fields                                                        |
+|------------------|-----------------------------|-------------------------------------------------------------------|
+| User             | lib/models/User.ts          | name, phone, email, password, role, organization                  |
+| DonorProfile     | lib/models/User.ts          | user, organization, bloodGroup, district, upazila, isVerified     |
+| BloodRequest     | lib/models/BloodRequest.ts  | patientName, bloodGroup, urgency, status, organization            |
+| Organization     | lib/models/Organization.ts  | name, slug, primaryColor, isActive                                |
+| RiderProfile     | lib/models/RiderProfile.ts  | user, organization, vehicle, status                               |
+| DeliveryTask     | lib/models/DeliveryTask.ts  | rider, request, status, pickup/delivery locations                 |
+| Donation         | lib/models/Donation.ts      | donor, organization, date, bloodGroup                             |
+| Event            | lib/models/Event.ts         | title, organization, date, location                               |
+| Feedback         | lib/models/Feedback.ts      | user, organization, message, rating                               |
+| AuditLog         | lib/models/AuditLog.ts      | action, user, organization, details                               |
+| PushSubscription | lib/models/PushSubscription.ts | user, endpoint, keys                                           |
+
+## User Roles
+`donor` | `patient` | `volunteer` | `admin` | `super_admin`
+
+## Blood Groups
+`A+` | `A-` | `B+` | `B-` | `O+` | `O-` | `AB+` | `AB-`
+
+## Request Urgency Levels
+`normal` | `urgent` | `emergency`
+
+## Request Statuses
+`pending` | `fulfilled` | `canceled`
+
+## Key API Routes
+| Method | Path                                       | Purpose                       |
+|--------|-------------------------------------------|-------------------------------|
+| GET    | /api/donors?orgSlug&bloodGroup&district   | List donors (filtered)        |
+| POST   | /api/donors/register                      | Register new donor            |
+| POST   | /api/donors/verify                        | Verify/unverify donor (admin) |
+| GET    | /api/requests?orgSlug&urgency&status      | List blood requests           |
+| POST   | /api/requests/new                         | Create blood request          |
+| POST   | /api/requests/status                      | Update request status         |
+| GET    | /api/org/stats?orgSlug                    | Org statistics                |
+| GET    | /api/org/analytics?orgSlug                | Org analytics data            |
+| GET/PUT| /api/org/settings                         | Org settings                  |
+| CRUD   | /api/org/users                            | Org user management           |
+| CRUD   | /api/admin/organizations                  | Super admin org CRUD          |
+| GET    | /api/admin/stats                          | Platform stats                |
+| GET    | /api/admin/analytics                      | Platform analytics            |
+| CRUD   | /api/riders                               | Rider management              |
+| CRUD   | /api/deliveries                           | Delivery task management      |
+| CRUD   | /api/events                               | Event management              |
+| CRUD   | /api/feedback                             | Feedback management           |
+| POST   | /api/push/subscribe                       | Push notification subscribe   |
+
+## Multi-Tenant Architecture
+- Organizations identified by URL slug: `/[orgSlug]/...`
+- All data (donors, requests) scoped to organization via `organization` ObjectId
+- Server-side org lookup: `getOrganizationBySlug(slug)` in `lib/orgUtils.ts`
+- Client-side org context: `OrganizationContext` in `lib/context/`
+- Dynamic theming via `primaryColor` field
+
+## Environment Variables
+| Variable                        | Purpose                           |
+|---------------------------------|-----------------------------------|
+| MONGODB_URI                     | MongoDB connection string         |
+| NEXTAUTH_URL                    | Base URL for NextAuth             |
+| NEXTAUTH_SECRET                 | JWT signing secret                |
+| NEXT_PUBLIC_VAPID_PUBLIC_KEY    | Web Push public key               |
+| VAPID_PRIVATE_KEY               | Web Push private key              |
+| VAPID_SUBJECT                   | Web Push contact mailto           |
+| NEXT_TELEMETRY_DISABLED         | Disable Next.js telemetry         |
+
+## Conventions
+- **Pages**: `page.tsx` (Next.js App Router convention)
+- **Layouts**: `layout.tsx`
+- **API Routes**: `route.ts` inside `/api/` directories
+- **Components**: PascalCase filenames (e.g., `Navbar.tsx`)
+- **Utilities**: camelCase filenames (e.g., `orgUtils.ts`)
+- **Models**: PascalCase filenames (e.g., `User.ts`)
+- **DB Connection**: Always call `await connectToDatabase()` from `@/lib/db/mongodb` before queries
+- **Validation**: Use Zod schemas for form/API input validation
+- **State**: React useState/useEffect for client state; MongoDB for persistence
+- **Auth checks**: Use `getServerSession(authOptions)` for server-side auth
+- **Toasts**: Use `toast.success()` / `toast.error()` from `sonner`
+- **Styling**: Tailwind CSS 4 utility classes; custom `clsx` + `tailwind-merge` via `cn()` helper
+
+## Scripts
+| Command              | Purpose                        |
+|----------------------|--------------------------------|
+| `npm run dev`        | Dev server (Turbopack)         |
+| `npm run build`      | Production build               |
+| `npm run start`      | Production server              |
+| `npm run lint`       | ESLint                         |
+| `npx tsx scripts/seed.ts` | Seed DB with test data    |
+
+## Known TODOs / Tech Debt
+1. Password hashing needs bcrypt in production (demo bypass exists)
+2. No root `middleware.ts` for route protection
+3. SMS/OTP verification not connected to real gateway
+4. `villagesCovered` stat is hardcoded to 45
+5. Some stats return mock string fallbacks instead of 0
+6. District/Upazila inputs could use standardized dropdown data
+7. Session type uses `(session.user as any)` in places
+8. Push notifications for emergency requests need completion

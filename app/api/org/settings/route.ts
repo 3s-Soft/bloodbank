@@ -19,7 +19,7 @@ export async function GET(req: Request) {
         }
 
         return NextResponse.json(organization);
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error("Fetch organization error:", error);
         return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
     }
@@ -67,8 +67,8 @@ export async function PUT(req: Request) {
         }
 
         return NextResponse.json({ message: "Organization updated successfully", organization });
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error("Update organization error:", error);
-        return NextResponse.json({ error: error.message || "Internal Server Error" }, { status: 500 });
+        return NextResponse.json({ error: (error instanceof Error ? error.message : "Internal Server Error") }, { status: 500 });
     }
 }

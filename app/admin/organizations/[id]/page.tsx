@@ -112,7 +112,7 @@ export default function EditOrganizationPage({
             toast.success("Organization updated successfully!");
             router.push("/admin/organizations");
         } catch (error: any) {
-            toast.error(error.message);
+            toast.error(error instanceof Error ? error.message : "An error occurred");
         } finally {
             setIsSubmitting(false);
         }

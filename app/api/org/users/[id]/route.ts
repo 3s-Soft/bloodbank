@@ -23,7 +23,7 @@ export async function GET(
             ...user,
             donorProfile,
         });
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error("Fetch user error:", error);
         return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
     }
@@ -59,9 +59,9 @@ export async function PUT(
         }
 
         return NextResponse.json({ message: "User updated successfully", user });
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error("Update user error:", error);
-        return NextResponse.json({ error: error.message || "Internal Server Error" }, { status: 500 });
+        return NextResponse.json({ error: (error instanceof Error ? error.message : "Internal Server Error") }, { status: 500 });
     }
 }
 
@@ -83,7 +83,7 @@ export async function DELETE(
         }
 
         return NextResponse.json({ message: "User deleted successfully" });
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error("Delete user error:", error);
         return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
     }

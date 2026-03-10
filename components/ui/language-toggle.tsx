@@ -1,6 +1,6 @@
 "use client";
 
-import { useLanguage, Language } from "@/lib/i18n";
+import { useLanguage } from "@/lib/i18n";
 import { Globe } from "lucide-react";
 
 interface LanguageToggleProps {

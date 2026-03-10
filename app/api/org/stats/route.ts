@@ -45,7 +45,7 @@ export async function GET(req: Request) {
             activeRequests: activeRequests || 0,
             villagesCovered: uniqueVillages.length || 0
         });
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error("Fetch stats error:", error);
         return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
     }

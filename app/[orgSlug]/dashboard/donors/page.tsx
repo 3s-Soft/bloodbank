@@ -60,6 +60,7 @@ export default function DonorManagement() {
         }
     };
 
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     useEffect(() => { fetchDonors(); }, [orgSlug]);
 
     const handleVerify = async (donorId: string, currentStatus: boolean) => {
@@ -73,7 +74,7 @@ export default function DonorManagement() {
                 toast.success(currentStatus ? "Verification removed" : "Donor verified!");
                 fetchDonors();
             }
-        } catch (error) {
+        } catch {
             toast.error("Failed to update verification status");
         }
     };
@@ -93,7 +94,7 @@ export default function DonorManagement() {
             toast.success(`${selectedDonors.size} donors ${verify ? "verified" : "unverified"} successfully!`);
             setSelectedDonors(new Set());
             fetchDonors();
-        } catch (error) {
+        } catch {
             toast.error("Some operations failed");
         } finally {
             setIsBulkProcessing(false);
@@ -144,7 +145,7 @@ export default function DonorManagement() {
 
     const toggleDonorSelection = (donorId: string) => {
         const s = new Set(selectedDonors);
-        s.has(donorId) ? s.delete(donorId) : s.add(donorId);
+        if (s.has(donorId)) { s.delete(donorId); } else { s.add(donorId); }
         setSelectedDonors(s);
     };
 
@@ -209,7 +210,7 @@ export default function DonorManagement() {
                     ].map((f) => (
                         <button
                             key={f.key}
-                            onClick={() => setFilter(f.key as any)}
+                            onClick={() => setFilter(f.key as "all" | "unverified" | "verified")}
                             className={`px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all ${filter === f.key
                                     ? "text-white shadow-lg"
                                     : "bg-slate-800 text-slate-400 hover:bg-slate-700 border border-slate-700"

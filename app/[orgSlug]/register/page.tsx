@@ -56,7 +56,7 @@ export default function DonorRegistration() {
             toast.success("Registration successful! You are now a donor.");
             router.push(`/${organization.slug}/donors`);
         } catch (error: any) {
-            toast.error(error.message);
+            toast.error(error instanceof Error ? error.message : "An error occurred");
         }
     };
 

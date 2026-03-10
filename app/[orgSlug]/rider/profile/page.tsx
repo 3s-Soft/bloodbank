@@ -1,15 +1,12 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import {
     Bike,
-    Truck,
     Navigation,
     Shield,
-    CheckCircle2,
     ArrowLeft,
     Save,
-    MapPin
 } from "lucide-react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
@@ -19,7 +16,7 @@ import { toast } from "sonner";
 export default function RiderProfilePage() {
     const params = useParams();
     const router = useRouter();
-    const { data: session } = useSession();
+    useSession();
     const orgSlug = params.orgSlug as string;
 
     const [loading, setLoading] = useState(false);
@@ -54,8 +51,8 @@ export default function RiderProfilePage() {
 
             toast.success("Rider profile updated!");
             router.push(`/${orgSlug}/rider`);
-        } catch (error: any) {
-            toast.error(error.message);
+        } catch (error: unknown) {
+            toast.error(error instanceof Error ? error.message : "Failed to save profile");
         } finally {
             setLoading(false);
         }

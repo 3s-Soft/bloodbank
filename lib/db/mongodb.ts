@@ -1,4 +1,8 @@
-import mongoose from "mongoose";
+import mongoose, { type Mongoose } from "mongoose";
+
+declare global {
+    var mongooseCache: { conn: Mongoose | null; promise: Promise<Mongoose> | null } | undefined;
+}
 
 const MONGODB_URI = process.env.MONGODB_URI;
 
@@ -28,11 +32,11 @@ const sanitizedUri = sanitizeConnectionURI(MONGODB_URI);
  * in development. This prevents connections from growing exponentially
  * during API Route usage.
  */
-let cached = (global as any).mongoose;
-
-if (!cached) {
-  cached = (global as any).mongoose = { conn: null, promise: null };
+if (!globalThis.mongooseCache) {
+  globalThis.mongooseCache = { conn: null, promise: null };
 }
+
+const cached = globalThis.mongooseCache;
 
 async function connectToDatabase() {
   if (cached.conn) {

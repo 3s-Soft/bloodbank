@@ -9,7 +9,7 @@ export async function getRiderProfile(userId: string) {
 
 export async function getAvailableTasks(district?: string, upazila?: string) {
     await connectToDatabase();
-    let query: any = { status: "pending" };
+    const query: Record<string, unknown> = { status: "pending" };
     // In a real app, we'd filter by coverage areas too
     return await DeliveryTask.find(query).sort({ createdAt: -1 }).lean();
 }

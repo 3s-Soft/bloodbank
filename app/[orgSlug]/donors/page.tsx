@@ -4,8 +4,6 @@ import { useOrganization } from "@/lib/context/OrganizationContext";
 import { Button } from "@/components/ui/button";
 import { LocationSelect, BloodGroupSelect } from "@/components/ui/location-select";
 import {
-    Search,
-    Droplet,
     MapPin,
     Phone,
     CheckCircle2,
@@ -13,10 +11,7 @@ import {
     Users,
     Filter,
     SortAsc,
-    Clock,
-    Calendar,
     X,
-    Sparkles,
     Navigation,
     ChevronDown,
     ChevronUp,
@@ -70,6 +65,7 @@ export default function DonorDiscovery() {
         }
     };
 
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     useEffect(() => { fetchDonors(); }, [bloodGroup, district, upazila, organization.slug]);
 
     const getLocationScore = (donor: Donor): number => {

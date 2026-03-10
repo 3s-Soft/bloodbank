@@ -40,8 +40,8 @@ export async function PATCH(
             await Organization.findByIdAndDelete(id);
             return NextResponse.json({ message: "Organization rejected and removed" });
         }
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error("Error verifying organization:", error);
-        return NextResponse.json({ error: error.message || "Failed to process request" }, { status: 500 });
+        return NextResponse.json({ error: (error instanceof Error ? error.message : "Failed to process request") }, { status: 500 });
     }
 }

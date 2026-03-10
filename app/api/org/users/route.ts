@@ -22,7 +22,7 @@ export async function GET(req: Request) {
         }
 
         // Build query
-        let query: any = { organization: organization._id };
+        const query: Record<string, unknown> = { organization: organization._id };
 
         if (role && role !== "all") {
             query.role = role;
@@ -71,7 +71,7 @@ export async function GET(req: Request) {
             users: enhancedUsers,
             stats,
         });
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error("Fetch users error:", error);
         return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
     }
@@ -108,8 +108,8 @@ export async function POST(req: Request) {
         });
 
         return NextResponse.json({ message: "User created successfully", user }, { status: 201 });
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error("Create user error:", error);
-        return NextResponse.json({ error: error.message || "Internal Server Error" }, { status: 500 });
+        return NextResponse.json({ error: (error instanceof Error ? error.message : "Internal Server Error") }, { status: 500 });
     }
 }

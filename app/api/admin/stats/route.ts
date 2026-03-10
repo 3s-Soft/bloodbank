@@ -49,7 +49,7 @@ export async function GET() {
             recentOrganizations,
             orgStats,
         });
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error("Fetch admin stats error:", error);
         return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
     }

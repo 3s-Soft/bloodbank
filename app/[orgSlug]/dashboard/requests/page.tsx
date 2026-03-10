@@ -41,7 +41,6 @@ export default function RequestManagement() {
     const organization = useOrganization();
     const orgSlug = organization.slug;
     const primaryColor = organization.primaryColor || "#dc2626";
-    const [requests, setRequests] = useState<BloodRequest[]>([]);
     const [allRequests, setAllRequests] = useState<BloodRequest[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [statusFilter, setStatusFilter] = useState<"all" | "pending" | "fulfilled" | "canceled">("pending");
@@ -61,7 +60,6 @@ export default function RequestManagement() {
             ]);
             const all = [...pending, ...fulfilled, ...canceled];
             setAllRequests(all);
-            setRequests(all);
         } catch (error) {
             console.error("Failed to fetch requests", error);
         } finally {
@@ -69,6 +67,7 @@ export default function RequestManagement() {
         }
     };
 
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     useEffect(() => { fetchRequests(); }, [orgSlug]);
 
     const handleStatusUpdate = async (requestId: string, newStatus: string) => {
@@ -82,7 +81,7 @@ export default function RequestManagement() {
                 toast.success(`Request marked as ${newStatus}`);
                 fetchRequests();
             }
-        } catch (error) {
+        } catch {
             toast.error("Failed to update request status");
         }
     };
@@ -115,7 +114,7 @@ export default function RequestManagement() {
             } else {
                 throw new Error("Failed to create task");
             }
-        } catch (error) {
+        } catch {
             toast.error("Coordination failed. Please try again.");
         } finally {
             setIsSubmittingTask(false);
@@ -240,7 +239,7 @@ export default function RequestManagement() {
                         return (
                             <button
                                 key={f.key}
-                                onClick={() => setStatusFilter(f.key as any)}
+                                onClick={() => setStatusFilter(f.key as "all" | "pending" | "fulfilled" | "canceled")}
                                 className={`px-3 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-1.5 ${statusFilter === f.key
                                     ? "text-white shadow-lg"
                                     : "bg-slate-800 text-slate-400 hover:bg-slate-700 border border-slate-700"
@@ -263,7 +262,7 @@ export default function RequestManagement() {
                     ].map((f) => (
                         <button
                             key={f.key}
-                            onClick={() => setUrgencyFilter(f.key as any)}
+                            onClick={() => setUrgencyFilter(f.key as "all" | "normal" | "urgent" | "emergency")}
                             className={`px-3 py-2 rounded-xl text-xs font-bold transition-all ${urgencyFilter === f.key
                                 ? "bg-slate-700 text-white"
                                 : "bg-slate-800/50 text-slate-500 hover:bg-slate-800 border border-slate-800"
