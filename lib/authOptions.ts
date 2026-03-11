@@ -2,67 +2,49 @@ import { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import GoogleProvider from "next-auth/providers/google";
 import bcrypt from "bcryptjs";
-import { adminDb, adminAuth } from "./firebase/adminApp";
+import { adminDb } from "./firebase/adminApp";
 import { COLLECTIONS, UserRole } from "./firebase/types";
 
 export const authOptions: NextAuthOptions = {
     providers: [
         CredentialsProvider({
-            id: "firebase-phone",
-            name: "Firebase Phone Authentication",
+            id: "phone",
+            name: "Phone Number",
             credentials: {
-                idToken: { label: "ID Token", type: "text" },
+                phone: { label: "Phone Number", type: "text" },
+                password: { label: "Password", type: "password" },
             },
             async authorize(credentials) {
-                if (!credentials?.idToken) {
-                    throw new Error("No token provided");
+                if (!credentials?.phone || !credentials?.password) {
+                    throw new Error("Please enter phone and password");
                 }
 
-                try {
-                    // Verify the Firebase ID token
-                    const decodedToken = await adminAuth.verifyIdToken(credentials.idToken);
-                    
-                    if (!decodedToken.phone_number) {
-                        throw new Error("No phone number attached to this token");
-                    }
+                const usersRef = adminDb.collection(COLLECTIONS.USERS);
+                const snapshot = await usersRef.where("phone", "==", credentials.phone).limit(1).get();
 
-                    const phone = decodedToken.phone_number.replace("+88", "");
-
-                    // Find or create user
-                    const usersRef = adminDb.collection(COLLECTIONS.USERS);
-                    const snapshot = await usersRef.where("phone", "==", phone).limit(1).get();
-
-                    let user;
-                    let userId;
-
-                    if (snapshot.empty) {
-                        // Auto-register new donors who sign in via phone
-                        const newUserRef = await usersRef.add({
-                            name: "New Donor",
-                            phone: phone,
-                            role: UserRole.DONOR,
-                            createdAt: new Date(),
-                            updatedAt: new Date(),
-                            onboardingCompleted: false,
-                        });
-                        user = { name: "New Donor", phone, role: UserRole.DONOR };
-                        userId = newUserRef.id;
-                    } else {
-                        const userDoc = snapshot.docs[0];
-                        user = userDoc.data();
-                        userId = userDoc.id;
-                    }
-
-                    return {
-                        id: userId,
-                        name: user.name,
-                        email: user.email || null,
-                        role: user.role,
-                    };
-                } catch (error) {
-                    console.error("Firebase Auth verification failed:", error);
-                    return null;
+                if (snapshot.empty) {
+                    throw new Error("No user found with this phone number");
                 }
+
+                const userDoc = snapshot.docs[0];
+                const user = { _id: userDoc.id, ...userDoc.data() } as any;
+
+                if (!user.password) {
+                    throw new Error("User has no password set");
+                }
+
+                const isPasswordValid = await bcrypt.compare(credentials.password, user.password) || credentials.password === user.password;
+                
+                if (!isPasswordValid) {
+                     throw new Error("Invalid password");
+                }
+
+                return {
+                    id: user._id,
+                    name: user.name,
+                    email: user.email,
+                    role: user.role,
+                };
             },
         }),
         CredentialsProvider({
