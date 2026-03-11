@@ -12,6 +12,7 @@ const pwaConfig = withPWA({
 const nextConfig: NextConfig = {
   /* config options here */
   output: "standalone",
+  serverExternalPackages: ["firebase-admin", "@opentelemetry/api"],
   turbopack: {},
   images: {
     formats: ["image/avif", "image/webp"],

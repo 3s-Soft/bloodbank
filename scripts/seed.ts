@@ -5,95 +5,45 @@
  * npx tsx scripts/seed.ts
  * 
  * Prerequisites:
- * - MongoDB running locally or MONGODB_URI set in .env.local
+ * - Firebase project credentials set in .env.local
  * - Node.js installed
  */
 
-import mongoose from "mongoose";
+import * as admin from "firebase-admin";
 import * as dotenv from "dotenv";
 import { resolve } from "path";
+import bcrypt from "bcryptjs";
 
 // Load environment variables
 dotenv.config({ path: resolve(process.cwd(), ".env.local") });
 
-const MONGODB_URI = process.env.MONGODB_URI;
+function initFirebaseAdmin() {
+    if (!admin.apps.length) {
+        let privateKey = process.env.FIREBASE_PRIVATE_KEY;
+        if (privateKey) {
+            privateKey = privateKey.replace(/\\n/g, '\n');
+        }
 
-if (!MONGODB_URI) {
-    console.error("❌ MONGODB_URI not found in .env.local");
-    process.exit(1);
+        admin.initializeApp({
+            credential: admin.credential.cert({
+                projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+                clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+                privateKey: privateKey,
+            }),
+        });
+    }
+    return admin.firestore();
 }
 
-// Organization Schema
-const OrganizationSchema = new mongoose.Schema(
-    {
-        name: { type: String, required: true },
-        slug: { type: String, required: true, unique: true, lowercase: true, trim: true },
-        logo: { type: String },
-        primaryColor: { type: String, default: "#D32F2F" },
-        contactEmail: { type: String },
-        contactPhone: { type: String },
-        address: { type: String },
-        isActive: { type: Boolean, default: true },
-    },
-    { timestamps: true }
-);
+const db = initFirebaseAdmin();
 
-const Organization = mongoose.models.Organization || mongoose.model("Organization", OrganizationSchema);
-
-// User Schema
-const UserSchema = new mongoose.Schema(
-    {
-        name: { type: String, required: true },
-        phone: { type: String, unique: true, sparse: true },
-        email: { type: String, unique: true, sparse: true },
-        password: { type: String },
-        role: { type: String, default: "patient" },
-        organization: { type: mongoose.Schema.Types.ObjectId, ref: "Organization" },
-        image: { type: String },
-    },
-    { timestamps: true }
-);
-
-const User = mongoose.models.User || mongoose.model("User", UserSchema);
-
-// DonorProfile Schema
-const DonorProfileSchema = new mongoose.Schema(
-    {
-        user: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
-        organization: { type: mongoose.Schema.Types.ObjectId, ref: "Organization", required: true },
-        bloodGroup: { type: String, required: true },
-        district: { type: String, required: true },
-        upazila: { type: String, required: true },
-        village: { type: String },
-        lastDonationDate: { type: Date },
-        isAvailable: { type: Boolean, default: true },
-        isVerified: { type: Boolean, default: false },
-    },
-    { timestamps: true }
-);
-
-const DonorProfile = mongoose.models.DonorProfile || mongoose.model("DonorProfile", DonorProfileSchema);
-
-// BloodRequest Schema
-const BloodRequestSchema = new mongoose.Schema(
-    {
-        patientName: { type: String, required: true },
-        bloodGroup: { type: String, required: true },
-        location: { type: String, required: true },
-        district: { type: String, required: true },
-        upazila: { type: String, required: true },
-        urgency: { type: String, default: "normal" },
-        requiredDate: { type: Date, required: true },
-        contactNumber: { type: String, required: true },
-        additionalNotes: { type: String },
-        status: { type: String, default: "pending" },
-        requester: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
-        organization: { type: mongoose.Schema.Types.ObjectId, ref: "Organization", required: true },
-    },
-    { timestamps: true }
-);
-
-const BloodRequest = mongoose.models.BloodRequest || mongoose.model("BloodRequest", BloodRequestSchema);
+// Constants
+const COLLECTIONS = {
+    USERS: "users",
+    DONOR_PROFILES: "donorProfiles",
+    ORGANIZATIONS: "organizations",
+    BLOOD_REQUESTS: "bloodRequests"
+};
 
 // Dummy Data
 const bloodGroups = ["A+", "A-", "B+", "B-", "O+", "O-", "AB+", "AB-"];
@@ -147,22 +97,29 @@ function generatePhone(): string {
     return `${prefix}${number}`;
 }
 
+async function clearCollections() {
+    console.log("🧹 Clearing existing Firestore data...");
+    for (const collection of Object.values(COLLECTIONS)) {
+        const snapshot = await db.collection(collection).get();
+        const batchSize = snapshot.size;
+        if (batchSize === 0) continue;
+        const batch = db.batch();
+        snapshot.docs.forEach((doc) => {
+            batch.delete(doc.ref);
+        });
+        await batch.commit();
+        console.log(`   - Cleared ${batchSize} documents from ${collection}`);
+    }
+}
+
 async function seed() {
-    console.log("🌱 Starting database seed...\n");
+    console.log("🌱 Starting Firestore database seed...\n");
 
     try {
-        await mongoose.connect(MONGODB_URI!);
-        console.log("✅ Connected to MongoDB");
-
-        // Clear existing data
-        console.log("🧹 Clearing existing data...");
-        await Promise.all([
-            Organization.deleteMany({}),
-            User.deleteMany({}),
-            DonorProfile.deleteMany({}),
-            BloodRequest.deleteMany({}),
-        ]);
+        await clearCollections();
         console.log("✅ Collections cleared\n");
+
+        const hashedPassword = await bcrypt.hash("demo123", 10);
 
         // Create test organizations
         const organizations = [
@@ -173,6 +130,8 @@ async function seed() {
                 contactPhone: "01711111111",
                 contactEmail: "savar@bloodbank.org",
                 address: "Savar Bus Stand, Savar, Dhaka",
+                isActive: true,
+                createdAt: new Date(),
             },
             {
                 name: "Uttara Donors",
@@ -181,6 +140,8 @@ async function seed() {
                 contactPhone: "01722222222",
                 contactEmail: "uttara@bloodbank.org",
                 address: "Sector 10, Uttara, Dhaka",
+                isActive: true,
+                createdAt: new Date(),
             },
             {
                 name: "Mirpur Life Savers",
@@ -189,37 +150,32 @@ async function seed() {
                 contactPhone: "01733333333",
                 contactEmail: "mirpur@bloodbank.org",
                 address: "Mirpur-10, Dhaka",
+                isActive: true,
+                createdAt: new Date(),
             },
         ];
 
         const createdOrgs: any[] = [];
 
         for (const org of organizations) {
-            let existingOrg = await Organization.findOne({ slug: org.slug });
-            if (!existingOrg) {
-                existingOrg = await Organization.create(org);
-                console.log(`✅ Created organization: ${org.name}`);
-            } else {
-                console.log(`⏭️  Organization already exists: ${org.name}`);
-            }
-            createdOrgs.push(existingOrg);
+            const orgRef = db.collection(COLLECTIONS.ORGANIZATIONS).doc();
+            await orgRef.set(org);
+            console.log(`✅ Created organization: ${org.name}`);
+            createdOrgs.push({ id: orgRef.id, ...org });
         }
 
         // Create super admin user
-        const superAdminExists = await User.findOne({ phone: "01700000000" });
-        let superAdmin;
-        if (!superAdminExists) {
-            superAdmin = await User.create({
-                name: "Super Admin",
-                phone: "01700000000",
-                email: "admin@bloodbank.org",
-                role: "super_admin",
-            });
-            console.log("✅ Created super admin (phone: 01700000000, password: demo123)");
-        } else {
-            superAdmin = superAdminExists;
-            console.log("⏭️  Super admin already exists");
-        }
+        const superAdminRef = db.collection(COLLECTIONS.USERS).doc();
+        await superAdminRef.set({
+            name: "Super Admin",
+            phone: "01700000000",
+            email: "admin@bloodbank.org",
+            password: hashedPassword,
+            role: "super_admin",
+            createdAt: new Date(),
+        });
+        const superAdminId = superAdminRef.id;
+        console.log("✅ Created super admin (phone: 01700000000, password: demo123)");
 
         // Create donors and blood requests for each organization
         for (const org of createdOrgs) {
@@ -227,16 +183,16 @@ async function seed() {
 
             // Create admin for this org
             const adminPhone = `0171${Math.floor(1000000 + Math.random() * 9000000)}`;
-            let orgAdmin = await User.findOne({ phone: adminPhone });
-            if (!orgAdmin) {
-                orgAdmin = await User.create({
-                    name: `${org.name.split(' ')[0]} Admin`,
-                    phone: adminPhone,
-                    role: "admin",
-                    organization: org._id,
-                });
-                console.log(`   ✅ Created org admin: ${orgAdmin.name}`);
-            }
+            const orgAdminRef = db.collection(COLLECTIONS.USERS).doc();
+            await orgAdminRef.set({
+                name: `${org.name.split(' ')[0]} Admin`,
+                phone: adminPhone,
+                password: hashedPassword,
+                role: "admin",
+                organization: org.id,
+                createdAt: new Date(),
+            });
+            console.log(`   ✅ Created org admin: ${org.name.split(' ')[0]} Admin`);
 
             // Create 15-25 donors per organization
             const donorCount = 15 + Math.floor(Math.random() * 11);
@@ -250,30 +206,30 @@ async function seed() {
                 const district = getRandomElement(districts);
                 const upazila = getRandomElement(district.upazilas);
                 const bloodGroup = getRandomElement(bloodGroups);
-
-                // Check if user exists
-                const existingUser = await User.findOne({ phone });
-                if (existingUser) continue;
-
+                
                 // Create user
-                const user = await User.create({
+                const userRef = db.collection(COLLECTIONS.USERS).doc();
+                await userRef.set({
                     name,
                     phone,
+                    password: hashedPassword,
                     role: "donor",
-                    organization: org._id,
+                    organization: org.id,
+                    createdAt: new Date(),
                 });
 
                 // Create donor profile
-                await DonorProfile.create({
-                    user: user._id,
-                    organization: org._id,
+                await db.collection(COLLECTIONS.DONOR_PROFILES).doc().set({
+                    user: userRef.id,
+                    organization: org.id,
                     bloodGroup,
                     district: district.name,
                     upazila,
-                    village: Math.random() > 0.3 ? getRandomElement(villages) : undefined,
-                    lastDonationDate: Math.random() > 0.4 ? getRandomDate(180) : undefined,
+                    village: Math.random() > 0.3 ? getRandomElement(villages) : null,
+                    lastDonationDate: Math.random() > 0.4 ? getRandomDate(180) : null,
                     isAvailable: Math.random() > 0.2,
                     isVerified: Math.random() > 0.4,
+                    createdAt: new Date(),
                 });
 
                 createdDonors++;
@@ -290,7 +246,7 @@ async function seed() {
                 const urgencies = ["normal", "urgent", "emergency"];
                 const statuses = ["pending", "pending", "pending", "fulfilled", "canceled"];
 
-                await BloodRequest.create({
+                await db.collection(COLLECTIONS.BLOOD_REQUESTS).doc().set({
                     patientName: getRandomElement(patientNames),
                     bloodGroup: getRandomElement(bloodGroups),
                     location: `${getRandomElement(villages)}, ${upazila}`,
@@ -301,10 +257,13 @@ async function seed() {
                     contactNumber: generatePhone(),
                     additionalNotes: Math.random() > 0.5
                         ? "Please call before coming. Patient is in ICU."
-                        : undefined,
+                        : null,
                     status: getRandomElement(statuses),
-                    requester: superAdmin._id,
-                    organization: org._id,
+                    requester: superAdminId,
+                    organization: org.id,
+                    matchedDonors: [],
+                    createdAt: new Date(),
+                    updatedAt: new Date(),
                 });
 
                 createdRequests++;
@@ -313,15 +272,16 @@ async function seed() {
         }
 
         // Summary
-        const totalDonors = await DonorProfile.countDocuments({});
-        const totalRequests = await BloodRequest.countDocuments({});
-        const totalUsers = await User.countDocuments({});
+        const totalOrgs = (await db.collection(COLLECTIONS.ORGANIZATIONS).count().get()).data().count;
+        const totalUsers = (await db.collection(COLLECTIONS.USERS).count().get()).data().count;
+        const totalDonors = (await db.collection(COLLECTIONS.DONOR_PROFILES).count().get()).data().count;
+        const totalRequests = (await db.collection(COLLECTIONS.BLOOD_REQUESTS).count().get()).data().count;
 
         console.log("\n" + "=".repeat(50));
         console.log("🎉 Seed completed successfully!");
         console.log("=".repeat(50));
         console.log(`\n📊 Database Summary:`);
-        console.log(`   Organizations: ${createdOrgs.length}`);
+        console.log(`   Organizations: ${totalOrgs}`);
         console.log(`   Users: ${totalUsers}`);
         console.log(`   Donors: ${totalDonors}`);
         console.log(`   Blood Requests: ${totalRequests}`);
@@ -339,9 +299,6 @@ async function seed() {
     } catch (error) {
         console.error("❌ Seed failed:", error);
         process.exit(1);
-    } finally {
-        await mongoose.disconnect();
-        console.log("\n🔌 Disconnected from MongoDB");
     }
 }
 
