@@ -6,7 +6,8 @@ We are thrilled to announce a major architectural shift for BloodBank! To increa
 ### Key Changes
 - **Database Schema Shift**: All Mongoose models have been replaced with TypeScript interfaces mapping to NoSQL document structures in Firestore.
 - **Serverless APIs**: Next.js API routes (Donors, Blood Requests, Organizations, Donations, Events, Feedback, Dashboard, Admin) have been rewritten to utilize the `firebase-admin` SDK. This replaces complex MongoDB queries with NoSQL-optimized filtering.
-- **Authentication Overhaul**: NextAuth callbacks and credential providers (Email & Phone) now read and persist user profiles natively against Firestore, stepping entirely away from MongoDB.
+- **Authentication Overhaul**: NextAuth callbacks and credential providers (Email & Google) now read and persist user profiles natively against Firestore, stepping entirely away from MongoDB.
+- **Native Phone Auth**: The legacy `bcrypt` local credentials provider for phone numbers has been replaced with true Firebase Native Phone Authentication. The login page now mounts an invisible `RecaptchaVerifier` and sends SMS OTP codes, which resolve into ID tokens that establish the Next.js session natively and automatically enroll new donors.
 - **Firebase Cloud Messaging (FCM)**: Replaced legacy `web-push` code with native Firebase Messaging to dispatch real-time emergency blood requests directly to verified donor devices.
 - **Live Event Sockets**: Refactored the Organization Request Dashboard (`app/[orgSlug]/dashboard/requests/page.tsx`) to pull live data updates instantly using Firebase's `onSnapshot` real-time socket listener, moving away from polled REST fetches.
 - **Codebase Cleansing**: Mongoose legacy code dependencies have been cleanly pruned from the project, reducing architectural overhead.
