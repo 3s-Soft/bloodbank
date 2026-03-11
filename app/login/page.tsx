@@ -11,6 +11,12 @@ import Link from "next/link";
 import { auth, googleProvider } from "@/lib/firebase";
 import { signInWithPopup } from "firebase/auth";
 
+declare global {
+    interface Window {
+        recaptchaVerifier: any;
+    }
+}
+
 function LoginForm() {
     const router = useRouter();
     const searchParams = useSearchParams();
@@ -18,23 +24,83 @@ function LoginForm() {
 
     const [loginType, setLoginType] = useState<"phone" | "email">("phone");
     const [phone, setPhone] = useState("");
+    const [otp, setOtp] = useState("");
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [isLoading, setIsLoading] = useState(false);
     const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+    const [confirmationResult, setConfirmationResult] = useState<any>(null);
 
-    const handleSubmit = async (e: React.FormEvent) => {
+    const handleSendOtp = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsLoading(true);
 
         try {
-            const providerId = loginType; // either "phone" or "email"
-            const credentials = loginType === "phone"
-                ? { phone, password }
-                : { email, password };
+            if (!window.recaptchaVerifier) {
+                const { RecaptchaVerifier } = await import("firebase/auth");
+                window.recaptchaVerifier = new RecaptchaVerifier(auth, "recaptcha-container", {
+                    size: "invisible",
+                });
+            }
 
-            const result = await signIn(providerId, {
-                ...credentials,
+            const { signInWithPhoneNumber } = await import("firebase/auth");
+            
+            // Format phone number to E.164 if missing country code
+            const formattedPhone = phone.startsWith("+") ? phone : `+88${phone}`;
+            
+            const confirmation = await signInWithPhoneNumber(auth, formattedPhone, window.recaptchaVerifier);
+            setConfirmationResult(confirmation);
+            toast.success("OTP sent to your phone!");
+        } catch (error: any) {
+            console.error("OTP send error:", error);
+            toast.error(error.message || "Failed to send OTP");
+            if (window.recaptchaVerifier) {
+                window.recaptchaVerifier.clear();
+                window.recaptchaVerifier = null;
+            }
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const handleVerifyOtp = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!confirmationResult) return;
+        setIsLoading(true);
+
+        try {
+            const result = await confirmationResult.confirm(otp);
+            const idToken = await result.user.getIdToken();
+
+            // Send Firebase token to NextAuth
+            const signInResult = await signIn("firebase-phone", {
+                idToken,
+                redirect: false,
+            });
+
+            if (signInResult?.error) {
+                toast.error(signInResult.error);
+            } else if (signInResult?.ok) {
+                toast.success("Login successful!");
+                router.refresh();
+                router.push(orgSlug ? `/${orgSlug}/dashboard` : "/");
+            }
+        } catch (error: any) {
+            console.error("OTP verification error:", error);
+            toast.error("Invalid OTP code");
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const handleEmailSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setIsLoading(true);
+
+        try {
+            const result = await signIn("email", {
+                email,
+                password,
                 redirect: false,
             });
 
@@ -43,13 +109,7 @@ function LoginForm() {
             } else if (result?.ok) {
                 toast.success("Login successful!");
                 router.refresh();
-                if (orgSlug) {
-                    router.push(`/${orgSlug}/dashboard`);
-                } else {
-                    router.push("/");
-                }
-            } else {
-                toast.error("Login failed - unexpected response");
+                router.push(orgSlug ? `/${orgSlug}/dashboard` : "/");
             }
         } catch (error: unknown) {
             console.error("Login error:", error);
@@ -125,60 +185,83 @@ function LoginForm() {
                     </button>
                 </div>
 
-                <form onSubmit={handleSubmit} className="space-y-4">
+                <form onSubmit={loginType === "email" ? handleEmailSubmit : (confirmationResult ? handleVerifyOtp : handleSendOtp)} className="space-y-4">
                     {loginType === "phone" ? (
-                        <div className="space-y-1.5">
-                            <label className="text-xs font-bold uppercase tracking-widest text-slate-500 ml-1 flex items-center">
-                                <Phone className="w-3 h-3 mr-2" />
-                                Phone Number
-                            </label>
-                            <input
-                                type="tel"
-                                value={phone}
-                                onChange={(e) => setPhone(e.target.value)}
-                                placeholder="017XXXXXXXX"
-                                required
-                                className="w-full h-12 rounded-xl border border-slate-800 bg-slate-900 px-4 focus:ring-2 focus:ring-red-500 outline-none transition-all text-white placeholder-slate-600"
-                            />
-                        </div>
+                        <>
+                            {!confirmationResult ? (
+                                <div className="space-y-1.5">
+                                    <label className="text-xs font-bold uppercase tracking-widest text-slate-500 ml-1 flex items-center">
+                                        <Phone className="w-3 h-3 mr-2" />
+                                        Phone Number
+                                    </label>
+                                    <input
+                                        type="tel"
+                                        value={phone}
+                                        onChange={(e) => setPhone(e.target.value)}
+                                        placeholder="017XXXXXXXX"
+                                        required
+                                        className="w-full h-12 rounded-xl border border-slate-800 bg-slate-900 px-4 focus:ring-2 focus:ring-red-500 outline-none transition-all text-white placeholder-slate-600"
+                                    />
+                                    <div id="recaptcha-container"></div>
+                                </div>
+                            ) : (
+                                <div className="space-y-1.5">
+                                    <label className="text-xs font-bold uppercase tracking-widest text-slate-500 ml-1 flex items-center">
+                                        <Lock className="w-3 h-3 mr-2" />
+                                        Enter OTP Code
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={otp}
+                                        onChange={(e) => setOtp(e.target.value)}
+                                        placeholder="123456"
+                                        required
+                                        className="w-full h-12 rounded-xl border border-slate-800 bg-slate-900 px-4 focus:ring-2 focus:ring-red-500 outline-none transition-all text-white placeholder-slate-600 text-center tracking-widest font-mono text-lg"
+                                    />
+                                </div>
+                            )}
+                        </>
                     ) : (
-                        <div className="space-y-1.5">
-                            <label className="text-xs font-bold uppercase tracking-widest text-slate-500 ml-1 flex items-center">
-                                <Mail className="w-3 h-3 mr-2" />
-                                Email Address
-                            </label>
-                            <input
-                                type="email"
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
-                                placeholder="name@example.com"
-                                required
-                                className="w-full h-12 rounded-xl border border-slate-800 bg-slate-900 px-4 focus:ring-2 focus:ring-red-500 outline-none transition-all text-white placeholder-slate-600"
-                            />
-                        </div>
+                        <>
+                            <div className="space-y-1.5">
+                                <label className="text-xs font-bold uppercase tracking-widest text-slate-500 ml-1 flex items-center">
+                                    <Mail className="w-3 h-3 mr-2" />
+                                    Email Address
+                                </label>
+                                <input
+                                    type="email"
+                                    value={email}
+                                    onChange={(e) => setEmail(e.target.value)}
+                                    placeholder="name@example.com"
+                                    required
+                                    className="w-full h-12 rounded-xl border border-slate-800 bg-slate-900 px-4 focus:ring-2 focus:ring-red-500 outline-none transition-all text-white placeholder-slate-600"
+                                />
+                            </div>
+                            <div className="space-y-1.5">
+                                <label className="text-xs font-bold uppercase tracking-widest text-slate-500 ml-1 flex items-center">
+                                    <Lock className="w-3 h-3 mr-2" />
+                                    Password
+                                </label>
+                                <input
+                                    type="password"
+                                    value={password}
+                                    onChange={(e) => setPassword(e.target.value)}
+                                    placeholder="••••••••"
+                                    required
+                                    className="w-full h-12 rounded-xl border border-slate-800 bg-slate-900 px-4 focus:ring-2 focus:ring-red-500 outline-none transition-all text-white placeholder-slate-600"
+                                />
+                            </div>
+                        </>
                     )}
-
-                    <div className="space-y-1.5">
-                        <label className="text-xs font-bold uppercase tracking-widest text-slate-500 ml-1 flex items-center">
-                            <Lock className="w-3 h-3 mr-2" />
-                            Password
-                        </label>
-                        <input
-                            type="password"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            placeholder="••••••••"
-                            required
-                            className="w-full h-12 rounded-xl border border-slate-800 bg-slate-900 px-4 focus:ring-2 focus:ring-red-500 outline-none transition-all text-white placeholder-slate-600"
-                        />
-                    </div>
 
                     <Button
                         type="submit"
                         className="w-full h-12 text-sm font-black uppercase tracking-widest text-white bg-red-600 hover:bg-red-700 shadow-lg shadow-red-900/20"
                         disabled={isLoading || isGoogleLoading}
                     >
-                        {isLoading ? "Signing in..." : "Sign In"}
+                        {isLoading ? "Please wait..." : (
+                            loginType === "email" ? "Sign In" : (confirmationResult ? "Verify OTP" : "Send OTP")
+                        )}
                     </Button>
                 </form>
 
