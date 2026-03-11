@@ -6,10 +6,10 @@ import bcrypt from "bcryptjs";
 export async function POST(req: Request) {
     try {
         const body = await req.json();
-        const { name, phone, password, age, gender, bloodGroup, district, upazila, village, lastDonationDate, orgSlug } = body;
+        const { name, email, phone, password, age, gender, bloodGroup, district, upazila, village, lastDonationDate, orgSlug } = body;
 
-        if (!name || !phone || !orgSlug) {
-            return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+        if (!name || (!phone && !email) || !orgSlug) {
+            return NextResponse.json({ error: "Missing required fields: Name, Organization, and either Phone or Email" }, { status: 400 });
         }
 
         // Find organization
@@ -20,9 +20,18 @@ export async function POST(req: Request) {
         }
         const organizationId = orgSnapshot.docs[0].id;
 
-        // Check if user already exists (globally by phone)
         const usersRef = adminDb.collection(COLLECTIONS.USERS);
-        const userSnapshot = await usersRef.where("phone", "==", phone).limit(1).get();
+        let userSnapshot;
+        
+        // Find by email or phone
+        if (email) {
+            userSnapshot = await usersRef.where("email", "==", email).limit(1).get();
+            if (userSnapshot.empty && phone) {
+                userSnapshot = await usersRef.where("phone", "==", phone).limit(1).get();
+            }
+        } else {
+            userSnapshot = await usersRef.where("phone", "==", phone).limit(1).get();
+        }
         
         let userId;
         let userData;
@@ -32,7 +41,8 @@ export async function POST(req: Request) {
             // Create user for the organization
             const newUserReq = {
                 name,
-                phone,
+                email: email || null,
+                phone: phone || null,
                 password: hashedPassword,
                 role: UserRole.DONOR,
                 organization: organizationId,
@@ -53,14 +63,23 @@ export async function POST(req: Request) {
             const existingUser = userSnapshot.docs[0];
             userId = existingUser.id;
             userData = { _id: userId, ...existingUser.data() } as any;
+            
+            // If user exists but is missing phone/email from the form, update it
+            const updates: any = {};
+            if (email && !userData.email) updates.email = email;
+            if (phone && !userData.phone) updates.phone = phone;
+            if (password && !userData.password) updates.password = await bcrypt.hash(password, 10);
+            
             // If user exists but is not part of this organization, 
             // and has NO organization assigned yet, we can assign this one.
             if (!userData.organization) {
-                await usersRef.doc(userId).update({
-                    organization: organizationId,
-                    updatedAt: new Date()
-                });
+                updates.organization = organizationId;
                 userData.organization = organizationId;
+            }
+
+            if (Object.keys(updates).length > 0) {
+                updates.updatedAt = new Date();
+                await usersRef.doc(userId).update(updates);
             }
         }
 
