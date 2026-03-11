@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import connectToDatabase from "@/lib/db/mongodb";
 import { Organization } from "@/lib/models/Organization";
+import { User, UserRole } from "@/lib/models/User";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/authOptions";
 
@@ -34,6 +35,15 @@ export async function PATCH(
         if (action === "verify") {
             organization.isVerified = true;
             await organization.save();
+
+            // Promote creator to admin of this organization if they exist
+            if (organization.createdBy) {
+                await User.findByIdAndUpdate(organization.createdBy, {
+                    role: UserRole.ADMIN,
+                    organization: organization._id,
+                });
+            }
+
             return NextResponse.json({ message: "Organization verified successfully", organization });
         } else {
             // Reject = delete the organization

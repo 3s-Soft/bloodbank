@@ -16,8 +16,6 @@ import {
     FileText,
     Clock,
     CheckCircle,
-    Bike,
-    Send,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
@@ -46,9 +44,7 @@ export default function RequestManagement() {
     const [statusFilter, setStatusFilter] = useState<"all" | "pending" | "fulfilled" | "canceled">("pending");
     const [urgencyFilter, setUrgencyFilter] = useState<"all" | "normal" | "urgent" | "emergency">("all");
     const [searchQuery, setSearchQuery] = useState("");
-    const [requestRiderFor, setRequestRiderFor] = useState<BloodRequest | null>(null);
-    const [pickupAddress, setPickupAddress] = useState("");
-    const [isSubmittingTask, setIsSubmittingTask] = useState(false);
+
 
     const fetchRequests = async () => {
         setIsLoading(true);
@@ -86,40 +82,7 @@ export default function RequestManagement() {
         }
     };
 
-    const handleCreateDeliveryTask = async (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!requestRiderFor) return;
 
-        setIsSubmittingTask(true);
-        try {
-            const res = await fetch("/api/deliveries", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    bloodRequestId: requestRiderFor._id,
-                    organizationId: organization._id,
-                    sourceName: organization.name,
-                    sourceAddress: pickupAddress,
-                    destinationName: requestRiderFor.location,
-                    destinationAddress: `${requestRiderFor.location}, ${requestRiderFor.upazila}`,
-                    contactPhone: requestRiderFor.contactNumber,
-                    notes: requestRiderFor.additionalNotes
-                })
-            });
-
-            if (res.ok) {
-                toast.success("Delivery task created! Local riders notified.");
-                setRequestRiderFor(null);
-                setPickupAddress("");
-            } else {
-                throw new Error("Failed to create task");
-            }
-        } catch {
-            toast.error("Coordination failed. Please try again.");
-        } finally {
-            setIsSubmittingTask(false);
-        }
-    };
 
     const filteredRequests = allRequests.filter(request => {
         const matchesStatus = statusFilter === "all" || request.status === statusFilter;
@@ -340,18 +303,6 @@ export default function RequestManagement() {
                                             {request.status === "pending" ? (
                                                 <div className="flex gap-2 shrink-0">
                                                     <Button
-                                                        variant="outline"
-                                                        size="sm"
-                                                        className="border-red-500/30 text-red-500 hover:bg-red-500/10"
-                                                        onClick={() => {
-                                                            setRequestRiderFor(request);
-                                                            setPickupAddress(organization.address || "");
-                                                        }}
-                                                    >
-                                                        <Bike className="w-4 h-4 mr-1.5" />
-                                                        Request Rider
-                                                    </Button>
-                                                    <Button
                                                         className="bg-emerald-600 hover:bg-emerald-700 text-white"
                                                         size="sm"
                                                         onClick={() => handleStatusUpdate(request._id, "fulfilled")}
@@ -399,38 +350,6 @@ export default function RequestManagement() {
                 </div>
             )}
 
-            {/* Request Rider Overlay */}
-            {requestRiderFor && (
-                <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
-                    <div className="w-full max-w-md bg-slate-900 border border-white/10 rounded-[2.5rem] p-8 shadow-2xl space-y-6">
-                        <div className="flex items-center justify-between">
-                            <h2 className="text-2xl font-black text-white">Logistics Pickup</h2>
-                            <button onClick={() => setRequestRiderFor(null)} className="text-slate-500 hover:text-white"><XCircle /></button>
-                        </div>
-                        <p className="text-sm text-slate-400 font-medium">Coordinate a volunteer rider to transport blood for **{requestRiderFor.patientName}**.</p>
-
-                        <form onSubmit={handleCreateDeliveryTask} className="space-y-4">
-                            <div className="space-y-2">
-                                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Pickup Address</label>
-                                <textarea
-                                    required
-                                    value={pickupAddress}
-                                    onChange={(e) => setPickupAddress(e.target.value)}
-                                    placeholder="Enter detailed hospital/bank address..."
-                                    className="w-full h-32 p-4 rounded-2xl bg-slate-800 border-none text-sm text-white focus:ring-2 focus:ring-red-500/50 outline-none resize-none"
-                                />
-                            </div>
-                            <Button
-                                type="submit"
-                                disabled={isSubmittingTask}
-                                className="w-full h-14 rounded-2xl bg-red-600 text-white font-black hover:bg-red-700 shadow-xl shadow-red-500/20"
-                            >
-                                {isSubmittingTask ? "Dispatching..." : <><Send className="w-4 h-4 mr-2" /> Dispatch Rider</>}
-                            </Button>
-                        </form>
-                    </div>
-                </div>
-            )}
         </div>
     );
 }

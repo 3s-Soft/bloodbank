@@ -59,7 +59,7 @@ const BloodRequestSchema: Schema = new Schema(
             enum: Object.values(RequestStatus),
             default: RequestStatus.PENDING,
         },
-        requester: { type: Schema.Types.ObjectId, ref: "User", required: true },
+        requester: { type: Schema.Types.ObjectId, ref: "User" },
         organization: { type: Schema.Types.ObjectId, ref: "Organization", required: true },
         matchedDonors: [{ type: Schema.Types.ObjectId, ref: "DonorProfile" }],
         escalatedAt: { type: Date },

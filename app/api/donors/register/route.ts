@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import connectDB from "@/lib/db/mongodb";
 import { User, UserRole, DonorProfile } from "@/lib/models/User";
 import { Organization } from "@/lib/models/Organization";
+import bcrypt from "bcryptjs";
 
 export async function POST(req: Request) {
     try {
@@ -23,11 +24,12 @@ export async function POST(req: Request) {
         let user = await User.findOne({ phone });
 
         if (!user) {
+            const hashedPassword = password ? await bcrypt.hash(password, 10) : undefined;
             // Create user for the organization
             user = await User.create({
                 name,
                 phone,
-                password, // Store as provided (bcrypt should be used here later)
+                password: hashedPassword,
                 role: UserRole.DONOR,
                 organization: organization._id,
             });

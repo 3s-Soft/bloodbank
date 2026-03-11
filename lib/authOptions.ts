@@ -3,6 +3,7 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import connectToDatabase from "./db/mongodb";
 import { User } from "./models/User";
 import GoogleProvider from "next-auth/providers/google";
+import bcrypt from "bcryptjs";
 
 export const authOptions: NextAuthOptions = {
     providers: [
@@ -25,9 +26,15 @@ export const authOptions: NextAuthOptions = {
                     throw new Error("No user found with this phone number");
                 }
 
-                // Temporary demo logic for development
-                if (credentials.password !== "demo123") {
-                    // throw new Error("Invalid password");
+                if (!user.password) {
+                    throw new Error("User has no password set");
+                }
+
+                // Check bcrypt hash, fallback to plaintext comparison for legacy seed data
+                const isPasswordValid = await bcrypt.compare(credentials.password, user.password) || credentials.password === user.password;
+                
+                if (!isPasswordValid) {
+                     throw new Error("Invalid password");
                 }
 
                 return {
@@ -57,9 +64,15 @@ export const authOptions: NextAuthOptions = {
                     throw new Error("No user found with this email");
                 }
 
-                // Temporary demo logic for development
-                if (credentials.password !== "demo123") {
-                    // throw new Error("Invalid password");
+                if (!user.password) {
+                    throw new Error("User has no password set");
+                }
+
+                // Check bcrypt hash, fallback to plaintext comparison for legacy seed data
+                const isPasswordValid = await bcrypt.compare(credentials.password, user.password) || credentials.password === user.password;
+                
+                if (!isPasswordValid) {
+                     throw new Error("Invalid password");
                 }
 
                 return {
