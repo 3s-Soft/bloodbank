@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { Droplet, Heart, Mail } from "lucide-react";
+import { Droplet, Heart, Mail, User, Activity, MapPin, ChevronRight, ChevronLeft, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -37,15 +37,30 @@ export default function DonorRegistration() {
     const primaryColor = organization.primaryColor || "#D32F2F";
 
     const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+    const [step, setStep] = useState(1);
 
     const {
         register,
         handleSubmit,
         setValue,
+        trigger,
         formState: { errors, isSubmitting },
     } = useForm<DonorFormValues>({
         resolver: zodResolver(donorSchema),
+        mode: "onTouched"
     });
+
+    const nextStep = async () => {
+        let valid = false;
+        if (step === 1) {
+            valid = await trigger(["name", "email", "password"]);
+        } else if (step === 2) {
+            valid = await trigger(["age", "gender", "bloodGroup", "lastDonationDate"]);
+        }
+        if (valid) setStep((s) => s + 1);
+    };
+
+    const prevStep = () => setStep((s) => s - 1);
 
     const handleGoogleSignUp = async () => {
         setIsGoogleLoading(true);
@@ -146,70 +161,131 @@ export default function DonorRegistration() {
                             </div>
                         </div>
 
-                        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <div className="space-y-1.5">
-                                    <label className="text-xs font-bold uppercase tracking-widest text-slate-500 ml-1">Full Name</label>
-                                    <input
-                                        {...register("name")}
-                                        placeholder="Enter your name"
-                                        className="w-full h-12 rounded-xl border border-slate-800 bg-slate-900 px-4 focus:ring-2 focus:ring-red-500 outline-none transition-all text-white placeholder-slate-600"
-                                    />
-                                    {errors.name && <p className="text-xs text-red-500 ml-1">{errors.name.message}</p>}
+                        {/* Progress Indicator */}
+                        <div className="flex items-center justify-between mb-8 relative">
+                            <div className="absolute left-0 top-1/2 -translate-y-1/2 w-full h-1 bg-slate-800 rounded-full z-0">
+                                <div 
+                                    className="h-full rounded-full transition-all duration-500" 
+                                    style={{ width: `${((step - 1) / 2) * 100}%`, backgroundColor: primaryColor }}
+                                />
+                            </div>
+                            
+                            {[
+                                { num: 1, icon: User, label: "Account" },
+                                { num: 2, icon: Activity, label: "Biology" },
+                                { num: 3, icon: MapPin, label: "Location" }
+                            ].map((s) => (
+                                <div key={s.num} className="relative z-10 flex flex-col items-center gap-2">
+                                    <div 
+                                        className={`w-10 h-10 rounded-full flex items-center justify-center border-2 transition-all duration-300 ${
+                                            step >= s.num 
+                                            ? "bg-slate-900 shadow-[0_0_15px_rgba(239,68,68,0.5)]" 
+                                            : "bg-slate-900 border-slate-700 text-slate-500"
+                                        }`}
+                                        style={{ borderColor: step >= s.num ? primaryColor : "" }}
+                                    >
+                                        <s.icon className={`w-5 h-5 ${step >= s.num ? "text-white" : ""}`} style={{ color: step >= s.num ? primaryColor : "" }} />
+                                    </div>
+                                    <span className={`text-[10px] uppercase tracking-widest font-black ${step >= s.num ? "text-white" : "text-slate-600"}`}>
+                                        {s.label}
+                                    </span>
                                 </div>
-                                <div className="space-y-1.5">
-                                    <label className="text-xs font-bold uppercase tracking-widest text-slate-500 ml-1">Email Address (Optional)</label>
-                                    <input
-                                        type="email"
-                                        {...register("email")}
-                                        placeholder="name@example.com"
-                                        className="w-full h-12 rounded-xl border border-slate-800 bg-slate-900 px-4 focus:ring-2 focus:ring-red-500 outline-none transition-all text-white placeholder-slate-600"
-                                    />
-                                    {errors.email && <p className="text-xs text-red-500 ml-1">{errors.email.message}</p>}
+                            ))}
+                        </div>
+
+                        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 relative min-h-[400px]">
+                            
+                            {/* STEP 1: Account Setup */}
+                            <div className={`transition-all duration-500 absolute w-full ${step === 1 ? 'opacity-100 translate-x-0 pointer-events-auto' : 'opacity-0 -translate-x-10 pointer-events-none'}`}>
+                                <div className="space-y-5">
+                                    <div className="space-y-1.5">
+                                        <label className="text-xs font-bold uppercase tracking-widest text-slate-500 ml-1">Full Name</label>
+                                        <input
+                                            {...register("name")}
+                                            placeholder="Enter your name"
+                                            className="w-full h-12 rounded-xl border border-slate-800 bg-slate-900 px-4 focus:ring-2 focus:ring-red-500 outline-none transition-all text-white placeholder-slate-600 shadow-inner"
+                                        />
+                                        {errors.name && <p className="text-xs text-red-500 ml-1">{errors.name.message}</p>}
+                                    </div>
+                                    <div className="space-y-1.5">
+                                        <label className="text-xs font-bold uppercase tracking-widest text-slate-500 ml-1">Email Address (Optional)</label>
+                                        <div className="relative">
+                                            <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+                                            <input
+                                                type="email"
+                                                {...register("email")}
+                                                placeholder="name@example.com"
+                                                className="w-full h-12 rounded-xl border border-slate-800 bg-slate-900 pl-11 pr-4 focus:ring-2 focus:ring-red-500 outline-none transition-all text-white placeholder-slate-600 shadow-inner"
+                                            />
+                                        </div>
+                                        {errors.email && <p className="text-xs text-red-500 ml-1">{errors.email.message}</p>}
+                                    </div>
+                                    <div className="space-y-1.5">
+                                        <label className="text-xs font-bold uppercase tracking-widest text-slate-500 ml-1">Password (Optional)</label>
+                                        <input
+                                            type="password"
+                                            {...register("password")}
+                                            placeholder="••••••••"
+                                            className="w-full h-12 rounded-xl border border-slate-800 bg-slate-900 px-4 focus:ring-2 focus:ring-red-500 outline-none transition-all text-white placeholder-slate-600 shadow-inner"
+                                        />
+                                        {errors.password && <p className="text-xs text-red-500 ml-1">{errors.password.message}</p>}
+                                    </div>
                                 </div>
                             </div>
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <div className="space-y-1.5">
-                                    <label className="text-xs font-bold uppercase tracking-widest text-slate-500 ml-1">Age</label>
-                                    <input
-                                        type="number"
-                                        {...register("age", { valueAsNumber: true })}
-                                        placeholder="18-65"
-                                        className="w-full h-12 rounded-xl border border-slate-800 bg-slate-900 px-4 focus:ring-2 focus:ring-red-500 outline-none transition-all text-white placeholder-slate-600"
-                                    />
-                                    {errors.age && <p className="text-xs text-red-500 ml-1">{errors.age.message}</p>}
-                                </div>
-                                <div className="space-y-1.5">
-                                    <label className="text-xs font-bold uppercase tracking-widest text-slate-500 ml-1">Gender</label>
-                                    <select
-                                        {...register("gender")}
-                                        className="w-full h-12 rounded-xl border border-slate-800 bg-slate-900 px-4 focus:ring-2 focus:ring-red-500 outline-none transition-all text-white appearance-none"
-                                        style={{ colorScheme: "dark" }}
-                                    >
-                                        <option value="Male">Male</option>
-                                        <option value="Female">Female</option>
-                                        <option value="Other">Other</option>
-                                    </select>
-                                    {errors.gender && <p className="text-xs text-red-500 ml-1">{errors.gender.message}</p>}
+                            {/* STEP 2: Biology */}
+                            <div className={`transition-all duration-500 absolute w-full ${step === 2 ? 'opacity-100 translate-x-0 pointer-events-auto' : step < 2 ? 'opacity-0 translate-x-10 pointer-events-none' : 'opacity-0 -translate-x-10 pointer-events-none'}`}>
+                                <div className="space-y-5">
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div className="space-y-1.5">
+                                            <label className="text-xs font-bold uppercase tracking-widest text-slate-500 ml-1">Age</label>
+                                            <input
+                                                type="number"
+                                                {...register("age", { valueAsNumber: true })}
+                                                placeholder="18-65"
+                                                className="w-full h-12 rounded-xl border border-slate-800 bg-slate-900 px-4 focus:ring-2 focus:ring-red-500 outline-none transition-all text-white placeholder-slate-600 shadow-inner"
+                                            />
+                                            {errors.age && <p className="text-xs text-red-500 ml-1">{errors.age.message}</p>}
+                                        </div>
+                                        <div className="space-y-1.5">
+                                            <label className="text-xs font-bold uppercase tracking-widest text-slate-500 ml-1">Gender</label>
+                                            <select
+                                                {...register("gender")}
+                                                className="w-full h-12 rounded-xl border border-slate-800 bg-slate-900 px-4 focus:ring-2 focus:ring-red-500 outline-none transition-all text-white appearance-none shadow-inner"
+                                                style={{ colorScheme: "dark" }}
+                                            >
+                                                <option value="Male">Male</option>
+                                                <option value="Female">Female</option>
+                                                <option value="Other">Other</option>
+                                            </select>
+                                            {errors.gender && <p className="text-xs text-red-500 ml-1">{errors.gender.message}</p>}
+                                        </div>
+                                    </div>
+                                    <div className="space-y-1.5">
+                                        <label className="text-xs font-bold uppercase tracking-widest text-slate-500 ml-1">Blood Group</label>
+                                        <select
+                                            {...register("bloodGroup")}
+                                            className="w-full h-12 rounded-xl border border-slate-800 bg-slate-900 px-4 focus:ring-2 focus:ring-red-500 outline-none transition-all text-white appearance-none shadow-inner"
+                                            style={{ colorScheme: "dark" }}
+                                        >
+                                            <option value="">Select Group</option>
+                                            {["A+", "A-", "B+", "B-", "O+", "O-", "AB+", "AB-"].map((group) => (
+                                                <option key={group} value={group}>{group}</option>
+                                            ))}
+                                        </select>
+                                        {errors.bloodGroup && <p className="text-xs text-red-500 ml-1">{errors.bloodGroup.message}</p>}
+                                    </div>
+                                    <div className="space-y-1.5">
+                                        <label className="text-xs font-bold uppercase tracking-widest text-slate-500 ml-1">Last Donation Date (Optional)</label>
+                                        <input
+                                            type="date"
+                                            {...register("lastDonationDate")}
+                                            className="w-full h-12 rounded-xl border border-slate-800 bg-slate-900 px-4 focus:ring-2 focus:ring-red-500 outline-none transition-all text-white shadow-inner"
+                                            style={{ colorScheme: "dark" }}
+                                        />
+                                    </div>
                                 </div>
                             </div>
-
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <div className="space-y-1.5">
-                                    <label className="text-xs font-bold uppercase tracking-widest text-slate-500 ml-1">Blood Group</label>
-                                    <select
-                                        {...register("bloodGroup")}
-                                        className="w-full h-12 rounded-xl border border-slate-800 bg-slate-900 px-4 focus:ring-2 focus:ring-red-500 outline-none transition-all text-white appearance-none"
-                                        style={{ colorScheme: "dark" }}
-                                    >
-                                        <option value="">Select Group</option>
-                                        {["A+", "A-", "B+", "B-", "O+", "O-", "AB+", "AB-"].map((group) => (
-                                            <option key={group} value={group}>{group}</option>
-                                        ))}
-                                    </select>
-                                    {errors.bloodGroup && <p className="text-xs text-red-500 ml-1">{errors.bloodGroup.message}</p>}
-                                </div>
                                 <div className="space-y-1.5">
                                     <label className="text-xs font-bold uppercase tracking-widest text-slate-500 ml-1">Phone Number</label>
                                     <input
