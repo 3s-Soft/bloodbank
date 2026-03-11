@@ -1,14 +1,12 @@
 import { NextResponse } from "next/server";
-import connectDB from "@/lib/db/mongodb";
-import { BloodRequest, UrgencyLevel } from "@/lib/models/BloodRequest";
-import { Organization } from "@/lib/models/Organization";
+import { adminDb } from "@/lib/firebase/adminApp";
+import { COLLECTIONS, UrgencyLevel, RequestStatus } from "@/lib/firebase/types";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/authOptions";
 import { sendPushNotifications, buildBloodRequestPayload } from "@/lib/pushNotifications";
 
 export async function POST(req: Request) {
     try {
-        await connectDB();
         const session = await getServerSession(authOptions);
         const body = await req.json();
 
@@ -26,13 +24,16 @@ export async function POST(req: Request) {
         } = body;
 
         // Find organization
-        const organization = await Organization.findOne({ slug: orgSlug });
-        if (!organization) {
+        const orgsRef = adminDb.collection(COLLECTIONS.ORGANIZATIONS);
+        const orgSnapshot = await orgsRef.where("slug", "==", orgSlug).limit(1).get();
+        if (orgSnapshot.empty) {
             return NextResponse.json({ error: "Organization not found" }, { status: 404 });
         }
+        const organizationId = orgSnapshot.docs[0].id;
 
         // Create the blood request
-        const newRequest = await BloodRequest.create({
+        const requestsRef = adminDb.collection(COLLECTIONS.BLOOD_REQUESTS);
+        const requestData = {
             patientName,
             bloodGroup,
             location,
@@ -41,10 +42,17 @@ export async function POST(req: Request) {
             urgency,
             requiredDate: new Date(requiredDate),
             contactNumber,
-            additionalNotes,
-            requester: session?.user ? session.user.id : undefined, // Optional if not logged in
-            organization: organization._id,
-        });
+            additionalNotes: additionalNotes || null,
+            status: RequestStatus.PENDING,
+            requester: session?.user ? session.user.id : null,
+            organization: organizationId,
+            matchedDonors: [],
+            createdAt: new Date(),
+            updatedAt: new Date()
+        };
+        
+        const docRef = await requestsRef.add(requestData);
+        const newRequest = { _id: docRef.id, ...requestData };
 
         // Send push notifications for urgent and emergency requests (fire-and-forget)
         if (urgency === UrgencyLevel.URGENT || urgency === UrgencyLevel.EMERGENCY) {
@@ -53,9 +61,9 @@ export async function POST(req: Request) {
                 bloodGroup,
                 district,
                 orgSlug,
-                String(newRequest._id)
+                docRef.id
             );
-            sendPushNotifications(String(organization._id), payload, { district, bloodGroup }).catch(
+            sendPushNotifications(organizationId, payload, { district, bloodGroup }).catch(
                 (err) => console.error("Push notification error:", err)
             );
         }

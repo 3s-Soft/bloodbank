@@ -1,47 +1,47 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/authOptions";
-import connectDB from "@/lib/db/mongodb";
-import { PushSubscriptionModel } from "@/lib/models/PushSubscription";
-import { Organization } from "@/lib/models/Organization";
+import { adminDb } from "@/lib/firebase/adminApp";
+import { COLLECTIONS } from "@/lib/firebase/types";
 
-/** POST /api/push/subscribe – save a push subscription */
 export async function POST(req: Request) {
     try {
-        await connectDB();
         const session = await getServerSession(authOptions);
         const body = await req.json();
 
-        const { subscription, orgSlug, district, bloodGroup } = body;
+        const { token, orgSlug, district, bloodGroup } = body;
 
-        if (!subscription?.endpoint || !subscription?.keys?.p256dh || !subscription?.keys?.auth) {
-            return NextResponse.json({ error: "Invalid subscription object" }, { status: 400 });
+        if (!token) {
+            return NextResponse.json({ error: "Invalid FCM token" }, { status: 400 });
         }
 
         if (!orgSlug) {
             return NextResponse.json({ error: "orgSlug is required" }, { status: 400 });
         }
 
-        const organization = await Organization.findOne({ slug: orgSlug });
-        if (!organization) {
+        const orgsRef = adminDb.collection(COLLECTIONS.ORGANIZATIONS);
+        const orgSnapshot = await orgsRef.where("slug", "==", orgSlug).limit(1).get();
+        if (orgSnapshot.empty) {
             return NextResponse.json({ error: "Organization not found" }, { status: 404 });
         }
 
-        await PushSubscriptionModel.findOneAndUpdate(
-            { endpoint: subscription.endpoint },
-            {
-                endpoint: subscription.endpoint,
-                keys: {
-                    p256dh: subscription.keys.p256dh,
-                    auth: subscription.keys.auth,
-                },
-                organization: organization._id,
-                user: session?.user?.id,
-                district,
-                bloodGroup,
-            },
-            { upsert: true, new: true }
-        );
+        const subsRef = adminDb.collection(COLLECTIONS.PUSH_SUBSCRIPTIONS);
+        const existingSub = await subsRef.where("token", "==", token).limit(1).get();
+
+        const subData = {
+            token,
+            organization: orgSnapshot.docs[0].id,
+            user: session?.user?.id || null,
+            district: district || null,
+            bloodGroup: bloodGroup || null,
+            updatedAt: new Date()
+        };
+
+        if (existingSub.empty) {
+            await subsRef.add({ ...subData, createdAt: new Date() });
+        } else {
+            await subsRef.doc(existingSub.docs[0].id).update(subData);
+        }
 
         return NextResponse.json({ message: "Subscribed successfully" }, { status: 201 });
     } catch (error) {
@@ -50,18 +50,21 @@ export async function POST(req: Request) {
     }
 }
 
-/** DELETE /api/push/subscribe – remove a push subscription */
 export async function DELETE(req: Request) {
     try {
-        await connectDB();
         const body = await req.json();
-        const { endpoint } = body;
+        const { token } = body;
 
-        if (!endpoint) {
-            return NextResponse.json({ error: "endpoint is required" }, { status: 400 });
+        if (!token) {
+            return NextResponse.json({ error: "token is required" }, { status: 400 });
         }
 
-        await PushSubscriptionModel.deleteOne({ endpoint });
+        const subsRef = adminDb.collection(COLLECTIONS.PUSH_SUBSCRIPTIONS);
+        const existingSub = await subsRef.where("token", "==", token).limit(1).get();
+        if (!existingSub.empty) {
+            await subsRef.doc(existingSub.docs[0].id).delete();
+        }
+        
         return NextResponse.json({ message: "Unsubscribed successfully" });
     } catch (error) {
         console.error("Push unsubscribe error:", error);

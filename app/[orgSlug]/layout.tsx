@@ -19,7 +19,7 @@ export default async function OrganizationLayout({
     }
 
     const orgData = {
-        _id: organization._id.toString(),
+        _id: String(organization._id),
         name: organization.name,
         slug: organization.slug,
         logo: organization.logo,

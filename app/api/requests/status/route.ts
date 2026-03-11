@@ -1,27 +1,24 @@
 import { NextResponse } from "next/server";
-import connectDB from "@/lib/db/mongodb";
-import { BloodRequest } from "@/lib/models/BloodRequest";
+import { adminDb } from "@/lib/firebase/adminApp";
+import { COLLECTIONS } from "@/lib/firebase/types";
 
 export async function POST(req: Request) {
     try {
-        await connectDB();
         const { requestId, status } = await req.json();
 
         if (!requestId || !status) {
             return NextResponse.json({ error: "Request ID and Status are required" }, { status: 400 });
         }
 
-        const request = await BloodRequest.findByIdAndUpdate(
-            requestId,
-            { status },
-            { new: true }
-        );
-
-        if (!request) {
+        const requestRef = adminDb.collection(COLLECTIONS.BLOOD_REQUESTS).doc(requestId);
+        const doc = await requestRef.get();
+        if(!doc.exists) {
             return NextResponse.json({ error: "Blood request not found" }, { status: 404 });
         }
 
-        return NextResponse.json({ message: "Request status updated", request });
+        await requestRef.update({ status, updatedAt: new Date() });
+
+        return NextResponse.json({ message: "Request status updated", request: { _id: requestId, ...doc.data(), status } });
     } catch (error: unknown) {
         console.error("Request status update error:", error);
         return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });

@@ -1,33 +1,31 @@
 import { NextResponse } from "next/server";
-import connectDB from "@/lib/db/mongodb";
-import { Organization } from "@/lib/models/Organization";
-import { User, DonorProfile } from "@/lib/models/User";
-import { BloodRequest } from "@/lib/models/BloodRequest";
+import { adminDb } from "@/lib/firebase/adminApp";
+import { COLLECTIONS } from "@/lib/firebase/types";
 
-// GET - Get super admin dashboard stats
 export async function GET() {
     try {
-        await connectDB();
-
-        const totalOrganizations = await Organization.countDocuments({});
-        const activeOrganizations = await Organization.countDocuments({ isActive: true });
-        const totalDonors = await DonorProfile.countDocuments({});
-        const totalUsers = await User.countDocuments({});
-        const totalRequests = await BloodRequest.countDocuments({});
-        const pendingRequests = await BloodRequest.countDocuments({ status: "pending" });
-        const fulfilledRequests = await BloodRequest.countDocuments({ status: "fulfilled" });
+        const totalOrganizations = (await adminDb.collection(COLLECTIONS.ORGANIZATIONS).count().get()).data().count;
+        const activeOrganizations = (await adminDb.collection(COLLECTIONS.ORGANIZATIONS).where("isActive", "==", true).count().get()).data().count;
+        const totalDonors = (await adminDb.collection(COLLECTIONS.DONOR_PROFILES).count().get()).data().count;
+        const totalUsers = (await adminDb.collection(COLLECTIONS.USERS).count().get()).data().count;
+        const totalRequests = (await adminDb.collection(COLLECTIONS.BLOOD_REQUESTS).count().get()).data().count;
+        const pendingRequests = (await adminDb.collection(COLLECTIONS.BLOOD_REQUESTS).where("status", "==", "pending").count().get()).data().count;
+        const fulfilledRequests = (await adminDb.collection(COLLECTIONS.BLOOD_REQUESTS).where("status", "==", "fulfilled").count().get()).data().count;
 
         // Get recent organizations
-        const recentOrganizations = await Organization.find({})
-            .sort({ createdAt: -1 })
-            .limit(5);
+        const recentOrgsSnap = await adminDb.collection(COLLECTIONS.ORGANIZATIONS)
+            .orderBy("createdAt", "desc")
+            .limit(5)
+            .get();
+        const recentOrganizations = recentOrgsSnap.docs.map(doc => ({ _id: doc.id, ...doc.data() }));
 
         // Get organization stats with donor/request counts
-        const organizations = await Organization.find({}).lean();
+        const orgsSnap = await adminDb.collection(COLLECTIONS.ORGANIZATIONS).get();
+        const organizations = orgsSnap.docs.map(doc => ({ _id: doc.id, ...doc.data() }));
         const orgStats = await Promise.all(
             organizations.map(async (org) => {
-                const donorCount = await DonorProfile.countDocuments({ organization: org._id });
-                const requestCount = await BloodRequest.countDocuments({ organization: org._id });
+                const donorCount = (await adminDb.collection(COLLECTIONS.DONOR_PROFILES).where("organization", "==", org._id).count().get()).data().count;
+                const requestCount = (await adminDb.collection(COLLECTIONS.BLOOD_REQUESTS).where("organization", "==", org._id).count().get()).data().count;
                 return {
                     ...org,
                     donorCount,

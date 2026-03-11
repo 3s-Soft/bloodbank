@@ -1,10 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import connectToDatabase from "@/lib/db/mongodb";
-import { Organization } from "@/lib/models/Organization";
+import { adminDb } from "@/lib/firebase/adminApp";
+import { COLLECTIONS } from "@/lib/firebase/types";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/authOptions";
 
-// POST - Create a new organization (public, but requires login)
 export async function POST(request: NextRequest) {
     try {
         const session = await getServerSession(authOptions);
@@ -13,23 +12,21 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: "You must be logged in to create an organization" }, { status: 401 });
         }
 
-        await connectToDatabase();
         const body = await request.json();
-
         const { name, slug, contactEmail, contactPhone, address, primaryColor } = body;
 
         if (!name || !slug) {
             return NextResponse.json({ error: "Name and slug are required" }, { status: 400 });
         }
 
-        // Check if slug already exists
-        const existingOrg = await Organization.findOne({ slug: slug.toLowerCase() });
-        if (existingOrg) {
+        const orgsRef = adminDb.collection(COLLECTIONS.ORGANIZATIONS);
+        const existingOrg = await orgsRef.where("slug", "==", slug.toLowerCase()).limit(1).get();
+        
+        if (!existingOrg.empty) {
             return NextResponse.json({ error: "An organization with this slug already exists" }, { status: 400 });
         }
 
-        // Create a new organization (unverified by default)
-        const organization = await Organization.create({
+        const orgData = {
             name,
             slug: slug.toLowerCase(),
             contactEmail,
@@ -39,11 +36,15 @@ export async function POST(request: NextRequest) {
             isActive: true,
             isVerified: false,
             createdBy: session.user.id,
-        });
+            createdAt: new Date(),
+            updatedAt: new Date()
+        };
+
+        const orgDoc = await orgsRef.add(orgData);
 
         return NextResponse.json({
             message: "Organization created successfully! It will be reviewed by an admin.",
-            organization,
+            organization: { _id: orgDoc.id, ...orgData },
         }, { status: 201 });
     } catch (error: unknown) {
         console.error("Error creating organization:", error);
@@ -51,26 +52,24 @@ export async function POST(request: NextRequest) {
     }
 }
 
-// GET - List all verified organizations (for public listing)
 export async function GET(request: NextRequest) {
     try {
-        await connectToDatabase();
-
         const { searchParams } = new URL(request.url);
         const includeUnverified = searchParams.get("includeUnverified") === "true";
 
-        const filter: Record<string, unknown> = { isActive: true };
+        let orgsRef: FirebaseFirestore.Query = adminDb.collection(COLLECTIONS.ORGANIZATIONS);
+        orgsRef = orgsRef.where("isActive", "==", true);
+        
         if (!includeUnverified) {
-            // Include organizations that are verified OR don't have isVerified field yet (legacy data)
-            filter.$or = [
-                { isVerified: true },
-                { isVerified: { $exists: false } }
-            ];
+            orgsRef = orgsRef.where("isVerified", "==", true);
         }
 
-        const organizations = await Organization.find(filter)
-            .sort({ createdAt: -1 })
-            .lean();
+        const snapshot = await orgsRef.orderBy("createdAt", "desc").get();
+        
+        const organizations = snapshot.docs.map(doc => ({
+            _id: doc.id,
+            ...doc.data()
+        }));
 
         return NextResponse.json(organizations);
     } catch (error: unknown) {
@@ -78,7 +77,6 @@ export async function GET(request: NextRequest) {
         return NextResponse.json({
             error: "Internal Server Error",
             message: error instanceof Error ? error.message : "Unknown error",
-            stack: process.env.NODE_ENV === "development" && error instanceof Error ? error.stack : undefined
         }, { status: 500 });
     }
 }

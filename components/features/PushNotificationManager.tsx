@@ -3,7 +3,8 @@
 import { useEffect, useState } from "react";
 import { Bell, BellOff } from "lucide-react";
 import { toast } from "sonner";
-import { urlBase64ToUint8Array } from "@/lib/utils/vapid";
+import { getMessaging, getToken, deleteToken } from "firebase/messaging";
+import { app } from "@/lib/firebase/clientApp";
 
 interface PushNotificationManagerProps {
     orgSlug: string;
@@ -13,12 +14,6 @@ interface PushNotificationManagerProps {
     bloodGroup?: string;
 }
 
-
-/**
- * Renders a small toggle button that lets a user subscribe to or
- * unsubscribe from Web Push notifications for urgent/emergency blood
- * requests in the given organisation.
- */
 export default function PushNotificationManager({
     orgSlug,
     district,
@@ -27,18 +22,25 @@ export default function PushNotificationManager({
     const [supported, setSupported] = useState(false);
     const [subscribed, setSubscribed] = useState(false);
     const [loading, setLoading] = useState(false);
+    const [currentToken, setCurrentToken] = useState<string | null>(null);
 
     useEffect(() => {
         if (typeof window === "undefined") return;
         if (!("serviceWorker" in navigator) || !("PushManager" in window)) return;
         setSupported(true);
 
-        // Check if already subscribed
-        navigator.serviceWorker.ready.then((reg) => {
-            reg.pushManager.getSubscription().then((sub) => {
-                setSubscribed(!!sub);
-            });
-        });
+        // Try to get existing token
+        try {
+             const messaging = getMessaging(app);
+             getToken(messaging, { vapidKey: process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY }).then(token => {
+                 if (token) {
+                     setSubscribed(true);
+                     setCurrentToken(token);
+                 }
+             }).catch(() => {
+                 // Ignore errors if permission not granted
+             });
+        } catch(e) { /* ignore */ }
     }, []);
 
     const subscribe = async () => {
@@ -56,20 +58,25 @@ export default function PushNotificationManager({
                 return;
             }
 
-            const reg = await navigator.serviceWorker.ready;
-            const subscription = await reg.pushManager.subscribe({
-                userVisibleOnly: true,
-                applicationServerKey: urlBase64ToUint8Array(vapidPublicKey),
+            const messaging = getMessaging(app);
+            const token = await getToken(messaging, {
+                vapidKey: vapidPublicKey,
             });
+
+            if (!token) {
+                toast.error("Failed to generate FCM token.");
+                return;
+            }
 
             const res = await fetch("/api/push/subscribe", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ subscription, orgSlug, district, bloodGroup }),
+                body: JSON.stringify({ token, orgSlug, district, bloodGroup }),
             });
 
             if (!res.ok) throw new Error("Failed to save subscription");
             setSubscribed(true);
+            setCurrentToken(token);
             toast.success("You'll be notified about urgent blood requests!");
         } catch (err) {
             const message = err instanceof Error ? err.message : "Failed to subscribe to notifications.";
@@ -82,17 +89,18 @@ export default function PushNotificationManager({
     const unsubscribe = async () => {
         setLoading(true);
         try {
-            const reg = await navigator.serviceWorker.ready;
-            const subscription = await reg.pushManager.getSubscription();
-            if (subscription) {
+            const messaging = getMessaging(app);
+            
+            if (currentToken) {
                 await fetch("/api/push/subscribe", {
                     method: "DELETE",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ endpoint: subscription.endpoint }),
+                    body: JSON.stringify({ token: currentToken }),
                 });
-                await subscription.unsubscribe();
+                await deleteToken(messaging);
             }
             setSubscribed(false);
+            setCurrentToken(null);
             toast.success("You've unsubscribed from push notifications.");
         } catch (err) {
             const message = err instanceof Error ? err.message : "Failed to unsubscribe.";

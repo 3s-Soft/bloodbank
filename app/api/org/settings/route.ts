@@ -1,11 +1,10 @@
 import { NextResponse } from "next/server";
-import connectDB from "@/lib/db/mongodb";
-import { Organization } from "@/lib/models/Organization";
+import { adminDb } from "@/lib/firebase/adminApp";
+import { COLLECTIONS } from "@/lib/firebase/types";
 
 // GET - Get organization settings by slug
 export async function GET(req: Request) {
     try {
-        await connectDB();
         const { searchParams } = new URL(req.url);
         const orgSlug = searchParams.get("orgSlug");
 
@@ -13,12 +12,14 @@ export async function GET(req: Request) {
             return NextResponse.json({ error: "Organization slug is required" }, { status: 400 });
         }
 
-        const organization = await Organization.findOne({ slug: orgSlug });
-        if (!organization) {
+        const orgsRef = adminDb.collection(COLLECTIONS.ORGANIZATIONS);
+        const orgSnapshot = await orgsRef.where("slug", "==", orgSlug).limit(1).get();
+
+        if (orgSnapshot.empty) {
             return NextResponse.json({ error: "Organization not found" }, { status: 404 });
         }
 
-        return NextResponse.json(organization);
+        return NextResponse.json({ _id: orgSnapshot.docs[0].id, ...orgSnapshot.docs[0].data() });
     } catch (error: unknown) {
         console.error("Fetch organization error:", error);
         return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
@@ -28,7 +29,6 @@ export async function GET(req: Request) {
 // PUT - Update organization settings
 export async function PUT(req: Request) {
     try {
-        await connectDB();
         const body = await req.json();
         const { orgSlug, name, slug, logo, primaryColor, contactEmail, contactPhone, address } = body;
 
@@ -36,6 +36,14 @@ export async function PUT(req: Request) {
             return NextResponse.json({ error: "Organization slug is required" }, { status: 400 });
         }
 
+        const orgsRef = adminDb.collection(COLLECTIONS.ORGANIZATIONS);
+        const currentOrgSnap = await orgsRef.where("slug", "==", orgSlug).limit(1).get();
+
+        if (currentOrgSnap.empty) {
+            return NextResponse.json({ error: "Organization not found" }, { status: 404 });
+        }
+
+        const orgId = currentOrgSnap.docs[0].id;
         const updateData: any = {
             name,
             logo,
@@ -43,30 +51,27 @@ export async function PUT(req: Request) {
             contactEmail,
             contactPhone,
             address,
+            updatedAt: new Date()
         };
 
         // If slug is being updated
         if (slug && slug !== orgSlug) {
             const normalizedSlug = slug.toLowerCase().trim();
             // Check if new slug is already taken
-            const existing = await Organization.findOne({ slug: normalizedSlug });
-            if (existing) {
+            const existing = await orgsRef.where("slug", "==", normalizedSlug).limit(1).get();
+            if (!existing.empty && existing.docs[0].id !== orgId) {
                 return NextResponse.json({ error: "This URL slug is already taken" }, { status: 400 });
             }
             updateData.slug = normalizedSlug;
         }
 
-        const organization = await Organization.findOneAndUpdate(
-            { slug: orgSlug },
-            updateData,
-            { new: true }
-        );
+        // Remove undefined fields
+        Object.keys(updateData).forEach(key => updateData[key] === undefined && delete updateData[key]);
 
-        if (!organization) {
-            return NextResponse.json({ error: "Organization not found" }, { status: 404 });
-        }
+        await orgsRef.doc(orgId).update(updateData);
+        const freshSnap = await orgsRef.doc(orgId).get();
 
-        return NextResponse.json({ message: "Organization updated successfully", organization });
+        return NextResponse.json({ message: "Organization updated successfully", organization: { _id: freshSnap.id, ...freshSnap.data() } });
     } catch (error: unknown) {
         console.error("Update organization error:", error);
         return NextResponse.json({ error: (error instanceof Error ? error.message : "Internal Server Error") }, { status: 500 });

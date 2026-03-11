@@ -1,17 +1,16 @@
 import { NextResponse } from "next/server";
-import connectDB from "@/lib/db/mongodb";
-import { Organization } from "@/lib/models/Organization";
+import { adminDb } from "@/lib/firebase/adminApp";
+import { COLLECTIONS } from "@/lib/firebase/types";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/authOptions";
 
-// GET - List all organizations
 export async function GET() {
     try {
-        await connectDB();
+        const snapshot = await adminDb.collection(COLLECTIONS.ORGANIZATIONS)
+            .orderBy("createdAt", "desc")
+            .get();
 
-        const organizations = await Organization.find({})
-            .sort({ createdAt: -1 });
-
+        const organizations = snapshot.docs.map(doc => ({ _id: doc.id, ...doc.data() }));
         return NextResponse.json(organizations);
     } catch (error: unknown) {
         console.error("Fetch organizations error:", error);
@@ -19,32 +18,24 @@ export async function GET() {
     }
 }
 
-// POST - Create new organization
 export async function POST(req: Request) {
     try {
-        await connectDB();
         const session = await getServerSession(authOptions);
-
-        // Check if user is super_admin (in production, enforce this strictly)
-        // if (!session || (session.user as any).role !== "super_admin") {
-        //     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-        // }
 
         const body = await req.json();
         const { name, slug, logo, primaryColor, contactEmail, contactPhone, address } = body;
 
-        // Validate required fields
         if (!name || !slug) {
             return NextResponse.json({ error: "Name and slug are required" }, { status: 400 });
         }
 
-        // Check if slug is unique
-        const existingOrg = await Organization.findOne({ slug: slug.toLowerCase() });
-        if (existingOrg) {
+        const orgsRef = adminDb.collection(COLLECTIONS.ORGANIZATIONS);
+        const existingOrg = await orgsRef.where("slug", "==", slug.toLowerCase()).limit(1).get();
+        if (!existingOrg.empty) {
             return NextResponse.json({ error: "Organization with this slug already exists" }, { status: 400 });
         }
 
-        const organization = await Organization.create({
+        const orgData = {
             name,
             slug: slug.toLowerCase().trim(),
             logo,
@@ -53,9 +44,13 @@ export async function POST(req: Request) {
             contactPhone,
             address,
             isActive: true,
-        });
+            createdAt: new Date(),
+            updatedAt: new Date(),
+        };
 
-        return NextResponse.json({ message: "Organization created successfully", organization }, { status: 201 });
+        const docRef = await orgsRef.add(orgData);
+
+        return NextResponse.json({ message: "Organization created successfully", organization: { _id: docRef.id, ...orgData } }, { status: 201 });
     } catch (error: unknown) {
         console.error("Create organization error:", error);
         return NextResponse.json({ error: (error instanceof Error ? error.message : "Internal Server Error") }, { status: 500 });

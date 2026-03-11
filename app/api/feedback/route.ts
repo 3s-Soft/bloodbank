@@ -1,34 +1,43 @@
 import { NextRequest, NextResponse } from "next/server";
-import connectToDatabase from "@/lib/db/mongodb";
-import { Feedback, FeedbackCategory, FeedbackStatus } from "@/lib/models/Feedback";
-import { Organization } from "@/lib/models/Organization";
+import { adminDb } from "@/lib/firebase/adminApp";
+import { COLLECTIONS } from "@/lib/firebase/types";
+
+// Feedback structures replaced instead of importing from old mongoose models
+const FeedbackCategory = { GENERAL: "general", BUG: "bug", FEATURE: "feature", SUPPORT: "support" };
+const FeedbackStatus = { NEW: "new", IN_PROGRESS: "in_progress", RESOLVED: "resolved", DISMISSED: "dismissed" };
 
 // GET: List feedback (admin)
 export async function GET(req: NextRequest) {
     try {
-        await connectToDatabase();
         const { searchParams } = new URL(req.url);
         const orgSlug = searchParams.get("orgSlug");
         const status = searchParams.get("status");
         const category = searchParams.get("category");
 
-        const query: Record<string, unknown> = {};
+        let query: any = adminDb.collection(COLLECTIONS.FEEDBACK);
 
         if (orgSlug) {
-            const org = await Organization.findOne({ slug: orgSlug });
-            if (!org) {
+            const orgsRef = adminDb.collection(COLLECTIONS.ORGANIZATIONS);
+            const orgSnap = await orgsRef.where("slug", "==", orgSlug).limit(1).get();
+            if (orgSnap.empty) {
                 return NextResponse.json({ error: "Organization not found" }, { status: 404 });
             }
-            query.organization = org._id;
+            query = query.where("organization", "==", orgSnap.docs[0].id);
         }
 
-        if (status) query.status = status;
-        if (category) query.category = category;
+        if (status) query = query.where("status", "==", status);
+        if (category) query = query.where("category", "==", category);
 
-        const feedback = await Feedback.find(query)
-            .populate("user", "name email")
-            .sort({ createdAt: -1 })
-            .limit(100);
+        const feedbackSnap = await query.orderBy("createdAt", "desc").limit(100).get();
+        const feedback = await Promise.all(feedbackSnap.docs.map(async (doc: any) => {
+             const data = doc.data();
+             let userObj = null;
+             if (data.user) {
+                  const uDoc = await adminDb.collection(COLLECTIONS.USERS).doc(data.user).get();
+                  if (uDoc.exists) userObj = { _id: uDoc.id, name: uDoc.data()?.name, email: uDoc.data()?.email };
+             }
+             return { _id: doc.id, ...data, user: userObj };
+        }));
 
         return NextResponse.json(feedback);
     } catch (error) {
@@ -40,7 +49,6 @@ export async function GET(req: NextRequest) {
 // POST: Submit feedback (public)
 export async function POST(req: NextRequest) {
     try {
-        await connectToDatabase();
         const body = await req.json();
         const { name, email, category, message, orgSlug, userId } = body;
 
@@ -51,24 +59,29 @@ export async function POST(req: NextRequest) {
             );
         }
 
-        const feedbackData: Record<string, unknown> = {
+        const feedbackData: any = {
             name,
             email,
             category: category || FeedbackCategory.GENERAL,
             message,
             status: FeedbackStatus.NEW,
+            createdAt: new Date(),
+            updatedAt: new Date()
         };
 
         if (orgSlug) {
-            const org = await Organization.findOne({ slug: orgSlug });
-            if (org) feedbackData.organization = org._id;
+            const orgsRef = adminDb.collection(COLLECTIONS.ORGANIZATIONS);
+            const orgSnap = await orgsRef.where("slug", "==", orgSlug).limit(1).get();
+            if (!orgSnap.empty) {
+                 feedbackData.organization = orgSnap.docs[0].id;
+            }
         }
 
         if (userId) feedbackData.user = userId;
 
-        const feedback = await Feedback.create(feedbackData);
+        const feedbackRef = await adminDb.collection(COLLECTIONS.FEEDBACK).add(feedbackData);
 
-        return NextResponse.json({ success: true, feedback });
+        return NextResponse.json({ success: true, feedback: { _id: feedbackRef.id, ...feedbackData } });
     } catch (error) {
         console.error("Error submitting feedback:", error);
         return NextResponse.json({ error: "Failed to submit feedback" }, { status: 500 });

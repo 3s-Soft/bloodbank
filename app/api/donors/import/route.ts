@@ -1,14 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-import connectToDatabase from "@/lib/db/mongodb";
-import { User } from "@/lib/models/User";
-import { DonorProfile } from "@/lib/models/User";
-import { Organization } from "@/lib/models/Organization";
-import { AuditLog, AuditAction } from "@/lib/models/AuditLog";
+import { adminDb } from "@/lib/firebase/adminApp";
+import { COLLECTIONS } from "@/lib/firebase/types";
+
+const AuditAction = { DONOR_IMPORTED: "DONOR_IMPORTED" };
 
 // POST: Bulk import donors from JSON
 export async function POST(req: NextRequest) {
     try {
-        await connectToDatabase();
         const body = await req.json();
         const { donors, orgSlug, performedBy } = body;
 
@@ -19,10 +17,12 @@ export async function POST(req: NextRequest) {
             );
         }
 
-        const org = await Organization.findOne({ slug: orgSlug });
-        if (!org) {
+        const orgsRef = adminDb.collection(COLLECTIONS.ORGANIZATIONS);
+        const orgSnap = await orgsRef.where("slug", "==", orgSlug).limit(1).get();
+        if (orgSnap.empty) {
             return NextResponse.json({ error: "Organization not found" }, { status: 404 });
         }
+        const orgId = orgSnap.docs[0].id;
 
         const results = {
             total: donors.length,
@@ -45,24 +45,31 @@ export async function POST(req: NextRequest) {
                 }
 
                 // Find or create user
-                let user = await User.findOne({ phone: donor.phone });
-                if (!user) {
-                    user = await User.create({
+                let userId = "";
+                const userSnap = await adminDb.collection(COLLECTIONS.USERS).where("phone", "==", donor.phone).limit(1).get();
+                if (userSnap.empty) {
+                    const newUserRef = await adminDb.collection(COLLECTIONS.USERS).add({
                         name: donor.name,
                         phone: donor.phone,
-                        email: donor.email || undefined,
+                        email: donor.email || null,
                         role: "donor",
-                        organization: org._id,
+                        organization: orgId,
+                        createdAt: new Date(),
+                        updatedAt: new Date()
                     });
+                    userId = newUserRef.id;
+                } else {
+                    userId = userSnap.docs[0].id;
                 }
 
-                // Check if donor profile already exists
-                const existingProfile = await DonorProfile.findOne({
-                    user: user._id,
-                    organization: org._id,
-                });
+                // Check if donor profile already exists for this organization
+                const existingProfileSnap = await adminDb.collection(COLLECTIONS.DONOR_PROFILES)
+                    .where("user", "==", userId)
+                    .where("organization", "==", orgId)
+                    .limit(1)
+                    .get();
 
-                if (existingProfile) {
+                if (!existingProfileSnap.empty) {
                     results.failed++;
                     results.errors.push({
                         index: i,
@@ -73,16 +80,19 @@ export async function POST(req: NextRequest) {
                 }
 
                 // Create donor profile
-                await DonorProfile.create({
-                    user: user._id,
-                    organization: org._id,
+                await adminDb.collection(COLLECTIONS.DONOR_PROFILES).add({
+                    user: userId,
+                    organization: orgId,
                     bloodGroup: donor.bloodGroup,
                     district: donor.district,
                     upazila: donor.upazila,
-                    village: donor.village || undefined,
-                    lastDonationDate: donor.lastDonationDate ? new Date(donor.lastDonationDate) : undefined,
+                    village: donor.village || null,
+                    lastDonationDate: donor.lastDonationDate ? new Date(donor.lastDonationDate) : null,
+                    totalDonations: donor.totalDonations || 0,
                     isAvailable: donor.isAvailable !== false,
                     isVerified: false,
+                    createdAt: new Date(),
+                    updatedAt: new Date()
                 });
 
                 results.success++;
@@ -98,12 +108,13 @@ export async function POST(req: NextRequest) {
 
         // Audit log
         if (performedBy) {
-            await AuditLog.create({
+            await adminDb.collection(COLLECTIONS.AUDIT_LOGS).add({
                 action: AuditAction.DONOR_IMPORTED,
                 performedBy,
-                organization: org._id,
+                organization: orgId,
                 details: `Bulk imported ${results.success}/${results.total} donors`,
                 metadata: { success: results.success, failed: results.failed },
+                createdAt: new Date()
             });
         }
 

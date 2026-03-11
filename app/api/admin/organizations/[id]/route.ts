@@ -1,39 +1,33 @@
 import { NextResponse } from "next/server";
-import connectDB from "@/lib/db/mongodb";
-import { Organization } from "@/lib/models/Organization";
-import { DonorProfile } from "@/lib/models/User";
-import { BloodRequest } from "@/lib/models/BloodRequest";
+import { adminDb } from "@/lib/firebase/adminApp";
+import { COLLECTIONS } from "@/lib/firebase/types";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/authOptions";
 
-// GET - Get single organization by ID
 export async function GET(
     req: Request,
     { params }: { params: Promise<{ id: string }> }
 ) {
     try {
-        await connectDB();
         const { id } = await params;
 
-        const organization = await Organization.findById(id);
-        if (!organization) {
+        const orgRef = adminDb.collection(COLLECTIONS.ORGANIZATIONS).doc(id);
+        const orgDoc = await orgRef.get();
+        if (!orgDoc.exists) {
             return NextResponse.json({ error: "Organization not found" }, { status: 404 });
         }
+        const organization = { _id: id, ...orgDoc.data() };
 
-        // Get stats for this organization
-        const donorCount = await DonorProfile.countDocuments({ organization: organization._id });
-        const requestCount = await BloodRequest.countDocuments({ organization: organization._id });
-        const activeRequests = await BloodRequest.countDocuments({
-            organization: organization._id,
-            status: "pending"
-        });
+        const dSnap = await adminDb.collection(COLLECTIONS.DONOR_PROFILES).where("organization", "==", id).count().get();
+        const rSnap = await adminDb.collection(COLLECTIONS.BLOOD_REQUESTS).where("organization", "==", id).count().get();
+        const aSnap = await adminDb.collection(COLLECTIONS.BLOOD_REQUESTS).where("organization", "==", id).where("status", "==", "pending").count().get();
 
         return NextResponse.json({
-            ...organization.toObject(),
+            ...organization,
             stats: {
-                donorCount,
-                requestCount,
-                activeRequests
+                donorCount: dSnap.data().count,
+                requestCount: rSnap.data().count,
+                activeRequests: aSnap.data().count
             }
         });
     } catch (error: unknown) {
@@ -42,32 +36,26 @@ export async function GET(
     }
 }
 
-// PUT - Update organization
 export async function PUT(
     req: Request,
     { params }: { params: Promise<{ id: string }> }
 ) {
     try {
-        await connectDB();
         const { id } = await params;
         const body = await req.json();
 
         const { name, slug, logo, primaryColor, contactEmail, contactPhone, address, isActive } = body;
 
-        // Check if slug is unique (excluding current org)
         if (slug) {
-            const existingOrg = await Organization.findOne({
-                slug: slug.toLowerCase(),
-                _id: { $ne: id }
-            });
-            if (existingOrg) {
+            const snap = await adminDb.collection(COLLECTIONS.ORGANIZATIONS).where("slug", "==", slug.toLowerCase()).get();
+            const exists = snap.docs.some(d => d.id !== id);
+            if (exists) {
                 return NextResponse.json({ error: "Organization with this slug already exists" }, { status: 400 });
             }
         }
 
-        const organization = await Organization.findByIdAndUpdate(
-            id,
-            {
+        const orgRef = adminDb.collection(COLLECTIONS.ORGANIZATIONS).doc(id);
+        const upData: any = {
                 name,
                 slug: slug?.toLowerCase().trim(),
                 logo,
@@ -76,39 +64,37 @@ export async function PUT(
                 contactPhone,
                 address,
                 isActive,
-            },
-            { new: true }
-        );
+                updatedAt: new Date()
+        };
+        // Clean undefined fields
+        Object.keys(upData).forEach(key => upData[key] === undefined && delete upData[key]);
 
-        if (!organization) {
-            return NextResponse.json({ error: "Organization not found" }, { status: 404 });
-        }
+        await orgRef.update(upData);
+        
+        const freshSnap = await orgRef.get();
 
-        return NextResponse.json({ message: "Organization updated successfully", organization });
+        return NextResponse.json({ message: "Organization updated successfully", organization: { _id: id, ...freshSnap.data() } });
     } catch (error: unknown) {
         console.error("Update organization error:", error);
         return NextResponse.json({ error: (error instanceof Error ? error.message : "Internal Server Error") }, { status: 500 });
     }
 }
 
-// DELETE - Delete organization
 export async function DELETE(
     req: Request,
     { params }: { params: Promise<{ id: string }> }
 ) {
     try {
-        await connectDB();
         const { id } = await params;
 
-        const organization = await Organization.findByIdAndDelete(id);
+        const orgRef = adminDb.collection(COLLECTIONS.ORGANIZATIONS).doc(id);
+        const doc = await orgRef.get();
 
-        if (!organization) {
+        if (!doc.exists) {
             return NextResponse.json({ error: "Organization not found" }, { status: 404 });
         }
-
-        // Optionally: Delete related data (donors, requests, users)
-        // await DonorProfile.deleteMany({ organization: id });
-        // await BloodRequest.deleteMany({ organization: id });
+        
+        await orgRef.delete();
 
         return NextResponse.json({ message: "Organization deleted successfully" });
     } catch (error: unknown) {

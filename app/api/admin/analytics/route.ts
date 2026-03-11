@@ -1,51 +1,47 @@
 import { NextResponse } from "next/server";
-import connectDB from "@/lib/db/mongodb";
-import { Organization } from "@/lib/models/Organization";
-import { User, DonorProfile } from "@/lib/models/User";
-import { BloodRequest } from "@/lib/models/BloodRequest";
+import { adminDb } from "@/lib/firebase/adminApp";
+import { COLLECTIONS } from "@/lib/firebase/types";
 
-// GET - Get detailed analytics for super admin
 export async function GET() {
     try {
-        await connectDB();
-
         // Overall stats
-        const totalOrganizations = await Organization.countDocuments({});
-        const activeOrganizations = await Organization.countDocuments({ isActive: true });
-        const totalDonors = await DonorProfile.countDocuments({});
-        const verifiedDonors = await DonorProfile.countDocuments({ isVerified: true });
-        const availableDonors = await DonorProfile.countDocuments({ isAvailable: true });
-        const totalUsers = await User.countDocuments({});
-        const totalRequests = await BloodRequest.countDocuments({});
-        const pendingRequests = await BloodRequest.countDocuments({ status: "pending" });
-        const fulfilledRequests = await BloodRequest.countDocuments({ status: "fulfilled" });
-        const canceledRequests = await BloodRequest.countDocuments({ status: "canceled" });
+        const totalOrganizations = (await adminDb.collection(COLLECTIONS.ORGANIZATIONS).count().get()).data().count;
+        const activeOrganizations = (await adminDb.collection(COLLECTIONS.ORGANIZATIONS).where("isActive", "==", true).count().get()).data().count;
+        const totalDonors = (await adminDb.collection(COLLECTIONS.DONOR_PROFILES).count().get()).data().count;
+        const verifiedDonors = (await adminDb.collection(COLLECTIONS.DONOR_PROFILES).where("isVerified", "==", true).count().get()).data().count;
+        const availableDonors = (await adminDb.collection(COLLECTIONS.DONOR_PROFILES).where("isAvailable", "==", true).count().get()).data().count;
+        const totalUsers = (await adminDb.collection(COLLECTIONS.USERS).count().get()).data().count;
+        const totalRequests = (await adminDb.collection(COLLECTIONS.BLOOD_REQUESTS).count().get()).data().count;
+        const pendingRequests = (await adminDb.collection(COLLECTIONS.BLOOD_REQUESTS).where("status", "==", "pending").count().get()).data().count;
+        const fulfilledRequests = (await adminDb.collection(COLLECTIONS.BLOOD_REQUESTS).where("status", "==", "fulfilled").count().get()).data().count;
+        const canceledRequests = (await adminDb.collection(COLLECTIONS.BLOOD_REQUESTS).where("status", "==", "canceled").count().get()).data().count;
 
         // Blood group distribution (across all orgs)
         const bloodGroups = ["A+", "A-", "B+", "B-", "O+", "O-", "AB+", "AB-"];
         const bloodGroupStats = await Promise.all(
             bloodGroups.map(async (group) => ({
                 group,
-                count: await DonorProfile.countDocuments({ bloodGroup: group }),
+                count: (await adminDb.collection(COLLECTIONS.DONOR_PROFILES).where("bloodGroup", "==", group).count().get()).data().count,
             }))
         );
 
         // Urgency distribution for pending requests
         const urgencyStats = {
-            normal: await BloodRequest.countDocuments({ status: "pending", urgency: "normal" }),
-            urgent: await BloodRequest.countDocuments({ status: "pending", urgency: "urgent" }),
-            emergency: await BloodRequest.countDocuments({ status: "pending", urgency: "emergency" }),
+            normal: (await adminDb.collection(COLLECTIONS.BLOOD_REQUESTS).where("status", "==", "pending").where("urgency", "==", "normal").count().get()).data().count,
+            urgent: (await adminDb.collection(COLLECTIONS.BLOOD_REQUESTS).where("status", "==", "pending").where("urgency", "==", "urgent").count().get()).data().count,
+            emergency: (await adminDb.collection(COLLECTIONS.BLOOD_REQUESTS).where("status", "==", "pending").where("urgency", "==", "emergency").count().get()).data().count,
         };
 
         // Per-organization stats
-        const organizations = await Organization.find({}).lean();
+        const orgsSnap = await adminDb.collection(COLLECTIONS.ORGANIZATIONS).get();
+        const organizations = orgsSnap.docs.map(doc => ({ _id: doc.id, ...doc.data() as any }));
         const orgStats = await Promise.all(
             organizations.map(async (org) => {
-                const donorCount = await DonorProfile.countDocuments({ organization: org._id });
-                const verifiedCount = await DonorProfile.countDocuments({ organization: org._id, isVerified: true });
-                const requestCount = await BloodRequest.countDocuments({ organization: org._id });
-                const pendingCount = await BloodRequest.countDocuments({ organization: org._id, status: "pending" });
-                const fulfilledCount = await BloodRequest.countDocuments({ organization: org._id, status: "fulfilled" });
+                const donorCount = (await adminDb.collection(COLLECTIONS.DONOR_PROFILES).where("organization", "==", org._id).count().get()).data().count;
+                const verifiedCount = (await adminDb.collection(COLLECTIONS.DONOR_PROFILES).where("organization", "==", org._id).where("isVerified", "==", true).count().get()).data().count;
+                const requestCount = (await adminDb.collection(COLLECTIONS.BLOOD_REQUESTS).where("organization", "==", org._id).count().get()).data().count;
+                const pendingCount = (await adminDb.collection(COLLECTIONS.BLOOD_REQUESTS).where("organization", "==", org._id).where("status", "==", "pending").count().get()).data().count;
+                const fulfilledCount = (await adminDb.collection(COLLECTIONS.BLOOD_REQUESTS).where("organization", "==", org._id).where("status", "==", "fulfilled").count().get()).data().count;
 
                 return {
                     _id: org._id,
@@ -64,18 +60,24 @@ export async function GET() {
         );
 
         // District distribution
-        const districtAggregation = await DonorProfile.aggregate([
-            { $group: { _id: "$district", count: { $sum: 1 } } },
-            { $sort: { count: -1 } },
-            { $limit: 10 }
-        ]);
+        // Firestore lacks aggregations, so we'll fetch all donors to do this grouped calculation in memory (not scalable, but works for MVP).
+        const allDonorsSnap = await adminDb.collection(COLLECTIONS.DONOR_PROFILES).select("district").get();
+        const districtCount: Record<string, number> = {};
+        allDonorsSnap.forEach(doc => {
+             const d = doc.data().district;
+             if(d) districtCount[d] = (districtCount[d] || 0) + 1;
+        });
+        const districtAggregation = Object.entries(districtCount)
+             .map(([district, count]) => ({ district, count }))
+             .sort((a, b) => b.count - a.count)
+             .slice(0, 10);
 
         // Recent activity (last 7 days)
         const weekAgo = new Date();
         weekAgo.setDate(weekAgo.getDate() - 7);
 
-        const recentDonors = await DonorProfile.countDocuments({ createdAt: { $gte: weekAgo } });
-        const recentRequests = await BloodRequest.countDocuments({ createdAt: { $gte: weekAgo } });
+        const recentDonors = (await adminDb.collection(COLLECTIONS.DONOR_PROFILES).where("createdAt", ">=", weekAgo).count().get()).data().count;
+        const recentRequests = (await adminDb.collection(COLLECTIONS.BLOOD_REQUESTS).where("createdAt", ">=", weekAgo).count().get()).data().count;
 
         return NextResponse.json({
             overview: {
@@ -94,7 +96,7 @@ export async function GET() {
             bloodGroupStats,
             urgencyStats,
             orgStats,
-            districtStats: districtAggregation.map(d => ({ district: d._id, count: d.count })),
+            districtStats: districtAggregation,
             recentActivity: {
                 newDonors: recentDonors,
                 newRequests: recentRequests,

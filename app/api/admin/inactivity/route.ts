@@ -1,48 +1,52 @@
 import { NextRequest, NextResponse } from "next/server";
-import connectToDatabase from "@/lib/db/mongodb";
-import { Organization } from "@/lib/models/Organization";
-import { DonorProfile } from "@/lib/models/User";
-import { BloodRequest } from "@/lib/models/BloodRequest";
+import { adminDb } from "@/lib/firebase/adminApp";
+import { COLLECTIONS } from "@/lib/firebase/types";
 
-// GET: Detect inactive organizations (no new donors or requests in 30 days)
+// GET: Detect inactive organizations (no new donors or requests in X days)
 export async function GET(req: NextRequest) {
     try {
-        await connectToDatabase();
         const { searchParams } = new URL(req.url);
         const daysThreshold = parseInt(searchParams.get("days") || "30");
 
         const cutoffDate = new Date();
         cutoffDate.setDate(cutoffDate.getDate() - daysThreshold);
 
-        const organizations = await Organization.find({ isActive: true });
+        const orgsSnap = await adminDb.collection(COLLECTIONS.ORGANIZATIONS).where("isActive", "==", true).get();
+        const organizations = orgsSnap.docs.map(doc => ({ _id: doc.id, ...doc.data() as any }));
 
         const inactiveOrgs = [];
 
         for (const org of organizations) {
             // Check for recent donors
-            const recentDonor = await DonorProfile.findOne({
-                organization: org._id,
-                createdAt: { $gte: cutoffDate },
-            }).sort({ createdAt: -1 });
+            const recentDonorSnap = await adminDb.collection(COLLECTIONS.DONOR_PROFILES)
+                .where("organization", "==", org._id)
+                .where("createdAt", ">=", cutoffDate)
+                .limit(1)
+                .get();
 
             // Check for recent requests
-            const recentRequest = await BloodRequest.findOne({
-                organization: org._id,
-                createdAt: { $gte: cutoffDate },
-            }).sort({ createdAt: -1 });
+            const recentRequestSnap = await adminDb.collection(COLLECTIONS.BLOOD_REQUESTS)
+                .where("organization", "==", org._id)
+                .where("createdAt", ">=", cutoffDate)
+                .limit(1)
+                .get();
 
-            if (!recentDonor && !recentRequest) {
+            if (recentDonorSnap.empty && recentRequestSnap.empty) {
                 // Find last activity date
-                const lastDonor = await DonorProfile.findOne({
-                    organization: org._id,
-                }).sort({ createdAt: -1 });
+                const lastDonorSnap = await adminDb.collection(COLLECTIONS.DONOR_PROFILES)
+                    .where("organization", "==", org._id)
+                    .orderBy("createdAt", "desc")
+                    .limit(1)
+                    .get();
 
-                const lastRequest = await BloodRequest.findOne({
-                    organization: org._id,
-                }).sort({ createdAt: -1 });
+                const lastRequestSnap = await adminDb.collection(COLLECTIONS.BLOOD_REQUESTS)
+                    .where("organization", "==", org._id)
+                    .orderBy("createdAt", "desc")
+                    .limit(1)
+                    .get();
 
-                const lastDonorDate = (lastDonor as any)?.createdAt || null;
-                const lastRequestDate = lastRequest?.createdAt || null;
+                const lastDonorDate = lastDonorSnap.empty ? null : (lastDonorSnap.docs[0].data().createdAt?.toDate ? lastDonorSnap.docs[0].data().createdAt.toDate() : new Date(lastDonorSnap.docs[0].data().createdAt));
+                const lastRequestDate = lastRequestSnap.empty ? null : (lastRequestSnap.docs[0].data().createdAt?.toDate ? lastRequestSnap.docs[0].data().createdAt.toDate() : new Date(lastRequestSnap.docs[0].data().createdAt));
 
                 let lastActivityDate: Date | null = null;
                 if (lastDonorDate && lastRequestDate) {
@@ -55,14 +59,17 @@ export async function GET(req: NextRequest) {
                     ? Math.floor((Date.now() - lastActivityDate.getTime()) / (1000 * 60 * 60 * 24))
                     : null;
 
+                const donorsCount = (await adminDb.collection(COLLECTIONS.DONOR_PROFILES).where("organization", "==", org._id).count().get()).data().count;
+                const requestsCount = (await adminDb.collection(COLLECTIONS.BLOOD_REQUESTS).where("organization", "==", org._id).count().get()).data().count;
+
                 inactiveOrgs.push({
                     _id: org._id,
                     name: org.name,
                     slug: org.slug,
                     lastActivityDate,
                     daysSinceActivity,
-                    totalDonors: await DonorProfile.countDocuments({ organization: org._id }),
-                    totalRequests: await BloodRequest.countDocuments({ organization: org._id }),
+                    totalDonors: donorsCount,
+                    totalRequests: requestsCount,
                 });
             }
         }

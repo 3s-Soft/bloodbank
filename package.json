@@ -1,6 +1,6 @@
 {
   "name": "bloodbank",
-  "version": "0.1.0",
+  "version": "2.0.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -14,7 +14,8 @@
     "@hookform/resolvers": "^5.2.2",
     "bcryptjs": "^3.0.3",
     "clsx": "^2.1.1",
-    "firebase": "^12.8.0",
+    "firebase": "^12.10.0",
+    "firebase-admin": "^13.7.0",
     "lucide-react": "^0.563.0",
     "mongoose": "^9.1.5",
     "next": "16.1.5",

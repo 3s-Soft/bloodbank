@@ -1,30 +1,6 @@
-import webpush from "web-push";
-import connectDB from "@/lib/db/mongodb";
-import { PushSubscriptionModel } from "@/lib/models/PushSubscription";
-import { UrgencyLevel } from "@/lib/models/BloodRequest";
-
-// Lazy initialization flag – VAPID details are set once on first use,
-// avoiding build-time crashes when env vars are not yet available.
-let vapidInitialized = false;
-
-function ensureVapidConfigured(): boolean {
-    if (vapidInitialized) return true;
-
-    const publicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
-    const privateKey = process.env.VAPID_PRIVATE_KEY;
-
-    if (!publicKey || !privateKey) {
-        return false;
-    }
-
-    webpush.setVapidDetails(
-        process.env.VAPID_SUBJECT || "mailto:admin@example.com",
-        publicKey,
-        privateKey
-    );
-    vapidInitialized = true;
-    return true;
-}
+import { adminMessaging, adminDb } from "@/lib/firebase/adminApp";
+import { COLLECTIONS } from "@/lib/firebase/types";
+import { UrgencyLevel } from "@/lib/firebase/types";
 
 export interface PushNotificationPayload {
     title: string;
@@ -44,61 +20,75 @@ export async function sendPushNotifications(
     payload: PushNotificationPayload,
     filters?: { district?: string; bloodGroup?: string }
 ): Promise<void> {
-    if (!ensureVapidConfigured()) {
-        console.warn("VAPID keys not configured – skipping push notifications.");
-        return;
-    }
 
-    await connectDB();
+    // Include subscribers that match the filter OR have no filter set
+    let subsRef: any = adminDb.collection(COLLECTIONS.PUSH_SUBSCRIPTIONS).where("organization", "==", organizationId);
 
-    // Build query: include subscribers that match the filter OR have no filter set
-    const query: Record<string, unknown> = { organization: organizationId };
-    if (filters?.district) {
-        query.$or = [{ district: filters.district }, { district: { $exists: false } }, { district: null }];
-    }
-    if (filters?.bloodGroup) {
-        const bloodGroupConditions = [{ bloodGroup: filters.bloodGroup }, { bloodGroup: { $exists: false } }, { bloodGroup: null }];
-        if (query.$or) {
-            // Combine both district and bloodGroup filters with $and
-            query.$and = [
-                { $or: query.$or as Record<string, unknown>[] },
-                { $or: bloodGroupConditions },
-            ];
-            delete query.$or;
-        } else {
-            query.$or = bloodGroupConditions;
+    // Note: Firestore has limitations on complex OR queries. 
+    // Usually it's better to fetch by org and filter in memory for complex combinations like this.
+    const snapshot = await subsRef.get();
+    
+    let tokens: string[] = [];
+    const validDocs: { id: string, token: string }[] = [];
+
+    snapshot.docs.forEach((doc: any) => {
+        const data = doc.data();
+        let districtMatch = true;
+        let bloodGroupMatch = true;
+
+        if (filters?.district) {
+             districtMatch = !data.district || data.district === filters.district;
         }
-    }
+        if (filters?.bloodGroup) {
+             bloodGroupMatch = !data.bloodGroup || data.bloodGroup === filters.bloodGroup;
+        }
 
-    const subscriptions = await PushSubscriptionModel.find(query);
-
-    const message = JSON.stringify(payload);
-
-    const results = await Promise.allSettled(
-        subscriptions.map((sub) =>
-            webpush.sendNotification(
-                {
-                    endpoint: sub.endpoint,
-                    keys: { p256dh: sub.keys.p256dh, auth: sub.keys.auth },
-                },
-                message
-            )
-        )
-    );
-
-    // Remove subscriptions that are no longer valid (410 Gone)
-    const expiredEndpoints: string[] = [];
-    results.forEach((result, index) => {
-        if (result.status === "rejected") {
-            const err = result.reason as { statusCode?: number };
-            if (err?.statusCode === 410 || err?.statusCode === 404) {
-                expiredEndpoints.push(subscriptions[index].endpoint);
-            }
+        if (districtMatch && bloodGroupMatch && data.token) {
+             tokens.push(data.token);
+             validDocs.push({ id: doc.id, token: data.token });
         }
     });
 
-    if (expiredEndpoints.length > 0) {
-        await PushSubscriptionModel.deleteMany({ endpoint: { $in: expiredEndpoints } });
+    if (tokens.length === 0) return;
+
+    try {
+        const messagePayload = {
+             tokens,
+             notification: {
+                 title: payload.title,
+                 body: payload.body,
+             },
+             data: {
+                 url: payload.url || "/",
+             }
+        };
+
+        const response = await adminMessaging.sendEachForMulticast(messagePayload);
+        
+        // Remove subscriptions that are no longer valid
+        if (response.failureCount > 0) {
+            const failedTokens: string[] = [];
+            response.responses.forEach((resp, idx) => {
+                if (!resp.success) {
+                    const errCode = resp.error?.code;
+                    if (errCode === 'messaging/invalid-registration-token' ||
+                        errCode === 'messaging/registration-token-not-registered') {
+                        failedTokens.push(tokens[idx]);
+                    }
+                }
+            });
+
+            if (failedTokens.length > 0) {
+                 const invalidSubs = validDocs.filter(doc => failedTokens.includes(doc.token));
+                 const batch = adminDb.batch();
+                 invalidSubs.forEach(doc => {
+                      batch.delete(adminDb.collection(COLLECTIONS.PUSH_SUBSCRIPTIONS).doc(doc.id));
+                 });
+                 await batch.commit();
+            }
+        }
+    } catch(err) {
+        console.error("FCM Send Error: ", err);
     }
 }
 

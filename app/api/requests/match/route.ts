@@ -1,14 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import connectToDatabase from "@/lib/db/mongodb";
-import { DonorProfile } from "@/lib/models/User";
-import { BloodRequest } from "@/lib/models/BloodRequest";
-import { Organization } from "@/lib/models/Organization";
+import { adminDb } from "@/lib/firebase/adminApp";
+import { COLLECTIONS } from "@/lib/firebase/types";
 import { BLOOD_COMPATIBILITY } from "@/lib/gamification";
 
-// POST: Find matching donors for a blood request
 export async function POST(req: NextRequest) {
     try {
-        await connectToDatabase();
         const body = await req.json();
         const { requestId, bloodGroup, district, upazila, orgSlug } = body;
 
@@ -19,53 +15,63 @@ export async function POST(req: NextRequest) {
             );
         }
 
-        const org = await Organization.findOne({ slug: orgSlug });
-        if (!org) {
+        const orgsRef = adminDb.collection(COLLECTIONS.ORGANIZATIONS);
+        const orgSnapshot = await orgsRef.where("slug", "==", orgSlug).limit(1).get();
+        if (orgSnapshot.empty) {
             return NextResponse.json({ error: "Organization not found" }, { status: 404 });
         }
+        const orgId = orgSnapshot.docs[0].id;
 
-        // Get compatible blood types
         const compatibleTypes = BLOOD_COMPATIBILITY[bloodGroup] || [bloodGroup];
 
-        // Build query for matching donors
-        const query: Record<string, unknown> = {
-            organization: org._id,
-            bloodGroup: { $in: compatibleTypes },
-            isAvailable: true,
-        };
+        const donorsRef = adminDb.collection(COLLECTIONS.DONOR_PROFILES);
+        const snapshot = await donorsRef
+            .where("organization", "==", orgId)
+            .where("bloodGroup", "in", compatibleTypes)
+            .where("isAvailable", "==", true)
+            .get();
 
-        // Prefer donors in same district/upazila
-        const matchedDonors = await DonorProfile.find(query)
-            .populate("user", "name phone")
-            .sort({
-                isVerified: -1,
-                totalDonations: -1,
-            })
-            .limit(20);
+        if (snapshot.empty) {
+            return NextResponse.json({ bloodGroup, compatibleTypes, totalMatched: 0, donors: [] });
+        }
 
-        // Sort: same district first, then same upazila, then verified, then by donation count
+        const userIds = snapshot.docs.map(doc => doc.data().user).filter(id => id);
+        const uniqueUserIds = [...new Set(userIds)];
+        
+        const usersFetch = await Promise.all(uniqueUserIds.map(uid => adminDb.collection(COLLECTIONS.USERS).doc(uid).get()));
+        const userMap: Record<string, any> = {};
+        usersFetch.forEach(uDoc => {
+            if(uDoc.exists) userMap[uDoc.id] = { _id: uDoc.id, name: uDoc.data()?.name, phone: uDoc.data()?.phone };
+        });
+
+        let matchedDonors = snapshot.docs.map(doc => {
+             const data = doc.data();
+             return {
+                 _id: doc.id,
+                 ...data,
+                 user: data.user ? userMap[data.user] : null
+             } as any;
+        });
+
         const sorted = matchedDonors.sort((a, b) => {
-            // Same district gets priority
             const aDistrict = a.district?.toLowerCase() === district?.toLowerCase() ? 1 : 0;
             const bDistrict = b.district?.toLowerCase() === district?.toLowerCase() ? 1 : 0;
             if (aDistrict !== bDistrict) return bDistrict - aDistrict;
 
-            // Same upazila gets priority
             const aUpazila = a.upazila?.toLowerCase() === upazila?.toLowerCase() ? 1 : 0;
             const bUpazila = b.upazila?.toLowerCase() === upazila?.toLowerCase() ? 1 : 0;
             if (aUpazila !== bUpazila) return bUpazila - aUpazila;
 
-            // Verified donors get priority
             if (a.isVerified !== b.isVerified) return a.isVerified ? -1 : 1;
 
-            // More donations = higher priority
             return (b.totalDonations || 0) - (a.totalDonations || 0);
-        });
+        }).slice(0, 20);
 
-        // If requestId provided, save matched donor IDs to the request
         if (requestId) {
-            await BloodRequest.findByIdAndUpdate(requestId, {
+            const requestRef = adminDb.collection(COLLECTIONS.BLOOD_REQUESTS).doc(requestId);
+            await requestRef.update({
                 matchedDonors: sorted.map((d) => d._id),
+                updatedAt: new Date()
             });
         }
 

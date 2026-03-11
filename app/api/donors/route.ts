@@ -1,11 +1,9 @@
 import { NextResponse } from "next/server";
-import connectDB from "@/lib/db/mongodb";
-import { DonorProfile } from "@/lib/models/User";
-import { Organization } from "@/lib/models/Organization";
+import { adminDb } from "@/lib/firebase/adminApp";
+import { COLLECTIONS } from "@/lib/firebase/types";
 
 export async function GET(req: Request) {
     try {
-        await connectDB();
         const { searchParams } = new URL(req.url);
         const orgSlug = searchParams.get("orgSlug");
         const bloodGroup = searchParams.get("bloodGroup");
@@ -16,20 +14,48 @@ export async function GET(req: Request) {
             return NextResponse.json({ error: "Organization slug is required" }, { status: 400 });
         }
 
-        const organization = await Organization.findOne({ slug: orgSlug });
-        if (!organization) {
+        const orgsRef = adminDb.collection(COLLECTIONS.ORGANIZATIONS);
+        const orgSnapshot = await orgsRef.where("slug", "==", orgSlug).limit(1).get();
+        if (orgSnapshot.empty) {
             return NextResponse.json({ error: "Organization not found" }, { status: 404 });
         }
+        const organizationId = orgSnapshot.docs[0].id;
 
-        const query: Record<string, unknown> = { organization: organization._id };
+        let donorsRef: FirebaseFirestore.Query = adminDb.collection(COLLECTIONS.DONOR_PROFILES)
+            .where("organization", "==", organizationId);
 
-        if (bloodGroup) query.bloodGroup = bloodGroup;
-        if (district) query.district = new RegExp(district, "i");
-        if (upazila) query.upazila = new RegExp(upazila, "i");
+        if (bloodGroup) donorsRef = donorsRef.where("bloodGroup", "==", bloodGroup);
+        // Firestore doesn't support case-insensitive regex natively.
+        // We will fetch and filter in memory if district or upazila is provided
+        const snapshot = await donorsRef.orderBy("createdAt", "desc").get();
+        
+        // Populate user manually
+        const userIds = snapshot.docs.map(doc => doc.data().user);
+        const uniqueUserIds = [...new Set(userIds)];
+        
+        const usersFetch = await Promise.all(uniqueUserIds.map(uid => adminDb.collection(COLLECTIONS.USERS).doc(uid).get()));
+        const userMap: Record<string, any> = {};
+        usersFetch.forEach(uDoc => {
+            if(uDoc.exists) userMap[uDoc.id] = { _id: uDoc.id, name: uDoc.data()?.name, phone: uDoc.data()?.phone };
+        });
 
-        const donors = await DonorProfile.find(query)
-            .populate("user", "name phone")
-            .sort({ createdAt: -1 });
+        let donors = snapshot.docs.map(doc => {
+            const data = doc.data();
+            return {
+                _id: doc.id,
+                ...data,
+                user: userMap[data.user] || { name: "Unknown" }
+            } as any;
+        });
+
+        if (district || upazila) {
+            donors = donors.filter(d => {
+                let match = true;
+                if(district) match = match && d.district?.toLowerCase().includes(district.toLowerCase());
+                if(upazila) match = match && d.upazila?.toLowerCase().includes(upazila.toLowerCase());
+                return match;
+            });
+        }
 
         return NextResponse.json(donors);
     } catch (error: unknown) {

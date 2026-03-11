@@ -1,9 +1,9 @@
 import { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
-import connectToDatabase from "./db/mongodb";
-import { User } from "./models/User";
 import GoogleProvider from "next-auth/providers/google";
 import bcrypt from "bcryptjs";
+import { adminDb } from "./firebase/adminApp";
+import { COLLECTIONS, UserRole } from "./firebase/types";
 
 export const authOptions: NextAuthOptions = {
     providers: [
@@ -19,18 +19,20 @@ export const authOptions: NextAuthOptions = {
                     throw new Error("Please enter phone and password");
                 }
 
-                await connectToDatabase();
-                const user = await User.findOne({ phone: credentials.phone });
+                const usersRef = adminDb.collection(COLLECTIONS.USERS);
+                const snapshot = await usersRef.where("phone", "==", credentials.phone).limit(1).get();
 
-                if (!user) {
+                if (snapshot.empty) {
                     throw new Error("No user found with this phone number");
                 }
+
+                const userDoc = snapshot.docs[0];
+                const user = { _id: userDoc.id, ...userDoc.data() } as any;
 
                 if (!user.password) {
                     throw new Error("User has no password set");
                 }
 
-                // Check bcrypt hash, fallback to plaintext comparison for legacy seed data
                 const isPasswordValid = await bcrypt.compare(credentials.password, user.password) || credentials.password === user.password;
                 
                 if (!isPasswordValid) {
@@ -38,7 +40,7 @@ export const authOptions: NextAuthOptions = {
                 }
 
                 return {
-                    id: user._id.toString(),
+                    id: user._id,
                     name: user.name,
                     email: user.email,
                     role: user.role,
@@ -57,18 +59,20 @@ export const authOptions: NextAuthOptions = {
                     throw new Error("Please enter email and password");
                 }
 
-                await connectToDatabase();
-                const user = await User.findOne({ email: credentials.email });
+                const usersRef = adminDb.collection(COLLECTIONS.USERS);
+                const snapshot = await usersRef.where("email", "==", credentials.email).limit(1).get();
 
-                if (!user) {
+                if (snapshot.empty) {
                     throw new Error("No user found with this email");
                 }
+
+                const userDoc = snapshot.docs[0];
+                const user = { _id: userDoc.id, ...userDoc.data() } as any;
 
                 if (!user.password) {
                     throw new Error("User has no password set");
                 }
 
-                // Check bcrypt hash, fallback to plaintext comparison for legacy seed data
                 const isPasswordValid = await bcrypt.compare(credentials.password, user.password) || credentials.password === user.password;
                 
                 if (!isPasswordValid) {
@@ -76,42 +80,12 @@ export const authOptions: NextAuthOptions = {
                 }
 
                 return {
-                    id: user._id.toString(),
+                    id: user._id,
                     name: user.name,
                     email: user.email,
                     role: user.role,
                 };
             },
-        }),
-        CredentialsProvider({
-            id: "firebase",
-            name: "Firebase",
-            credentials: {
-                email: { label: "Email", type: "text" },
-                name: { label: "Name", type: "text" },
-            },
-            async authorize(credentials) {
-                if (!credentials?.email) return null;
-
-                await connectToDatabase();
-                let user = await User.findOne({ email: credentials.email });
-
-                if (!user) {
-                    user = await User.create({
-                        name: credentials.name || credentials.email.split("@")[0],
-                        email: credentials.email,
-                        phone: undefined, // Explicitly undefined for optional unique field
-                        role: "patient",
-                    });
-                }
-
-                return {
-                    id: user._id.toString(),
-                    name: user.name,
-                    email: user.email,
-                    role: user.role,
-                };
-            }
         }),
         GoogleProvider({
             clientId: process.env.GOOGLE_CLIENT_ID || "",
@@ -121,16 +95,25 @@ export const authOptions: NextAuthOptions = {
     callbacks: {
         async signIn({ user, account, profile }) {
             if (account?.provider === "google") {
-                await connectToDatabase();
-                const existingUser = await User.findOne({ email: user.email });
+                const usersRef = adminDb.collection(COLLECTIONS.USERS);
+                const snapshot = await usersRef.where("email", "==", user.email).limit(1).get();
 
-                if (!existingUser) {
-                    await User.create({
+                if (snapshot.empty) {
+                    await usersRef.add({
                         name: user.name || user.email?.split("@")[0] || "User",
-                        email: user.email || undefined,
-                        phone: undefined, // Explicitly undefined for optional unique field
-                        image: user.image || undefined,
-                        role: "patient",
+                        email: user.email || null,
+                        phone: null,
+                        image: user.image || null,
+                        role: UserRole.PATIENT,
+                        createdAt: new Date(),
+                        updatedAt: new Date(),
+                        onboardingCompleted: false,
+                        notificationPreferences: {
+                            emailDonationReminders: true,
+                            emailNewRequests: true,
+                            emailEventUpdates: true,
+                            inAppAlerts: true,
+                        }
                     });
                 }
             }
@@ -143,10 +126,11 @@ export const authOptions: NextAuthOptions = {
 
             // Always fetch latest role from DB during JWT refresh or login
             if (token?.email) {
-                await connectToDatabase();
-                const dbUser = await User.findOne({ email: token.email });
-                if (dbUser) {
-                    token.id = dbUser._id.toString();
+                const usersRef = adminDb.collection(COLLECTIONS.USERS);
+                const snapshot = await usersRef.where("email", "==", token.email).limit(1).get();
+                if (!snapshot.empty) {
+                    const dbUser = snapshot.docs[0].data();
+                    token.id = snapshot.docs[0].id;
                     token.role = dbUser.role;
                 }
             }
@@ -155,8 +139,8 @@ export const authOptions: NextAuthOptions = {
         },
         async session({ session, token }) {
             if (token) {
-                session.user.id = token.id;
-                session.user.role = token.role;
+                session.user.id = token.id as string;
+                session.user.role = token.role as string;
             }
             return session;
         },

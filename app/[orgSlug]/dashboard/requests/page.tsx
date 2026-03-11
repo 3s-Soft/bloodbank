@@ -1,5 +1,8 @@
 "use client";
 
+import { collection, query, where, onSnapshot, getFirestore } from "firebase/firestore";
+import { app } from "@/lib/firebase/clientApp";
+import { COLLECTIONS } from "@/lib/firebase/types";
 import { useOrganization } from "@/lib/context/OrganizationContext";
 import { Button } from "@/components/ui/button";
 import {
@@ -46,25 +49,40 @@ export default function RequestManagement() {
     const [searchQuery, setSearchQuery] = useState("");
 
 
-    const fetchRequests = async () => {
-        setIsLoading(true);
-        try {
-            const [pending, fulfilled, canceled] = await Promise.all([
-                fetch(`/api/requests?orgSlug=${orgSlug}&status=pending`).then(r => r.json()),
-                fetch(`/api/requests?orgSlug=${orgSlug}&status=fulfilled`).then(r => r.json()),
-                fetch(`/api/requests?orgSlug=${orgSlug}&status=canceled`).then(r => r.json()),
-            ]);
-            const all = [...pending, ...fulfilled, ...canceled];
-            setAllRequests(all);
-        } catch (error) {
-            console.error("Failed to fetch requests", error);
-        } finally {
-            setIsLoading(false);
-        }
-    };
+    const db = getFirestore(app);
 
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    useEffect(() => { fetchRequests(); }, [orgSlug]);
+    useEffect(() => {
+        if (!organization._id) return;
+        setIsLoading(true);
+
+        const q = query(
+            collection(db, COLLECTIONS.BLOOD_REQUESTS),
+            where("organization", "==", organization._id)
+        );
+
+        const unsubscribe = onSnapshot(q, (snapshot: any) => {
+            const requests = snapshot.docs.map((doc: any) => {
+                const data = doc.data();
+                return {
+                    ...data,
+                    _id: doc.id,
+                    requiredDate: data.requiredDate?.toDate?.()?.toISOString() || data.requiredDate,
+                    createdAt: data.createdAt?.toDate?.()?.toISOString() || data.createdAt,
+                } as BloodRequest;
+            });
+
+            requests.sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
+            setAllRequests(requests);
+            setIsLoading(false);
+        }, (error: any) => {
+            console.error("Firebase listen error", error);
+            setIsLoading(false);
+            toast.error("Failed to load requests in real-time");
+        });
+
+        return () => unsubscribe();
+    }, [organization._id]);
 
     const handleStatusUpdate = async (requestId: string, newStatus: string) => {
         try {
@@ -75,7 +93,7 @@ export default function RequestManagement() {
             });
             if (res.ok) {
                 toast.success(`Request marked as ${newStatus}`);
-                fetchRequests();
+                // Real-time listener handles the data refresh automatically
             }
         } catch {
             toast.error("Failed to update request status");

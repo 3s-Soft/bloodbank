@@ -1,70 +1,78 @@
 import { NextResponse } from "next/server";
-import connectDB from "@/lib/db/mongodb";
-import { Organization } from "@/lib/models/Organization";
-import { User, DonorProfile } from "@/lib/models/User";
+import { adminDb } from "@/lib/firebase/adminApp";
+import { COLLECTIONS } from "@/lib/firebase/types";
 
 // GET - List users for an organization
 export async function GET(req: Request) {
     try {
-        await connectDB();
         const { searchParams } = new URL(req.url);
         const orgSlug = searchParams.get("orgSlug");
         const role = searchParams.get("role");
-        const search = searchParams.get("search");
+        const search = searchParams.get("search")?.toLowerCase();
 
         if (!orgSlug) {
             return NextResponse.json({ error: "Organization slug is required" }, { status: 400 });
         }
 
-        const organization = await Organization.findOne({ slug: orgSlug });
-        if (!organization) {
+        const orgsRef = adminDb.collection(COLLECTIONS.ORGANIZATIONS);
+        const orgSnap = await orgsRef.where("slug", "==", orgSlug).limit(1).get();
+        if (orgSnap.empty) {
             return NextResponse.json({ error: "Organization not found" }, { status: 404 });
         }
+        const orgId = orgSnap.docs[0].id;
 
         // Build query
-        const query: Record<string, unknown> = { organization: organization._id };
+        let q: any = adminDb.collection(COLLECTIONS.USERS).where("organization", "==", orgId);
 
         if (role && role !== "all") {
-            query.role = role;
+            q = q.where("role", "==", role);
         }
+
+        const usersSnap = await q.get();
+        let users = usersSnap.docs.map((doc: any) => ({ _id: doc.id, ...doc.data() }));
 
         if (search) {
-            query.$or = [
-                { name: new RegExp(search, "i") },
-                { phone: new RegExp(search, "i") },
-                { email: new RegExp(search, "i") },
-            ];
+             users = users.filter((u: any) => 
+                 (u.name && u.name.toLowerCase().includes(search)) ||
+                 (u.phone && u.phone.toLowerCase().includes(search)) ||
+                 (u.email && u.email.toLowerCase().includes(search))
+             );
         }
 
-        const users = await User.find(query)
-            .sort({ createdAt: -1 })
-            .lean();
+        users.sort((a: any, b: any) => {
+            const dA = a.createdAt?.toDate ? a.createdAt.toDate() : new Date(a.createdAt || 0);
+            const dB = b.createdAt?.toDate ? b.createdAt.toDate() : new Date(b.createdAt || 0);
+            return dB.getTime() - dA.getTime();
+        });
 
         // Get donor profiles for users who are donors
-        const donorUserIds = users.filter(u => u.role === "donor").map(u => u._id);
-        const donorProfiles = await DonorProfile.find({
-            user: { $in: donorUserIds },
-            organization: organization._id
-        }).lean();
+        const donorUserIds = users.filter((u: any) => u.role === "donor").map((u: any) => u._id);
+        
+        let donorProfiles: any[] = [];
+        if (donorUserIds.length > 0) {
+             // Firestore 'in' has a max of 10. For now fetch by org and filter in memory since we are prototyping
+             const allDonorsSnap = await adminDb.collection(COLLECTIONS.DONOR_PROFILES).where("organization", "==", orgId).get();
+             donorProfiles = allDonorsSnap.docs.map(doc => ({ _id: doc.id, ...doc.data() })).filter((dp: any) => donorUserIds.includes(dp.user));
+        }
 
         // Create a map of user ID to donor profile
         const donorProfileMap = new Map(
-            donorProfiles.map(dp => [dp.user.toString(), dp])
+            donorProfiles.map(dp => [dp.user, dp])
         );
 
         // Enhance users with donor profile data
-        const enhancedUsers = users.map(user => ({
+        const enhancedUsers = users.map((user: any) => ({
             ...user,
-            donorProfile: donorProfileMap.get(user._id.toString()) || null,
+            donorProfile: donorProfileMap.get(user._id) || null,
         }));
 
         // Get user stats
         const stats = {
-            total: await User.countDocuments({ organization: organization._id }),
-            donors: await User.countDocuments({ organization: organization._id, role: "donor" }),
-            admins: await User.countDocuments({ organization: organization._id, role: "admin" }),
-            patients: await User.countDocuments({ organization: organization._id, role: "patient" }),
-            volunteers: await User.countDocuments({ organization: organization._id, role: "volunteer" }),
+            total: (await adminDb.collection(COLLECTIONS.USERS).where("organization", "==", orgId).count().get()).data().count,
+            donors: (await adminDb.collection(COLLECTIONS.USERS).where("organization", "==", orgId).where("role", "==", "donor").count().get()).data().count,
+            admins: (await adminDb.collection(COLLECTIONS.USERS).where("organization", "==", orgId).where("role", "==", "admin").count().get()).data().count,
+            patients: (await adminDb.collection(COLLECTIONS.USERS).where("organization", "==", orgId).where("role", "==", "patient").count().get()).data().count,
+            volunteers: (await adminDb.collection(COLLECTIONS.USERS).where("organization", "==", orgId).where("role", "==", "volunteer").count().get()).data().count,
         };
 
         return NextResponse.json({
@@ -80,7 +88,6 @@ export async function GET(req: Request) {
 // POST - Create a new user
 export async function POST(req: Request) {
     try {
-        await connectDB();
         const body = await req.json();
         const { name, phone, email, role, orgSlug } = body;
 
@@ -88,26 +95,32 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: "Name, phone, and organization are required" }, { status: 400 });
         }
 
-        const organization = await Organization.findOne({ slug: orgSlug });
-        if (!organization) {
+        const orgsRef = adminDb.collection(COLLECTIONS.ORGANIZATIONS);
+        const orgSnap = await orgsRef.where("slug", "==", orgSlug).limit(1).get();
+        if (orgSnap.empty) {
             return NextResponse.json({ error: "Organization not found" }, { status: 404 });
         }
+        const orgId = orgSnap.docs[0].id;
 
         // Check if phone already exists
-        const existingUser = await User.findOne({ phone });
-        if (existingUser) {
+        const existingUserSnap = await adminDb.collection(COLLECTIONS.USERS).where("phone", "==", phone).limit(1).get();
+        if (!existingUserSnap.empty) {
             return NextResponse.json({ error: "User with this phone already exists" }, { status: 400 });
         }
-
-        const user = await User.create({
+        
+        const userData = {
             name,
             phone,
-            email,
+            email: email || null,
             role: role || "patient",
-            organization: organization._id,
-        });
+            organization: orgId,
+            createdAt: new Date(),
+            updatedAt: new Date()
+        };
 
-        return NextResponse.json({ message: "User created successfully", user }, { status: 201 });
+        const userRef = await adminDb.collection(COLLECTIONS.USERS).add(userData);
+
+        return NextResponse.json({ message: "User created successfully", user: { _id: userRef.id, ...userData } }, { status: 201 });
     } catch (error: unknown) {
         console.error("Create user error:", error);
         return NextResponse.json({ error: (error instanceof Error ? error.message : "Internal Server Error") }, { status: 500 });

@@ -1,11 +1,9 @@
 import { NextResponse } from "next/server";
-import connectDB from "@/lib/db/mongodb";
-import { BloodRequest } from "@/lib/models/BloodRequest";
-import { Organization } from "@/lib/models/Organization";
+import { adminDb } from "@/lib/firebase/adminApp";
+import { COLLECTIONS } from "@/lib/firebase/types";
 
 export async function GET(req: Request) {
     try {
-        await connectDB();
         const { searchParams } = new URL(req.url);
         const orgSlug = searchParams.get("orgSlug");
         const urgency = searchParams.get("urgency");
@@ -15,18 +13,45 @@ export async function GET(req: Request) {
             return NextResponse.json({ error: "Organization slug is required" }, { status: 400 });
         }
 
-        const organization = await Organization.findOne({ slug: orgSlug });
-        if (!organization) {
+        const orgsRef = adminDb.collection(COLLECTIONS.ORGANIZATIONS);
+        const orgSnapshot = await orgsRef.where("slug", "==", orgSlug).limit(1).get();
+        if (orgSnapshot.empty) {
             return NextResponse.json({ error: "Organization not found" }, { status: 404 });
         }
+        const organizationId = orgSnapshot.docs[0].id;
 
-        const query: Record<string, unknown> = { organization: organization._id, status };
+        let requestsRef: FirebaseFirestore.Query = adminDb.collection(COLLECTIONS.BLOOD_REQUESTS)
+            .where("organization", "==", organizationId)
+            .where("status", "==", status);
 
-        if (urgency) query.urgency = urgency;
+        if (urgency) requestsRef = requestsRef.where("urgency", "==", urgency);
 
-        const requests = await BloodRequest.find(query)
-            .populate("requester", "name")
-            .sort({ urgency: -1, createdAt: -1 });
+        const snapshot = await requestsRef.get();
+        
+        const userIds = snapshot.docs.map(doc => doc.data().requester).filter(id => id);
+        const uniqueUserIds = [...new Set(userIds)];
+        
+        const usersFetch = await Promise.all(uniqueUserIds.map(uid => adminDb.collection(COLLECTIONS.USERS).doc(uid).get()));
+        const userMap: Record<string, any> = {};
+        usersFetch.forEach(uDoc => {
+            if(uDoc.exists) userMap[uDoc.id] = { _id: uDoc.id, name: uDoc.data()?.name };
+        });
+
+        const requests = snapshot.docs.map(doc => {
+            const data = doc.data();
+            return {
+                _id: doc.id,
+                ...data,
+                requester: data.requester ? userMap[data.requester] : null
+            } as any;
+        });
+
+        // Sort in memory (urgency isn't numeric here, just defaulting to time desc)
+        requests.sort((a, b) => {
+             const timeA = a.createdAt?.toMillis ? a.createdAt.toMillis() : new Date(a.createdAt).getTime();
+             const timeB = b.createdAt?.toMillis ? b.createdAt.toMillis() : new Date(b.createdAt).getTime();
+             return timeB - timeA;
+        });
 
         return NextResponse.json(requests);
     } catch (error: unknown) {

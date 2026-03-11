@@ -1,13 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
-import connectToDatabase from "@/lib/db/mongodb";
-import { Event, EventStatus } from "@/lib/models/Event";
-import { Organization } from "@/lib/models/Organization";
-import { AuditLog, AuditAction } from "@/lib/models/AuditLog";
+import { adminDb } from "@/lib/firebase/adminApp";
+import { COLLECTIONS } from "@/lib/firebase/types";
+
+// Event statuses replicated statically
+const EventStatus = { UPCOMING: "upcoming", ONGOING: "ongoing", COMPLETED: "completed", CANCELLED: "cancelled" };
+const AuditAction = { EVENT_CREATED: "EVENT_CREATED", EVENT_UPDATED: "EVENT_UPDATED", EVENT_DELETED: "EVENT_DELETED" };
 
 // GET: List events
 export async function GET(req: NextRequest) {
     try {
-        await connectToDatabase();
         const { searchParams } = new URL(req.url);
         const orgSlug = searchParams.get("orgSlug");
         const status = searchParams.get("status");
@@ -17,26 +18,34 @@ export async function GET(req: NextRequest) {
             return NextResponse.json({ error: "orgSlug is required" }, { status: 400 });
         }
 
-        const org = await Organization.findOne({ slug: orgSlug });
-        if (!org) {
+        const orgsRef = adminDb.collection(COLLECTIONS.ORGANIZATIONS);
+        const orgSnap = await orgsRef.where("slug", "==", orgSlug).limit(1).get();
+        if (orgSnap.empty) {
             return NextResponse.json({ error: "Organization not found" }, { status: 404 });
         }
+        const orgId = orgSnap.docs[0].id;
 
-        const query: Record<string, unknown> = { organization: org._id };
+        let query: any = adminDb.collection(COLLECTIONS.EVENTS).where("organization", "==", orgId);
 
         if (status) {
-            query.status = status;
+            query = query.where("status", "==", status);
         }
 
         if (upcoming === "true") {
-            query.date = { $gte: new Date() };
-            query.status = { $in: [EventStatus.UPCOMING, EventStatus.ONGOING] };
+            query = query.where("date", ">=", new Date());
+            query = query.where("status", "in", [EventStatus.UPCOMING, EventStatus.ONGOING]);
         }
 
-        const events = await Event.find(query)
-            .populate("createdBy", "name")
-            .sort({ date: upcoming === "true" ? 1 : -1 })
-            .limit(50);
+        const eventsSnap = await query.orderBy("date", upcoming === "true" ? "asc" : "desc").limit(50).get();
+        const events = await Promise.all(eventsSnap.docs.map(async (doc: any) => {
+             const data = doc.data();
+             let createdBy = null;
+             if (data.createdBy) {
+                  const uDoc = await adminDb.collection(COLLECTIONS.USERS).doc(data.createdBy).get();
+                  if (uDoc.exists) createdBy = { _id: uDoc.id, name: uDoc.data()?.name };
+             }
+             return { _id: doc.id, ...data, createdBy };
+        }));
 
         return NextResponse.json(events);
     } catch (error) {
@@ -48,7 +57,6 @@ export async function GET(req: NextRequest) {
 // POST: Create event
 export async function POST(req: NextRequest) {
     try {
-        await connectToDatabase();
         const body = await req.json();
         const { title, description, date, endDate, location, district, upazila, orgSlug, createdBy, maxParticipants, contactNumber } = body;
 
@@ -59,36 +67,45 @@ export async function POST(req: NextRequest) {
             );
         }
 
-        const org = await Organization.findOne({ slug: orgSlug });
-        if (!org) {
+        const orgsRef = adminDb.collection(COLLECTIONS.ORGANIZATIONS);
+        const orgSnap = await orgsRef.where("slug", "==", orgSlug).limit(1).get();
+        if (orgSnap.empty) {
             return NextResponse.json({ error: "Organization not found" }, { status: 404 });
         }
+        const orgId = orgSnap.docs[0].id;
 
-        const event = await Event.create({
+        const eventData = {
             title,
             description,
             date: new Date(date),
-            endDate: endDate ? new Date(endDate) : undefined,
+            endDate: endDate ? new Date(endDate) : null,
             location,
             district,
             upazila,
-            organization: org._id,
+            organization: orgId,
             createdBy,
             maxParticipants,
             contactNumber,
-        });
+            status: EventStatus.UPCOMING,
+            createdAt: new Date(),
+            updatedAt: new Date()
+        };
+        // Remove undefined fields
+        Object.keys(eventData).forEach(key => (eventData as any)[key] === undefined && delete (eventData as any)[key]);
+        const eventRef = await adminDb.collection(COLLECTIONS.EVENTS).add(eventData);
 
         // Audit log
-        await AuditLog.create({
+        await adminDb.collection(COLLECTIONS.AUDIT_LOGS).add({
             action: AuditAction.EVENT_CREATED,
             performedBy: createdBy,
-            organization: org._id,
+            organization: orgId,
             targetType: "Event",
-            targetId: event._id,
+            targetId: eventRef.id,
             details: `Created event: ${title}`,
+            createdAt: new Date()
         });
 
-        return NextResponse.json({ success: true, event });
+        return NextResponse.json({ success: true, event: { _id: eventRef.id, ...eventData } });
     } catch (error) {
         console.error("Error creating event:", error);
         return NextResponse.json({ error: "Failed to create event" }, { status: 500 });
@@ -98,7 +115,6 @@ export async function POST(req: NextRequest) {
 // PUT: Update event
 export async function PUT(req: NextRequest) {
     try {
-        await connectToDatabase();
         const body = await req.json();
         const { eventId, performedBy, ...updates } = body;
 
@@ -106,23 +122,32 @@ export async function PUT(req: NextRequest) {
             return NextResponse.json({ error: "eventId is required" }, { status: 400 });
         }
 
-        const event = await Event.findByIdAndUpdate(eventId, updates, { new: true });
-        if (!event) {
+        const objUpdates: any = { ...updates, updatedAt: new Date() };
+        Object.keys(objUpdates).forEach(key => objUpdates[key] === undefined && delete objUpdates[key]);
+
+        const eventRef = adminDb.collection(COLLECTIONS.EVENTS).doc(eventId);
+        const eventSnap = await eventRef.get();
+        
+        if (!eventSnap.exists) {
             return NextResponse.json({ error: "Event not found" }, { status: 404 });
         }
+        
+        await eventRef.update(objUpdates);
+        const evtFresh = await eventRef.get();
 
         if (performedBy) {
-            await AuditLog.create({
+            await adminDb.collection(COLLECTIONS.AUDIT_LOGS).add({
                 action: AuditAction.EVENT_UPDATED,
                 performedBy,
-                organization: event.organization,
+                organization: eventSnap.data()!.organization,
                 targetType: "Event",
-                targetId: event._id,
-                details: `Updated event: ${event.title}`,
+                targetId: eventId,
+                details: `Updated event: ${eventSnap.data()!.title}`,
+                createdAt: new Date()
             });
         }
 
-        return NextResponse.json({ success: true, event });
+        return NextResponse.json({ success: true, event: { _id: evtFresh.id, ...evtFresh.data() } });
     } catch (error) {
         console.error("Error updating event:", error);
         return NextResponse.json({ error: "Failed to update event" }, { status: 500 });
@@ -132,7 +157,6 @@ export async function PUT(req: NextRequest) {
 // DELETE: Delete event
 export async function DELETE(req: NextRequest) {
     try {
-        await connectToDatabase();
         const { searchParams } = new URL(req.url);
         const eventId = searchParams.get("eventId");
         const performedBy = searchParams.get("performedBy");
@@ -141,19 +165,25 @@ export async function DELETE(req: NextRequest) {
             return NextResponse.json({ error: "eventId is required" }, { status: 400 });
         }
 
-        const event = await Event.findByIdAndDelete(eventId);
-        if (!event) {
+        const eventRef = adminDb.collection(COLLECTIONS.EVENTS).doc(eventId);
+        const eventSnap = await eventRef.get();
+        
+        if (!eventSnap.exists) {
             return NextResponse.json({ error: "Event not found" }, { status: 404 });
         }
+        const eventData = eventSnap.data()!;
+        
+        await eventRef.delete();
 
         if (performedBy) {
-            await AuditLog.create({
+            await adminDb.collection(COLLECTIONS.AUDIT_LOGS).add({
                 action: AuditAction.EVENT_DELETED,
                 performedBy,
-                organization: event.organization,
+                organization: eventData.organization,
                 targetType: "Event",
-                targetId: event._id,
-                details: `Deleted event: ${event.title}`,
+                targetId: eventId,
+                details: `Deleted event: ${eventData.title}`,
+                createdAt: new Date()
             });
         }
 

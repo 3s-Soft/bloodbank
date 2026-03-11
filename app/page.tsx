@@ -9,8 +9,8 @@ import {
   Activity,
 } from "lucide-react";
 import Link from "next/link";
-import connectToDatabase from "@/lib/db/mongodb";
-import { Organization } from "@/lib/models/Organization";
+import { adminDb } from "@/lib/firebase/adminApp";
+import { COLLECTIONS } from "@/lib/firebase/types";
 import LandingNav from "@/components/LandingNav";
 
 export const dynamic = "force-dynamic";
@@ -25,9 +25,9 @@ interface OrganizationData {
 }
 
 async function getOrganizations(): Promise<OrganizationData[]> {
-  await connectToDatabase();
-  const orgs = await Organization.find({ isActive: true }).lean();
-  return JSON.parse(JSON.stringify(orgs));
+  const orgsRef = adminDb.collection(COLLECTIONS.ORGANIZATIONS);
+  const snapshot = await orgsRef.where("isActive", "==", true).get();
+  return snapshot.docs.map(doc => ({ _id: doc.id, ...doc.data() } as unknown as OrganizationData));
 }
 
 export default async function Home() {

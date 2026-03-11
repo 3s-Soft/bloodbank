@@ -1,11 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import connectToDatabase from "@/lib/db/mongodb";
-import { Organization } from "@/lib/models/Organization";
-import { User, UserRole } from "@/lib/models/User";
+import { adminDb } from "@/lib/firebase/adminApp";
+import { COLLECTIONS, UserRole } from "@/lib/firebase/types";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/authOptions";
 
-// PATCH - Verify or reject an organization (Super Admin only)
 export async function PATCH(
     request: NextRequest,
     { params }: { params: Promise<{ id: string }> }
@@ -18,36 +16,42 @@ export async function PATCH(
         }
 
         const { id } = await params;
-        await connectToDatabase();
         const body = await request.json();
 
-        const { action } = body; // "verify" or "reject"
+        const { action } = body;
 
         if (!["verify", "reject"].includes(action)) {
             return NextResponse.json({ error: "Invalid action. Must be 'verify' or 'reject'" }, { status: 400 });
         }
 
-        const organization = await Organization.findById(id);
-        if (!organization) {
+        const orgRef = adminDb.collection(COLLECTIONS.ORGANIZATIONS).doc(id);
+        const orgDoc = await orgRef.get();
+        if (!orgDoc.exists) {
             return NextResponse.json({ error: "Organization not found" }, { status: 404 });
         }
+        const orgData = orgDoc.data();
 
         if (action === "verify") {
-            organization.isVerified = true;
-            await organization.save();
+            await orgRef.update({
+                 isVerified: true,
+                 updatedAt: new Date()
+            });
 
-            // Promote creator to admin of this organization if they exist
-            if (organization.createdBy) {
-                await User.findByIdAndUpdate(organization.createdBy, {
-                    role: UserRole.ADMIN,
-                    organization: organization._id,
-                });
+            if (orgData?.createdBy) {
+                const userRef = adminDb.collection(COLLECTIONS.USERS).doc(orgData.createdBy);
+                const uDoc = await userRef.get();
+                if(uDoc.exists) {
+                     await userRef.update({
+                         role: UserRole.ADMIN,
+                         organization: id,
+                         updatedAt: new Date()
+                     });
+                }
             }
 
-            return NextResponse.json({ message: "Organization verified successfully", organization });
+            return NextResponse.json({ message: "Organization verified successfully", organization: { _id: id, ...orgData, isVerified: true } });
         } else {
-            // Reject = delete the organization
-            await Organization.findByIdAndDelete(id);
+            await orgRef.delete();
             return NextResponse.json({ message: "Organization rejected and removed" });
         }
     } catch (error: unknown) {
