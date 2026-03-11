@@ -12,6 +12,7 @@
   "dependencies": {
     "@ducanh2912/next-pwa": "^10.2.9",
     "@hookform/resolvers": "^5.2.2",
+    "@opentelemetry/api": "^1.9.0",
     "bcryptjs": "^3.0.3",
     "clsx": "^2.1.1",
     "firebase": "^12.10.0",
