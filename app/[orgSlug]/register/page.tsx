@@ -295,8 +295,6 @@ export default function DonorRegistration() {
                                     />
                                     {errors.phone && <p className="text-xs text-red-500 ml-1">{errors.phone.message}</p>}
                                 </div>
-                            </div>
-
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div className="space-y-1.5">
                                     <label className="text-xs font-bold uppercase tracking-widest text-slate-500 ml-1">Password</label>

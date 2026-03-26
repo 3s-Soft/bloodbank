@@ -25,34 +25,61 @@ export async function GET(req: Request) {
             .where("organization", "==", organizationId);
 
         if (bloodGroup) donorsRef = donorsRef.where("bloodGroup", "==", bloodGroup);
-        // Firestore doesn't support case-insensitive regex natively.
-        // We will fetch and filter in memory if district or upazila is provided
-        const snapshot = await donorsRef.orderBy("createdAt", "desc").get();
-        
+
+        // Prefer server-side ordering; if Firestore requires a composite index, fall back safely.
+        let snapshot: FirebaseFirestore.QuerySnapshot;
+        try {
+            snapshot = await donorsRef.orderBy("createdAt", "desc").get();
+        } catch (queryError) {
+            console.error("Donor query with orderBy failed, falling back to unordered query:", queryError);
+            snapshot = await donorsRef.get();
+        }
+
         // Populate user manually
-        const userIds = snapshot.docs.map(doc => doc.data().user);
+        const userIds = snapshot.docs
+            .map(doc => doc.data().user)
+            .filter((uid): uid is string => typeof uid === "string" && uid.trim().length > 0);
         const uniqueUserIds = [...new Set(userIds)];
-        
-        const usersFetch = await Promise.all(uniqueUserIds.map(uid => adminDb.collection(COLLECTIONS.USERS).doc(uid).get()));
-        const userMap: Record<string, any> = {};
+
+        const usersFetch = await Promise.all(
+            uniqueUserIds.map(uid => adminDb.collection(COLLECTIONS.USERS).doc(uid).get())
+        );
+        const userMap: Record<string, { _id: string; name?: string; phone?: string }> = {};
         usersFetch.forEach(uDoc => {
-            if(uDoc.exists) userMap[uDoc.id] = { _id: uDoc.id, name: uDoc.data()?.name, phone: uDoc.data()?.phone };
+            if (uDoc.exists) {
+                userMap[uDoc.id] = { _id: uDoc.id, name: uDoc.data()?.name, phone: uDoc.data()?.phone };
+            }
         });
 
-        let donors = snapshot.docs.map(doc => {
-            const data = doc.data();
-            return {
-                _id: doc.id,
-                ...data,
-                user: userMap[data.user] || { name: "Unknown" }
-            } as any;
+        let donors: Array<Record<string, unknown> & { _id: string; user: { _id?: string; name?: string; phone?: string } }> =
+            snapshot.docs.map(doc => {
+                const data = doc.data() as Record<string, unknown>;
+                const userId = typeof data.user === "string" ? data.user : null;
+
+                return {
+                    _id: doc.id,
+                    ...data,
+                    user: userId ? (userMap[userId] || { _id: userId, name: "Unknown" }) : { name: "Unknown" }
+                };
+            });
+
+        // Ensure deterministic newest-first ordering even when fallback query is used
+        donors = donors.sort((a, b) => {
+            const aCreatedAt = a["createdAt"];
+            const bCreatedAt = b["createdAt"];
+            const aTime = aCreatedAt ? new Date(String(aCreatedAt)).getTime() : 0;
+            const bTime = bCreatedAt ? new Date(String(bCreatedAt)).getTime() : 0;
+            return bTime - aTime;
         });
 
         if (district || upazila) {
             donors = donors.filter(d => {
+                const districtValue = typeof d["district"] === "string" ? d["district"].toLowerCase() : "";
+                const upazilaValue = typeof d["upazila"] === "string" ? d["upazila"].toLowerCase() : "";
+
                 let match = true;
-                if(district) match = match && d.district?.toLowerCase().includes(district.toLowerCase());
-                if(upazila) match = match && d.upazila?.toLowerCase().includes(upazila.toLowerCase());
+                if (district) match = match && districtValue.includes(district.toLowerCase());
+                if (upazila) match = match && upazilaValue.includes(upazila.toLowerCase());
                 return match;
             });
         }

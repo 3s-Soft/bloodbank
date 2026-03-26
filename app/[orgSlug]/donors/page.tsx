@@ -49,17 +49,32 @@ export default function DonorDiscovery() {
     const [showAdvanced, setShowAdvanced] = useState(false);
 
     const fetchDonors = async () => {
+        if (!organization.slug) {
+            setDonors([]);
+            setIsLoading(false);
+            return;
+        }
+
         setIsLoading(true);
         try {
             const params = new URLSearchParams({ orgSlug: organization.slug });
             if (bloodGroup) params.append("bloodGroup", bloodGroup);
             if (district) params.append("district", district);
             if (upazila) params.append("upazila", upazila);
+
             const res = await fetch(`/api/donors?${params.toString()}`);
             const data = await res.json();
-            setDonors(data);
+
+            if (!res.ok) {
+                console.error("Failed to fetch donors:", data?.error || "Unknown error");
+                setDonors([]);
+                return;
+            }
+
+            setDonors(Array.isArray(data) ? data : []);
         } catch (error) {
             console.error("Failed to fetch donors", error);
+            setDonors([]);
         } finally {
             setIsLoading(false);
         }
