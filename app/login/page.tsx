@@ -8,8 +8,6 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useState, Suspense } from "react";
 import { toast } from "sonner";
 import Link from "next/link";
-import { auth, googleProvider } from "@/lib/firebase";
-import { signInWithPopup } from "firebase/auth";
 
 function LoginForm() {
     const router = useRouter();
@@ -62,26 +60,12 @@ function LoginForm() {
     const handleGoogleSignIn = async () => {
         setIsGoogleLoading(true);
         try {
-            const result = await signInWithPopup(auth, googleProvider);
-            const user = result.user;
-
-            if (user) {
-                toast.success(`Welcome, ${user.displayName}!`);
-
-                await signIn("firebase", {
-                    email: user.email,
-                    name: user.displayName,
-                    callbackUrl: orgSlug ? `/${orgSlug}/dashboard` : "/",
-                });
-            }
+            await signIn("google", {
+                callbackUrl: orgSlug ? `/${orgSlug}/dashboard` : "/",
+            });
         } catch (error: unknown) {
-            console.error("Firebase Auth Error:", error);
-            const firebaseError = error as { code?: string };
-            if (firebaseError.code === "auth/operation-not-allowed") {
-                toast.error("Google login is not enabled in Firebase Console.");
-            } else {
-                toast.error("Google sign-in failed. Please try again.");
-            }
+            console.error("Google sign-in error:", error);
+            toast.error("Google sign-in failed. Please try again.");
             setIsGoogleLoading(false);
         }
     };
@@ -227,7 +211,7 @@ function LoginForm() {
 
                 <div className="mt-8 text-center space-y-4">
                     <p className="text-xs text-slate-500 font-medium">
-                        Don't have an account?{" "}
+                        Don&apos;t have an account?{" "}
                         <Link
                             href={orgSlug ? `/${orgSlug}/register` : "/#organizations"}
                             className="font-black text-red-500 hover:text-red-400"

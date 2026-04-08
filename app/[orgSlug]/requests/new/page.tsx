@@ -57,7 +57,7 @@ export default function NewBloodRequest() {
             }
             toast.success("Blood request posted successfully. We hope a donor connects soon!");
             router.push(`/${organization.slug}/requests`);
-        } catch (error: any) {
+        } catch (error) {
             toast.error(error instanceof Error ? error.message : "An error occurred");
         }
     };

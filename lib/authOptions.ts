@@ -5,6 +5,15 @@ import bcrypt from "bcryptjs";
 import { adminDb } from "./firebase/adminApp";
 import { COLLECTIONS, UserRole } from "./firebase/types";
 
+type AuthDbUser = {
+    _id: string;
+    name?: string;
+    email?: string;
+    phone?: string;
+    password?: string;
+    role?: string;
+};
+
 export const authOptions: NextAuthOptions = {
     providers: [
         CredentialsProvider({
@@ -27,7 +36,7 @@ export const authOptions: NextAuthOptions = {
                 }
 
                 const userDoc = snapshot.docs[0];
-                const user = { _id: userDoc.id, ...userDoc.data() } as any;
+                const user = { _id: userDoc.id, ...userDoc.data() } as AuthDbUser;
 
                 if (!user.password) {
                     throw new Error("User has no password set");
@@ -43,7 +52,7 @@ export const authOptions: NextAuthOptions = {
                     id: user._id,
                     name: user.name,
                     email: user.email,
-                    role: user.role,
+                    role: user.role || UserRole.PATIENT,
                 };
             },
         }),
@@ -67,7 +76,7 @@ export const authOptions: NextAuthOptions = {
                 }
 
                 const userDoc = snapshot.docs[0];
-                const user = { _id: userDoc.id, ...userDoc.data() } as any;
+                const user = { _id: userDoc.id, ...userDoc.data() } as AuthDbUser;
 
                 if (!user.password) {
                     throw new Error("User has no password set");
@@ -83,7 +92,7 @@ export const authOptions: NextAuthOptions = {
                     id: user._id,
                     name: user.name,
                     email: user.email,
-                    role: user.role,
+                    role: user.role || UserRole.PATIENT,
                 };
             },
         }),
@@ -93,7 +102,7 @@ export const authOptions: NextAuthOptions = {
         }),
     ],
     callbacks: {
-        async signIn({ user, account, profile }) {
+        async signIn({ user, account }) {
             if (account?.provider === "google") {
                 const usersRef = adminDb.collection(COLLECTIONS.USERS);
                 const snapshot = await usersRef.where("email", "==", user.email).limit(1).get();
@@ -119,19 +128,20 @@ export const authOptions: NextAuthOptions = {
             }
             return true;
         },
-        async jwt({ token, user, trigger, session }) {
+        async jwt({ token, user }) {
             if (user) {
                 token.id = user.id;
+                token.role = (user as { role?: string }).role || UserRole.PATIENT;
             }
 
-            // Always fetch latest role from DB during JWT refresh or login
+            // Keep role fresh when email exists (email or Google login)
             if (token?.email) {
                 const usersRef = adminDb.collection(COLLECTIONS.USERS);
                 const snapshot = await usersRef.where("email", "==", token.email).limit(1).get();
                 if (!snapshot.empty) {
                     const dbUser = snapshot.docs[0].data();
                     token.id = snapshot.docs[0].id;
-                    token.role = dbUser.role;
+                    token.role = typeof dbUser.role === "string" ? dbUser.role : UserRole.PATIENT;
                 }
             }
 
@@ -140,7 +150,7 @@ export const authOptions: NextAuthOptions = {
         async session({ session, token }) {
             if (token) {
                 session.user.id = token.id as string;
-                session.user.role = token.role as string;
+                session.user.role = typeof token.role === "string" ? token.role : UserRole.PATIENT;
             }
             return session;
         },

@@ -83,7 +83,7 @@ export default async function OrganizationDocs({
 
     if (!organization) notFound();
 
-    const primaryColor = (organization as any).primaryColor || "#dc2626";
+    const primaryColor = (organization as { primaryColor?: string }).primaryColor || "#dc2626";
 
     const filteredSections = q
         ? sections.filter(s =>
@@ -149,7 +149,7 @@ export default async function OrganizationDocs({
                         <LifeBuoy className="w-6 h-6 text-slate-500 mb-3" />
                         <h5 className="text-white text-sm font-bold mb-2">Need Support?</h5>
                         <p className="text-slate-500 text-[11px] leading-relaxed mb-4">
-                            Can't find what you're looking for? Reach out to our technical team.
+                            Can&apos;t find what you&apos;re looking for? Reach out to our technical team.
                         </p>
                         <Link href={`mailto:support@bloodbank.org.bd`} className="w-full py-2 bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold rounded-lg transition-colors inline-block text-center">
                             Contact Support
@@ -169,7 +169,7 @@ export default async function OrganizationDocs({
                             <div id="overview" className="scroll-mt-24">
                                 <h3 className="text-xl font-bold text-white mb-4">Dashboard Overview</h3>
                                 <p className="text-slate-400 font-medium leading-relaxed mb-6">
-                                    The organization dashboard provides a centralized command center for monitoring donation activity, request fulfillment, and platform growth. Real-time analytics charts visualize your organization's impact across different districts and blood groups.
+                                    The organization dashboard provides a centralized command center for monitoring donation activity, request fulfillment, and platform growth. Real-time analytics charts visualize your organization&apos;s impact across different districts and blood groups.
                                 </p>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div className="p-4 rounded-xl bg-slate-900/50 border border-slate-800">
@@ -263,14 +263,14 @@ export default async function OrganizationDocs({
                             <div id="creation" className="scroll-mt-24">
                                 <h3 className="text-xl font-bold text-white mb-4">Emergency Broadcasting</h3>
                                 <p className="text-slate-400 font-medium leading-relaxed mb-6">
-                                    For "High Urgency" requests, organization administrators can trigger an emergency broadcast. This protocol bypasses standard filters to notify all registered donors in the region.
+                                    For &quot;High Urgency&quot; requests, organization administrators can trigger an emergency broadcast. This protocol bypasses standard filters to notify all registered donors in the region.
                                 </p>
                                 <div className="p-6 rounded-2xl bg-slate-900/50 border border-slate-800 border-l-4 border-l-red-500">
                                     <h5 className="text-red-500 font-black text-xs uppercase mb-3 tracking-widest">Protocol: Urgent Response</h5>
                                     <ol className="space-y-3 text-slate-400 text-sm font-medium">
                                         <li className="flex gap-3"><span className="text-white opacity-20">01</span> Verify the hospital request document.</li>
-                                        <li className="flex gap-3"><span className="text-white opacity-20">02</span> Set request status to "Urgent" in the dashboard.</li>
-                                        <li className="flex gap-3"><span className="text-white opacity-20">03</span> Use the "Direct Match" tool to contact the top 5 compatible donors.</li>
+                                        <li className="flex gap-3"><span className="text-white opacity-20">02</span> Set request status to &quot;Urgent&quot; in the dashboard.</li>
+                                        <li className="flex gap-3"><span className="text-white opacity-20">03</span> Use the &quot;Direct Match&quot; tool to contact the top 5 compatible donors.</li>
                                     </ol>
                                 </div>
                             </div>
@@ -278,7 +278,7 @@ export default async function OrganizationDocs({
                             <div id="fulfillment" className="scroll-mt-24">
                                 <h3 className="text-xl font-bold text-white mb-4">Data Export & Reporting</h3>
                                 <p className="text-slate-400 font-medium leading-relaxed mb-4">
-                                    Need reports for hospital audits or government compliance? You can export your organization's activity data at any time.
+                                    Need reports for hospital audits or government compliance? You can export your organization&apos;s activity data at any time.
                                 </p>
                                 <div className="flex flex-wrap gap-2">
                                     <span className="px-3 py-1 bg-slate-800 border border-slate-700 rounded-full text-[10px] font-bold text-slate-400 uppercase">Export CSV</span>
@@ -323,7 +323,7 @@ export default async function OrganizationDocs({
                                         <span className="text-white font-bold">Security Tip</span>
                                     </div>
                                     <p className="text-slate-400 text-sm leading-relaxed mb-0 font-medium">
-                                        Review audit logs daily to identify any unusual activity. Every sensitive action—from viewing a donor's number to changing verification status—is logged with timestamps and user identification.
+                                        Review audit logs daily to identify any unusual activity. Every sensitive action—from viewing a donor&apos;s number to changing verification status—is logged with timestamps and user identification.
                                     </p>
                                 </div>
                             </div>

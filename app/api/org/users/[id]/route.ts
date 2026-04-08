@@ -58,7 +58,7 @@ export async function PUT(
             }
         }
         
-        const updateData: any = { name, phone, email, role, updatedAt: new Date() };
+        const updateData: Record<string, unknown> = { name, phone, email, role, updatedAt: new Date() };
         Object.keys(updateData).forEach(key => updateData[key] === undefined && delete updateData[key]);
 
         const userRef = adminDb.collection(COLLECTIONS.USERS).doc(id);

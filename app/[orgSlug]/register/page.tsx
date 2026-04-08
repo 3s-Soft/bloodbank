@@ -74,7 +74,7 @@ export default function DonorRegistration() {
                 if (user.displayName) setValue("name", user.displayName);
                 if (user.email) setValue("email", user.email);
             }
-        } catch (error: any) {
+        } catch (error) {
             console.error("Google Sign-In Error:", error);
             toast.error("Failed to link Google account");
         } finally {
@@ -97,7 +97,7 @@ export default function DonorRegistration() {
 
             toast.success("Registration successful! You are now a donor.");
             router.push(`/${organization.slug}/donors`);
-        } catch (error: any) {
+        } catch (error) {
             toast.error(error instanceof Error ? error.message : "An error occurred");
         }
     };

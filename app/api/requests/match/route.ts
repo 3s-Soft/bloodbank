@@ -39,32 +39,32 @@ export async function POST(req: NextRequest) {
         const uniqueUserIds = [...new Set(userIds)];
         
         const usersFetch = await Promise.all(uniqueUserIds.map(uid => adminDb.collection(COLLECTIONS.USERS).doc(uid).get()));
-        const userMap: Record<string, any> = {};
+        const userMap: Record<string, unknown> = {};
         usersFetch.forEach(uDoc => {
             if(uDoc.exists) userMap[uDoc.id] = { _id: uDoc.id, name: uDoc.data()?.name, phone: uDoc.data()?.phone };
         });
 
-        let matchedDonors = snapshot.docs.map(doc => {
+        const matchedDonors = snapshot.docs.map(doc => {
              const data = doc.data();
              return {
                  _id: doc.id,
                  ...data,
                  user: data.user ? userMap[data.user] : null
-             } as any;
+             } as Record<string, unknown>;
         });
 
         const sorted = matchedDonors.sort((a, b) => {
-            const aDistrict = a.district?.toLowerCase() === district?.toLowerCase() ? 1 : 0;
-            const bDistrict = b.district?.toLowerCase() === district?.toLowerCase() ? 1 : 0;
+            const aDistrict = (typeof a.district === 'string' && typeof district === 'string' && a.district.toLowerCase() === district.toLowerCase()) ? 1 : 0;
+            const bDistrict = (typeof b.district === 'string' && typeof district === 'string' && b.district.toLowerCase() === district.toLowerCase()) ? 1 : 0;
             if (aDistrict !== bDistrict) return bDistrict - aDistrict;
 
-            const aUpazila = a.upazila?.toLowerCase() === upazila?.toLowerCase() ? 1 : 0;
-            const bUpazila = b.upazila?.toLowerCase() === upazila?.toLowerCase() ? 1 : 0;
+            const aUpazila = (typeof a.upazila === 'string' && typeof upazila === 'string' && a.upazila.toLowerCase() === upazila.toLowerCase()) ? 1 : 0;
+            const bUpazila = (typeof b.upazila === 'string' && typeof upazila === 'string' && b.upazila.toLowerCase() === upazila.toLowerCase()) ? 1 : 0;
             if (aUpazila !== bUpazila) return bUpazila - aUpazila;
 
             if (a.isVerified !== b.isVerified) return a.isVerified ? -1 : 1;
 
-            return (b.totalDonations || 0) - (a.totalDonations || 0);
+            return (typeof b.totalDonations === 'number' ? b.totalDonations : 0) - (typeof a.totalDonations === 'number' ? a.totalDonations : 0);
         }).slice(0, 20);
 
         if (requestId) {

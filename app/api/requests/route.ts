@@ -32,7 +32,7 @@ export async function GET(req: Request) {
         const uniqueUserIds = [...new Set(userIds)];
         
         const usersFetch = await Promise.all(uniqueUserIds.map(uid => adminDb.collection(COLLECTIONS.USERS).doc(uid).get()));
-        const userMap: Record<string, any> = {};
+        const userMap: Record<string, unknown> = {};
         usersFetch.forEach(uDoc => {
             if(uDoc.exists) userMap[uDoc.id] = { _id: uDoc.id, name: uDoc.data()?.name };
         });
@@ -43,13 +43,23 @@ export async function GET(req: Request) {
                 _id: doc.id,
                 ...data,
                 requester: data.requester ? userMap[data.requester] : null
-            } as any;
+            } as Record<string, unknown>;
         });
 
         // Sort in memory (urgency isn't numeric here, just defaulting to time desc)
         requests.sort((a, b) => {
-             const timeA = a.createdAt?.toMillis ? a.createdAt.toMillis() : new Date(a.createdAt).getTime();
-             const timeB = b.createdAt?.toMillis ? b.createdAt.toMillis() : new Date(b.createdAt).getTime();
+             type CreatedAtType = { toMillis: () => number } | string | number | undefined;
+const getTime = (createdAt: CreatedAtType): number => {
+    if (createdAt && typeof createdAt === 'object' && typeof (createdAt as { toMillis?: () => number }).toMillis === 'function') {
+        return (createdAt as { toMillis: () => number }).toMillis();
+    }
+    if (typeof createdAt === 'string' || typeof createdAt === 'number') {
+        return new Date(createdAt).getTime();
+    }
+    return 0;
+};
+const timeA = getTime(a.createdAt as CreatedAtType);
+const timeB = getTime(b.createdAt as CreatedAtType);
              return timeB - timeA;
         });
 

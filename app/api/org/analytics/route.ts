@@ -82,10 +82,10 @@ export async function GET(req: Request) {
         
         const recentDonorsList = await Promise.all(recentDonorsSnap.docs.map(async doc => {
             const data = doc.data();
-            let userObj = { name: "Unknown" };
+            let userObj: { name: string; phone?: string } = { name: "Unknown" };
             if (data.user) {
                 const uDoc = await adminDb.collection(COLLECTIONS.USERS).doc(data.user).get();
-                if (uDoc.exists) userObj = { name: uDoc.data()?.name, phone: uDoc.data()?.phone } as any;
+                if (uDoc.exists) userObj = { name: uDoc.data()?.name, phone: uDoc.data()?.phone };
             }
             return { _id: doc.id, ...data, user: userObj };
         }));

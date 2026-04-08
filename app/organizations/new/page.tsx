@@ -122,7 +122,7 @@ export default function RequestOrganizationPage() {
                         </div>
                         <h2 className="text-2xl font-bold text-white mb-2">Request Submitted!</h2>
                         <p className="text-slate-400 mb-6">
-                            Your organization request has been submitted and is pending review by our admin team. You will be notified once it's approved.
+                            Your organization request has been submitted and is pending review by our admin team. You will be notified once it&apos;s approved.
                         </p>
                         <Link href="/">
                             <Button className="w-full bg-slate-800 hover:bg-slate-700 text-white font-bold">
@@ -177,7 +177,7 @@ export default function RequestOrganizationPage() {
                                     error={errors.slug?.message}
                                 />
                                 <p className="text-xs text-slate-500 mt-1 ml-1">
-                                    This will be your organization's URL: bloodbank.com/<span className="text-red-400">{watch("slug") || "your-slug"}</span>
+                                    This will be your organization&apos;s URL: bloodbank.com/<span className="text-red-400">{watch("slug") || "your-slug"}</span>
                                 </p>
                             </div>
 

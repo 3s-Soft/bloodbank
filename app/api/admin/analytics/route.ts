@@ -34,7 +34,7 @@ export async function GET() {
 
         // Per-organization stats
         const orgsSnap = await adminDb.collection(COLLECTIONS.ORGANIZATIONS).get();
-        const organizations = orgsSnap.docs.map(doc => ({ _id: doc.id, ...doc.data() as any }));
+        const organizations = orgsSnap.docs.map(doc => ({ _id: doc.id, ...(doc.data() as { name?: string; slug?: string; primaryColor?: string; isActive?: boolean }) }));
         const orgStats = await Promise.all(
             organizations.map(async (org) => {
                 const donorCount = (await adminDb.collection(COLLECTIONS.DONOR_PROFILES).where("organization", "==", org._id).count().get()).data().count;

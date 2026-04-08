@@ -82,7 +82,7 @@ export default async function GlobalDocs({
                             <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-orange-400">To Save Lives</span>
                         </h1>
                         <p className="text-lg md:text-xl text-slate-400 max-w-2xl mx-auto mb-12 font-medium leading-relaxed">
-                            Welcome to the central knowledge hub of Bangladesh BloodBank. Whether you're a donor looking to give or a hospital managing requests, we've got you covered.
+                            Welcome to the central knowledge hub of Bangladesh BloodBank. Whether you&apos;re a donor looking to give or a hospital managing requests, we&apos;ve got you covered.
                         </p>
 
                         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -116,7 +116,7 @@ export default async function GlobalDocs({
                             <h2 className="text-3xl md:text-5xl font-black text-white mb-8 tracking-tight">One Platform, Endless Impact</h2>
                             <div className="prose prose-invert max-w-none text-slate-400 font-medium leading-relaxed space-y-6">
                                 <p>
-                                    Bangladesh BloodBank is a digital infrastructure designed to bridge the gap between those who can help and those who need it most. Our platform addresses the critical shortage of organized blood donation data in rural areas of Bangladesh, turning fragmented local networks into a unified "Digital Life-Line."
+                                    Bangladesh BloodBank is a digital infrastructure designed to bridge the gap between those who can help and those who need it most. Our platform addresses the critical shortage of organized blood donation data in rural areas of Bangladesh, turning fragmented local networks into a unified &quot;Digital Life-Line.&quot;
                                 </p>
                                 <p>
                                     By digitizing donor availability at the sub-district (Upazila) and village levels, we enable communities to respond to medical emergencies with unprecedented speed and accuracy. Our goal is to ensure that no life is lost due to a lack of information or logistical delays.
@@ -158,7 +158,7 @@ export default async function GlobalDocs({
                                     </div>
                                     <h4 className="text-xl font-bold text-white mb-4">Phase 1: Verification & Matching</h4>
                                     <p className="text-slate-500 text-sm leading-relaxed mb-6">
-                                        When an emergency request is filed, our system immediately scans the local geographical hub for O-negative and specific compatible groups. We prioritize donors with high "reliability scores"—those who have fulfilled past requests promptly.
+                                        When an emergency request is filed, our system immediately scans the local geographical hub for O-negative and specific compatible groups. We prioritize donors with high &quot;reliability scores&quot;—those who have fulfilled past requests promptly.
                                     </p>
                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
                                         <div className="p-4 rounded-xl bg-slate-950 border border-white/5">
@@ -189,7 +189,7 @@ export default async function GlobalDocs({
                                 <div className="p-8 rounded-3xl bg-slate-900 border border-white/5 relative overflow-hidden group">
                                     <h4 className="text-xl font-bold text-white mb-4">Phase 2: Response & Rewards</h4>
                                     <p className="text-slate-500 text-sm leading-relaxed mb-4">
-                                        Our targeted Response SLA (Service Level Agreement) is 5 minutes from request validation. Donors who fulfill requests earn 50 points and a "Life-Saver" badge.
+                                        Our targeted Response SLA (Service Level Agreement) is 5 minutes from request validation. Donors who fulfill requests earn 50 points and a &quot;Life-Saver&quot; badge.
                                     </p>
                                     <ul className="space-y-3">
                                         <li className="flex items-center gap-3 text-slate-400 text-sm font-medium">
@@ -252,7 +252,7 @@ export default async function GlobalDocs({
                                         <div>
                                             <h4 className="text-lg font-bold text-white mb-2 tracking-tight">Data Governance & Privacy</h4>
                                             <p className="text-sm">
-                                                We employ a strict "Role-Based Access Control" (RBAC) model. Personal phone numbers are only accessible to verified organizations when an active request is being fulfilled. Your donation history is encrypted and never shared with third-party advertisers.
+                                                We employ a strict &quot;Role-Based Access Control&quot; (RBAC) model. Personal phone numbers are only accessible to verified organizations when an active request is being fulfilled. Your donation history is encrypted and never shared with third-party advertisers.
                                             </p>
                                         </div>
                                     </div>
@@ -264,7 +264,7 @@ export default async function GlobalDocs({
                                         <div>
                                             <h4 className="text-lg font-bold text-white mb-2 tracking-tight">No-Profit Mandate</h4>
                                             <p className="text-sm">
-                                                Bangladesh BloodBank is, and will always be, the people's property. We strictly prohibit the solicitation of money for blood donation services. Any user or organization found requesting "service fees" will be permanently blacklisted and reported to local authorities.
+                                                Bangladesh BloodBank is, and will always be, the people&apos;s property. We strictly prohibit the solicitation of money for blood donation services. Any user or organization found requesting &quot;service fees&quot; will be permanently blacklisted and reported to local authorities.
                                             </p>
                                         </div>
                                     </div>
@@ -275,7 +275,7 @@ export default async function GlobalDocs({
                                         Fraud Prevention
                                     </h5>
                                     <p className="text-xs text-amber-500/80 italic leading-relaxed">
-                                        "Our system monitors matching behavior for anomalies. Attempting to bypass the matching protocol or commercialize donation data is a violation of our core values and legal terms. We believe in the sanctity of selfless giving."
+                                        &quot;Our system monitors matching behavior for anomalies. Attempting to bypass the matching protocol or commercialize donation data is a violation of our core values and legal terms. We believe in the sanctity of selfless giving.&quot;
                                     </p>
                                 </div>
                             </div>
@@ -290,7 +290,7 @@ export default async function GlobalDocs({
 
                     <div className="container mx-auto px-4 max-w-4xl text-center relative z-10">
                         <h2 className="text-3xl md:text-5xl font-black text-white mb-8 tracking-tight italic">
-                            "Humanity first, technology always."
+                            &quot;Humanity first, technology always.&quot;
                         </h2>
                         <div className="flex flex-col sm:flex-row gap-4 justify-center">
                             <Link

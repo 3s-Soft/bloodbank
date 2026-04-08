@@ -23,7 +23,7 @@ export async function GET(req: NextRequest) {
         }
         const orgId = orgSnap.docs[0].id;
 
-        let query: any = adminDb.collection(COLLECTIONS.AUDIT_LOGS).where("organization", "==", orgId);
+        let query = adminDb.collection(COLLECTIONS.AUDIT_LOGS).where("organization", "==", orgId);
 
         if (action) {
             query = query.where("action", "==", action);
@@ -39,7 +39,7 @@ export async function GET(req: NextRequest) {
 
         const logsSnap = await query.orderBy("createdAt", "desc").limit(limit).get();
         
-        const logs = await Promise.all(logsSnap.docs.map(async (doc: any) => {
+        const logs = await Promise.all(logsSnap.docs.map(async (doc) => {
             const data = doc.data();
             let performedBy = null;
             if (data.performedBy) {

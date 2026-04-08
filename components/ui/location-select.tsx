@@ -110,7 +110,7 @@ export function LocationSelect({
                         role="button"
                         tabIndex={0}
                         onClick={handleClear}
-                        onKeyDown={(e) => { if (e.key === "Enter") handleClear(e as any); }}
+                        onKeyDown={(e) => { if (e.key === "Enter") handleClear(e as unknown as React.MouseEvent); }}
                         className="absolute right-10 top-1/2 -translate-y-1/2 p-1 hover:bg-slate-700 rounded cursor-pointer"
                     >
                         <X className="w-3.5 h-3.5 text-slate-400" />

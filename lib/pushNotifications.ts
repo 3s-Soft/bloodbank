@@ -22,16 +22,16 @@ export async function sendPushNotifications(
 ): Promise<void> {
 
     // Include subscribers that match the filter OR have no filter set
-    let subsRef: any = adminDb.collection(COLLECTIONS.PUSH_SUBSCRIPTIONS).where("organization", "==", organizationId);
+    const subsRef = adminDb.collection(COLLECTIONS.PUSH_SUBSCRIPTIONS).where("organization", "==", organizationId);
 
     // Note: Firestore has limitations on complex OR queries. 
     // Usually it's better to fetch by org and filter in memory for complex combinations like this.
     const snapshot = await subsRef.get();
     
-    let tokens: string[] = [];
+    const tokens: string[] = [];
     const validDocs: { id: string, token: string }[] = [];
 
-    snapshot.docs.forEach((doc: any) => {
+    snapshot.docs.forEach((doc) => {
         const data = doc.data();
         let districtMatch = true;
         let bloodGroupMatch = true;

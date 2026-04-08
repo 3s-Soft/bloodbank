@@ -74,7 +74,7 @@ export enum UrgencyLevel {
 export interface IRequestFeedback {
     rating: number;
     notes?: string;
-    submittedAt: Date | any;
+    submittedAt: Date | string | number | undefined;
 }
 
 export interface IBloodRequest {
@@ -85,18 +85,18 @@ export interface IBloodRequest {
     district: string;
     upazila: string;
     urgency: UrgencyLevel;
-    requiredDate: Date | any;
+    requiredDate: Date | string | number | undefined;
     contactNumber: string;
     additionalNotes?: string;
     status: RequestStatus;
     requester?: string; // User ID
     organization: string; // Org ID
     matchedDonors: string[]; // Array of DonorProfile IDs
-    escalatedAt?: Date | any;
+    escalatedAt?: Date | string | number;
     fulfilledBy?: string; // DonorProfile ID
     feedback?: IRequestFeedback;
-    createdAt?: Date | any;
-    updatedAt?: Date | any;
+    createdAt?: Date | string | number;
+    updatedAt?: Date | string | number;
 }
 
 // Collection Names

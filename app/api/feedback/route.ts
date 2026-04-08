@@ -14,7 +14,7 @@ export async function GET(req: NextRequest) {
         const status = searchParams.get("status");
         const category = searchParams.get("category");
 
-        let query: any = adminDb.collection(COLLECTIONS.FEEDBACK);
+        let query: FirebaseFirestore.Query<FirebaseFirestore.DocumentData> = adminDb.collection(COLLECTIONS.FEEDBACK);
 
         if (orgSlug) {
             const orgsRef = adminDb.collection(COLLECTIONS.ORGANIZATIONS);
@@ -29,7 +29,7 @@ export async function GET(req: NextRequest) {
         if (category) query = query.where("category", "==", category);
 
         const feedbackSnap = await query.orderBy("createdAt", "desc").limit(100).get();
-        const feedback = await Promise.all(feedbackSnap.docs.map(async (doc: any) => {
+        const feedback = await Promise.all(feedbackSnap.docs.map(async (doc) => {
              const data = doc.data();
              let userObj = null;
              if (data.user) {
@@ -59,7 +59,7 @@ export async function POST(req: NextRequest) {
             );
         }
 
-        const feedbackData: any = {
+        const feedbackData: Record<string, unknown> = {
             name,
             email,
             category: category || FeedbackCategory.GENERAL,

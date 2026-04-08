@@ -25,7 +25,7 @@ export async function GET(req: NextRequest) {
         }
         const orgId = orgSnap.docs[0].id;
 
-        let query: any = adminDb.collection(COLLECTIONS.EVENTS).where("organization", "==", orgId);
+        let query = adminDb.collection(COLLECTIONS.EVENTS).where("organization", "==", orgId);
 
         if (status) {
             query = query.where("status", "==", status);
@@ -37,7 +37,7 @@ export async function GET(req: NextRequest) {
         }
 
         const eventsSnap = await query.orderBy("date", upcoming === "true" ? "asc" : "desc").limit(50).get();
-        const events = await Promise.all(eventsSnap.docs.map(async (doc: any) => {
+        const events = await Promise.all(eventsSnap.docs.map(async (doc) => {
              const data = doc.data();
              let createdBy = null;
              if (data.createdBy) {
@@ -91,7 +91,7 @@ export async function POST(req: NextRequest) {
             updatedAt: new Date()
         };
         // Remove undefined fields
-        Object.keys(eventData).forEach(key => (eventData as any)[key] === undefined && delete (eventData as any)[key]);
+        Object.keys(eventData).forEach(key => (eventData as Record<string, unknown>)[key] === undefined && delete (eventData as Record<string, unknown>)[key]);
         const eventRef = await adminDb.collection(COLLECTIONS.EVENTS).add(eventData);
 
         // Audit log
@@ -122,7 +122,7 @@ export async function PUT(req: NextRequest) {
             return NextResponse.json({ error: "eventId is required" }, { status: 400 });
         }
 
-        const objUpdates: any = { ...updates, updatedAt: new Date() };
+        const objUpdates: Record<string, unknown> = { ...updates, updatedAt: new Date() };
         Object.keys(objUpdates).forEach(key => objUpdates[key] === undefined && delete objUpdates[key]);
 
         const eventRef = adminDb.collection(COLLECTIONS.EVENTS).doc(eventId);

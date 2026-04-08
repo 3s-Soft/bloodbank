@@ -53,15 +53,15 @@ export default function RequestManagement() {
 
     useEffect(() => {
         if (!organization._id) return;
-        setIsLoading(true);
 
         const q = query(
             collection(db, COLLECTIONS.BLOOD_REQUESTS),
             where("organization", "==", organization._id)
         );
 
-        const unsubscribe = onSnapshot(q, (snapshot: any) => {
-            const requests = snapshot.docs.map((doc: any) => {
+        const unsubscribe = onSnapshot(q, (snapshot) => {
+            setIsLoading(true); // Set loading state at the start of the async callback
+            const requests = snapshot.docs.map((doc) => {
                 const data = doc.data();
                 return {
                     ...data,
@@ -71,11 +71,11 @@ export default function RequestManagement() {
                 } as BloodRequest;
             });
 
-            requests.sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+            requests.sort((a: BloodRequest, b: BloodRequest) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
             setAllRequests(requests);
             setIsLoading(false);
-        }, (error: any) => {
+        }, (error) => {
             console.error("Firebase listen error", error);
             setIsLoading(false);
             toast.error("Failed to load requests in real-time");

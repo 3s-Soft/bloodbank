@@ -65,7 +65,7 @@ export default async function Home() {
 
           <p className="text-lg md:text-xl text-slate-400 max-w-2xl mx-auto mb-10 leading-relaxed font-medium">
             A professional community-driven platform connecting blood donors and recipients across Bangladesh.
-            Finding blood shouldn't be hard. We make it simple, fast, and 100% free.
+            Finding blood shouldn&apos;t be hard. We make it simple, fast, and 100% free.
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
@@ -98,7 +98,7 @@ export default async function Home() {
               <h2 className="text-3xl md:text-5xl font-black text-white tracking-tight">Active Blood Banks</h2>
             </div>
             <p className="text-slate-500 text-sm max-w-md font-medium">
-              We've partnered with trusted organizations to ensure every donation is safe, verified, and impactful.
+              We&apos;ve partnered with trusted organizations to ensure every donation is safe, verified, and impactful.
             </p>
           </div>
 
@@ -285,7 +285,7 @@ export default async function Home() {
   );
 }
 
-function ChevronRight(props: any) {
+function ChevronRight(props: React.SVGProps<SVGSVGElement>) {
   return (
     <svg
       {...props}

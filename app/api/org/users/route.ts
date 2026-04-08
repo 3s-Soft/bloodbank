@@ -22,37 +22,47 @@ export async function GET(req: Request) {
         const orgId = orgSnap.docs[0].id;
 
         // Build query
-        let q: any = adminDb.collection(COLLECTIONS.USERS).where("organization", "==", orgId);
+        let q = adminDb.collection(COLLECTIONS.USERS).where("organization", "==", orgId);
 
         if (role && role !== "all") {
             q = q.where("role", "==", role);
         }
 
         const usersSnap = await q.get();
-        let users = usersSnap.docs.map((doc: any) => ({ _id: doc.id, ...doc.data() }));
+        let users = usersSnap.docs.map((doc) => ({ _id: doc.id, ...doc.data() }));
 
         if (search) {
-             users = users.filter((u: any) => 
-                 (u.name && u.name.toLowerCase().includes(search)) ||
-                 (u.phone && u.phone.toLowerCase().includes(search)) ||
-                 (u.email && u.email.toLowerCase().includes(search))
+             users = users.filter((u: Record<string, unknown>) => 
+                 (typeof u.name === 'string' && u.name.toLowerCase().includes(search)) ||
+                 (typeof u.phone === 'string' && u.phone.toLowerCase().includes(search)) ||
+                 (typeof u.email === 'string' && u.email.toLowerCase().includes(search))
              );
         }
 
-        users.sort((a: any, b: any) => {
-            const dA = a.createdAt?.toDate ? a.createdAt.toDate() : new Date(a.createdAt || 0);
-            const dB = b.createdAt?.toDate ? b.createdAt.toDate() : new Date(b.createdAt || 0);
+        users.sort((a: Record<string, unknown>, b: Record<string, unknown>) => {
+            type CreatedAtType = { toDate: () => Date } | string | number | undefined;
+const getDate = (createdAt: CreatedAtType): Date => {
+    if (createdAt && typeof createdAt === 'object' && typeof (createdAt as { toDate?: () => Date }).toDate === 'function') {
+        return (createdAt as { toDate: () => Date }).toDate();
+    }
+    if (typeof createdAt === 'string' || typeof createdAt === 'number') {
+        return new Date(createdAt);
+    }
+    return new Date(0);
+};
+const dA = getDate(a.createdAt as CreatedAtType);
+const dB = getDate(b.createdAt as CreatedAtType);
             return dB.getTime() - dA.getTime();
         });
 
         // Get donor profiles for users who are donors
-        const donorUserIds = users.filter((u: any) => u.role === "donor").map((u: any) => u._id);
+        const donorUserIds = users.filter((u: Record<string, unknown>) => u.role === "donor").map((u: Record<string, unknown>) => u._id);
         
-        let donorProfiles: any[] = [];
+        let donorProfiles: Record<string, unknown>[] = [];
         if (donorUserIds.length > 0) {
              // Firestore 'in' has a max of 10. For now fetch by org and filter in memory since we are prototyping
              const allDonorsSnap = await adminDb.collection(COLLECTIONS.DONOR_PROFILES).where("organization", "==", orgId).get();
-             donorProfiles = allDonorsSnap.docs.map(doc => ({ _id: doc.id, ...doc.data() })).filter((dp: any) => donorUserIds.includes(dp.user));
+             donorProfiles = allDonorsSnap.docs.map(doc => ({ _id: doc.id, ...doc.data() })).filter((dp: Record<string, unknown>) => donorUserIds.includes(dp.user));
         }
 
         // Create a map of user ID to donor profile
@@ -61,7 +71,7 @@ export async function GET(req: Request) {
         );
 
         // Enhance users with donor profile data
-        const enhancedUsers = users.map((user: any) => ({
+        const enhancedUsers = users.map((user: Record<string, unknown>) => ({
             ...user,
             donorProfile: donorProfileMap.get(user._id) || null,
         }));

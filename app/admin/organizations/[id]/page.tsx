@@ -111,7 +111,7 @@ export default function EditOrganizationPage({
 
             toast.success("Organization updated successfully!");
             router.push("/admin/organizations");
-        } catch (error: any) {
+        } catch (error) {
             toast.error(error instanceof Error ? error.message : "An error occurred");
         } finally {
             setIsSubmitting(false);
@@ -291,7 +291,7 @@ export default function EditOrganizationPage({
                                     Organization Status
                                 </label>
                                 <p className="text-xs text-slate-500 font-medium">
-                                    Inactive organizations won't be accessible to users.
+                                    Inactive organizations won&apos;t be accessible to users.
                                 </p>
                             </div>
                             <label className="relative inline-flex items-center cursor-pointer">

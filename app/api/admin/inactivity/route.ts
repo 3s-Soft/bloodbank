@@ -12,7 +12,7 @@ export async function GET(req: NextRequest) {
         cutoffDate.setDate(cutoffDate.getDate() - daysThreshold);
 
         const orgsSnap = await adminDb.collection(COLLECTIONS.ORGANIZATIONS).where("isActive", "==", true).get();
-        const organizations = orgsSnap.docs.map(doc => ({ _id: doc.id, ...doc.data() as any }));
+        const organizations = orgsSnap.docs.map(doc => ({ _id: doc.id, ...(doc.data() as { name?: string; slug?: string }) }));
 
         const inactiveOrgs = [];
 

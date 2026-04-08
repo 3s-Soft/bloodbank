@@ -44,7 +44,7 @@ export async function PUT(req: Request) {
         }
 
         const orgId = currentOrgSnap.docs[0].id;
-        const updateData: any = {
+        const updateData: Record<string, unknown> = {
             name,
             logo,
             primaryColor,

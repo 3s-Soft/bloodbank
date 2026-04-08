@@ -62,10 +62,10 @@ export async function POST(req: Request) {
         } else {
             const existingUser = userSnapshot.docs[0];
             userId = existingUser.id;
-            userData = { _id: userId, ...existingUser.data() } as any;
+            userData = { _id: userId, ...(existingUser.data() as { email?: string; phone?: string; password?: string; organization?: string }) };
             
             // If user exists but is missing phone/email from the form, update it
-            const updates: any = {};
+            const updates: Record<string, unknown> = {};
             if (email && !userData.email) updates.email = email;
             if (phone && !userData.phone) updates.phone = phone;
             if (password && !userData.password) updates.password = await bcrypt.hash(password, 10);

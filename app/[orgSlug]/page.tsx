@@ -28,7 +28,7 @@ export default function OrganizationLanding() {
     const primaryColor = organization.primaryColor || "#dc2626";
     const { t } = useLanguage();
 
-    const [stats, setStats] = useState<any>({
+    const [stats, setStats] = useState<Record<string, number | string>>({
         donorsCount: "—",
         livesHelped: "—",
         activeRequests: "—",

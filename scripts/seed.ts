@@ -155,7 +155,7 @@ async function seed() {
             },
         ];
 
-        const createdOrgs: any[] = [];
+        const createdOrgs: Record<string, unknown>[] = [];
 
         for (const org of organizations) {
             const orgRef = db.collection(COLLECTIONS.ORGANIZATIONS).doc();
@@ -185,14 +185,14 @@ async function seed() {
             const adminPhone = `0171${Math.floor(1000000 + Math.random() * 9000000)}`;
             const orgAdminRef = db.collection(COLLECTIONS.USERS).doc();
             await orgAdminRef.set({
-                name: `${org.name.split(' ')[0]} Admin`,
+                name: `${typeof org.name === 'string' ? org.name.split(' ')[0] : 'Org'} Admin`,
                 phone: adminPhone,
                 password: hashedPassword,
                 role: "admin",
                 organization: org.id,
                 createdAt: new Date(),
             });
-            console.log(`   ✅ Created org admin: ${org.name.split(' ')[0]} Admin`);
+            console.log(`   ✅ Created org admin: ${(typeof org.name === 'string' ? org.name.split(' ')[0] : 'Org')} Admin`);
 
             // Create 15-25 donors per organization
             const donorCount = 15 + Math.floor(Math.random() * 11);

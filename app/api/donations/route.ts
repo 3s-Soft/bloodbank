@@ -17,7 +17,7 @@ export async function GET(req: NextRequest) {
             return NextResponse.json({ error: "donorId or orgSlug required" }, { status: 400 });
         }
 
-        let query: any = adminDb.collection(COLLECTIONS.DONATIONS);
+        let query: FirebaseFirestore.Query = adminDb.collection(COLLECTIONS.DONATIONS);
 
         if (donorId) {
             query = query.where("donor", "==", donorId);
@@ -34,16 +34,16 @@ export async function GET(req: NextRequest) {
 
         const donationsSnap = await query.orderBy("donationDate", "desc").limit(100).get();
         // Resolve nested donor + user lookups
-        const donations = await Promise.all(donationsSnap.docs.map(async (doc: any) => {
+        const donations = await Promise.all(donationsSnap.docs.map(async (doc) => {
             const data = doc.data();
             let donorObj = null;
             if (data.donor) {
                  const dDoc = await adminDb.collection(COLLECTIONS.DONOR_PROFILES).doc(data.donor).get();
                  if (dDoc.exists) {
-                      donorObj = { _id: dDoc.id, ...dDoc.data() } as any;
+                      donorObj = { _id: dDoc.id, ...(dDoc.data() as { user?: string }) };
                       if (donorObj.user) {
                            const uDoc = await adminDb.collection(COLLECTIONS.USERS).doc(donorObj.user).get();
-                           if (uDoc.exists) donorObj.user = { _id: uDoc.id, name: uDoc.data()?.name, phone: uDoc.data()?.phone };
+                           if (uDoc.exists) donorObj.user = { _id: uDoc.id, name: uDoc.data()?.name, phone: uDoc.data()?.phone } as unknown as string;
                       }
                  }
             }

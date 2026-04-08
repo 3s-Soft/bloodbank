@@ -55,7 +55,7 @@ export async function PUT(
         }
 
         const orgRef = adminDb.collection(COLLECTIONS.ORGANIZATIONS).doc(id);
-        const upData: any = {
+        const upData: Record<string, unknown> = {
                 name,
                 slug: slug?.toLowerCase().trim(),
                 logo,
