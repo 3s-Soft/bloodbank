@@ -1,6 +1,7 @@
 "use client";
 
 import { useOrganization } from "@/lib/context/OrganizationContext";
+import { LocationSelect } from "@/components/ui/location-select";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -44,6 +45,7 @@ export default function DonorRegistration() {
         handleSubmit,
         setValue,
         trigger,
+        watch,
         formState: { errors, isSubmitting },
     } = useForm<DonorFormValues>({
         resolver: zodResolver(donorSchema),
@@ -308,10 +310,16 @@ export default function DonorRegistration() {
                                 </div>
                                 <div className="space-y-1.5">
                                     <label className="text-xs font-bold uppercase tracking-widest text-slate-500 ml-1">District</label>
-                                    <input
-                                        {...register("district")}
-                                        placeholder="e.g. Dhaka"
-                                        className="w-full h-12 rounded-xl border border-slate-800 bg-slate-900 px-4 focus:ring-2 focus:ring-red-500 outline-none transition-all text-white placeholder-slate-600"
+                                    <LocationSelect
+                                        type="district"
+                                        value={watch("district")}
+                                        onChange={(val) => {
+                                            setValue("district", val);
+                                            setValue("upazila", "");
+                                        }}
+                                        placeholder="Select District"
+                                        error={errors.district?.message}
+                                        className="w-full"
                                     />
                                     {errors.district && <p className="text-xs text-red-500 ml-1">{errors.district.message}</p>}
                                 </div>
@@ -320,10 +328,14 @@ export default function DonorRegistration() {
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div className="space-y-1.5">
                                     <label className="text-xs font-bold uppercase tracking-widest text-slate-500 ml-1">Upazila</label>
-                                    <input
-                                        {...register("upazila")}
-                                        placeholder="e.g. Savar"
-                                        className="w-full h-12 rounded-xl border border-slate-800 bg-slate-900 px-4 focus:ring-2 focus:ring-red-500 outline-none transition-all text-white placeholder-slate-600"
+                                    <LocationSelect
+                                        type="upazila"
+                                        value={watch("upazila")}
+                                        onChange={(val) => setValue("upazila", val)}
+                                        district={watch("district")}
+                                        placeholder="Select Upazila"
+                                        error={errors.upazila?.message}
+                                        className="w-full"
                                     />
                                     {errors.upazila && <p className="text-xs text-red-500 ml-1">{errors.upazila.message}</p>}
                                 </div>
