@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { Droplet, Home, RotateCcw, Users } from "lucide-react";
 
 import { ErrorSurface } from "@/components/ErrorSurface";
+import { reportClientError } from "@/lib/reportClientError";
 
 /**
  * Error boundary for an organization's pages.
@@ -23,7 +24,7 @@ export default function OrgError({
     const slug = pathname.split("/").filter(Boolean)[0] ?? "";
 
     useEffect(() => {
-        console.error("Organization page error:", error);
+        reportClientError("Organization page error", error);
     }, [error]);
 
     return (

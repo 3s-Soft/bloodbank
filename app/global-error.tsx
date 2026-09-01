@@ -2,6 +2,9 @@
 
 import { useEffect } from "react";
 
+// A dependency-free helper, safe to import even though the layout has failed.
+import { reportClientError } from "@/lib/reportClientError";
+
 /**
  * Last-resort boundary, for failures in the root layout itself.
  *
@@ -18,7 +21,7 @@ export default function GlobalError({
     reset: () => void;
 }) {
     useEffect(() => {
-        console.error("Root layout error:", error);
+        reportClientError("Root layout error", error);
     }, [error]);
 
     return (

@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { Building2, Home, RotateCcw } from "lucide-react";
 
 import { ErrorSurface } from "@/components/ErrorSurface";
+import { reportClientError } from "@/lib/reportClientError";
 
 /**
  * Route-level error boundary.
@@ -19,9 +20,7 @@ export default function Error({
     reset: () => void;
 }) {
     useEffect(() => {
-        // The surface deliberately shows no stack or message, so the detail has
-        // to reach the server logs from here.
-        console.error("Unhandled application error:", error);
+        reportClientError("Unhandled application error", error);
     }, [error]);
 
     return (

@@ -18,15 +18,34 @@ import { ErrorSurface } from "@/components/ErrorSurface";
 /** Top-level paths that are real routes rather than organization slugs. */
 const SYSTEM_SEGMENTS = new Set(["login", "docs", "admin", "organizations", "api"]);
 
+/**
+ * Whether a path segment could be an organization slug at all.
+ *
+ * Matching the pattern `slugSchema` enforces on real slugs, rather than
+ * maintaining a blocklist of everything else. A blocklist misses the requests
+ * that actually arrive most often: crawlers and browsers ask for /robots.txt,
+ * /sitemap.xml, /favicon.ico and /.well-known/*, none of which are served here,
+ * and telling a crawler that "nothing is registered under robots.txt" is
+ * nonsense. Every one of those fails this test on the dot or the leading dot.
+ */
+function couldBeOrgSlug(segment: string | undefined): segment is string {
+    if (!segment || segment.length < 2) return false;
+    if (SYSTEM_SEGMENTS.has(segment)) return false;
+    return /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(segment);
+}
+
 export default function NotFound() {
-    const pathname = usePathname();
+    // `usePathname` can be null while this is rendered on the server, which is
+    // how the page reaches crawlers and anyone without JavaScript. Falling back
+    // to the generic variant means the markup is never empty; hydration then
+    // swaps in the organization-specific wording where it applies.
+    const pathname = usePathname() ?? "";
     const segments = pathname.split("/").filter(Boolean);
     const [first, ...rest] = segments;
 
-    // `[orgSlug]` matches every single-segment path, so an unknown one that is
-    // not a system route can only be an organization that does not exist.
-    const unknownOrganization =
-        segments.length === 1 && !SYSTEM_SEGMENTS.has(first);
+    // `[orgSlug]` matches every single-segment path, so an unknown one shaped
+    // like a slug can only be an organization that does not exist.
+    const unknownOrganization = segments.length === 1 && couldBeOrgSlug(first);
 
     if (unknownOrganization) {
         return (
@@ -60,7 +79,7 @@ export default function NotFound() {
     }
 
     // Inside a known organization, its own pages are the useful destinations.
-    if (rest.length > 0 && !SYSTEM_SEGMENTS.has(first)) {
+    if (rest.length > 0 && couldBeOrgSlug(first)) {
         return (
             <ErrorSurface
                 code="404"
