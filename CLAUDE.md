@@ -76,7 +76,8 @@ Authenticated admin routes are deliberately unlimited — they are already behin
 - Path alias `@/*` → repo root. App Router `params` are Promises: `const { orgSlug } = await params;`.
 - Every route wraps its handler in `withErrorHandling` and answers `{ data }` or `{ error }`. Clients call through `lib/api/client.ts` (`apiGet`/`apiPost`/`apiPut`/`apiDelete`, `query`), which unwraps `data` and throws `ApiRequestError`.
 - Ids are numeric (`id`), not the Firestore-era `_id` string. Nothing should reintroduce `_id`.
-- Input is parsed with the Zod schemas in `lib/validation/schemas.ts`, shared between forms and routes.
+- Input is parsed with the Zod schemas in `lib/validation/schemas.ts`, shared between forms and routes. **Optional form fields arrive as empty strings, not absent keys** — use `optionalDateSchema` / `optionalPasswordSchema` (or the same `emptyToUndefined` wrapper) for them. A bare `z.coerce.date().optional()` turns `""` into an Invalid Date and rejects the common case of a blank field; this shipped once and broke every donor registration that left the password or last-donation date empty.
+- Client-side form schemas must mirror the server schema they post to. The register page previously enforced a 6-character password against the server's 8 and collected `age`/`gender` that no column stores, so a form that passed client validation was still rejected.
 - Audit action values are **snake_case** because `app/[orgSlug]/dashboard/audit-log/page.tsx` keys its label/icon map off those exact strings.
 - District/upazila inputs use `<LocationSelect>` backed by `lib/data/locations.ts` — never free text.
 - `cn()` is redefined locally in each `components/ui/*` file; there is no shared `lib/utils.ts`.

@@ -45,6 +45,24 @@ export const feedbackStatusSchema = z.enum(FEEDBACK_STATUS_VALUES);
 /** Numeric ids arrive from URLs and query strings as strings. */
 export const idSchema = z.coerce.number().int().positive();
 
+/**
+ * HTML forms submit untouched optional inputs as empty strings, not as absent
+ * keys. Without this, `z.coerce.date()` turns "" into an Invalid Date and a
+ * `.min()` string check rejects it, so leaving an optional field blank - the
+ * common case - fails validation. These helpers normalise "" to undefined
+ * before the real check runs.
+ */
+const emptyToUndefined = <T extends z.ZodTypeAny>(schema: T) =>
+    z.preprocess((value) => (value === "" || value === null ? undefined : value), schema.optional());
+
+/** Optional date that accepts "", a date string, or a Date. */
+export const optionalDateSchema = emptyToUndefined(z.coerce.date());
+
+/** Optional password with a minimum length, tolerating a blank field. */
+export const optionalPasswordSchema = emptyToUndefined(
+    z.string().min(8, "Password must be at least 8 characters"),
+);
+
 export const orgSlugQuerySchema = z.object({
     orgSlug: slugSchema,
 });
@@ -56,12 +74,12 @@ export const donorRegistrationSchema = z
         name: z.string().trim().min(2, "Name is required").max(191),
         email: emailSchema.optional().or(z.literal("")),
         phone: phoneSchema.optional().or(z.literal("")),
-        password: z.string().min(8, "Password must be at least 8 characters").optional(),
+        password: optionalPasswordSchema,
         bloodGroup: bloodGroupSchema,
         district: z.string().trim().min(1, "District is required").max(128),
         upazila: z.string().trim().min(1, "Upazila is required").max(128),
         village: z.string().trim().max(128).optional().or(z.literal("")),
-        lastDonationDate: z.coerce.date().optional().nullable(),
+        lastDonationDate: optionalDateSchema,
         orgSlug: slugSchema,
     })
     .refine((value) => Boolean(value.phone || value.email), {
@@ -167,7 +185,7 @@ export const eventCreateSchema = z.object({
     title: z.string().trim().min(2, "Title is required").max(191),
     description: z.string().trim().max(2000).optional().or(z.literal("")),
     date: z.coerce.date(),
-    endDate: z.coerce.date().optional().nullable(),
+    endDate: optionalDateSchema,
     location: z.string().trim().max(512).optional().or(z.literal("")),
     district: z.string().trim().max(128).optional().or(z.literal("")),
     upazila: z.string().trim().max(128).optional().or(z.literal("")),
@@ -206,7 +224,7 @@ export const orgUserCreateSchema = z.object({
     // Optional: an admin may add a member record before that person has a
     // login. Without a password the account simply cannot sign in with
     // credentials, which matches the previous behaviour.
-    password: z.string().min(8, "Password must be at least 8 characters").optional().or(z.literal("")),
+    password: optionalPasswordSchema,
     role: userRoleSchema,
     orgSlug: slugSchema,
 });
