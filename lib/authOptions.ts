@@ -77,57 +77,72 @@ function clearFailures(identifier: string) {
     failedAttempts.delete(identifier);
 }
 
+/**
+ * Builds a credentials provider keyed on a single identifier.
+ *
+ * The phone and email providers differ only in which field they read, how it
+ * is normalised, and which lookup they use. Expressing that as one factory
+ * keeps the security-sensitive part -- lockout, password check, failure
+ * recording -- in exactly one place, so it cannot drift between the two.
+ */
+function identifierProvider(options: {
+    id: "phone" | "email";
+    name: string;
+    field: string;
+    inputType: string;
+    normalise: (raw: string) => string;
+    lookup: (identifier: string) => Promise<UserRow | null>;
+    missingMessage: string;
+}) {
+    return CredentialsProvider({
+        id: options.id,
+        name: options.name,
+        credentials: {
+            [options.field]: { label: options.name, type: options.inputType },
+            password: { label: "Password", type: "password" },
+        },
+        async authorize(credentials) {
+            const raw = credentials?.[options.field];
+            if (!raw || !credentials?.password) {
+                throw new Error(options.missingMessage);
+            }
+
+            const identifier = options.normalise(raw);
+            const key = `${options.id}:${identifier}`;
+
+            assertNotLockedOut(key);
+
+            const user = await options.lookup(identifier);
+            if (!user || !(await verifyPassword(credentials.password, user))) {
+                recordFailure(key);
+                throw new Error(INVALID_CREDENTIALS);
+            }
+
+            clearFailures(key);
+            return toSessionUser(user);
+        },
+    });
+}
+
 export const authOptions: NextAuthOptions = {
     providers: [
-        CredentialsProvider({
+        identifierProvider({
             id: "phone",
             name: "Phone Number",
-            credentials: {
-                phone: { label: "Phone Number", type: "text" },
-                password: { label: "Password", type: "password" },
-            },
-            async authorize(credentials) {
-                if (!credentials?.phone || !credentials?.password) {
-                    throw new Error("Enter your phone number and password");
-                }
-
-                const phone = credentials.phone.trim();
-                assertNotLockedOut(`phone:${phone}`);
-
-                const user = await usersRepo.findByPhone(phone);
-                if (!user || !(await verifyPassword(credentials.password, user))) {
-                    recordFailure(`phone:${phone}`);
-                    throw new Error(INVALID_CREDENTIALS);
-                }
-
-                clearFailures(`phone:${phone}`);
-                return toSessionUser(user);
-            },
+            field: "phone",
+            inputType: "text",
+            normalise: (raw) => raw.trim(),
+            lookup: (phone) => usersRepo.findByPhone(phone),
+            missingMessage: "Enter your phone number and password",
         }),
-        CredentialsProvider({
+        identifierProvider({
             id: "email",
             name: "Email Address",
-            credentials: {
-                email: { label: "Email", type: "email" },
-                password: { label: "Password", type: "password" },
-            },
-            async authorize(credentials) {
-                if (!credentials?.email || !credentials?.password) {
-                    throw new Error("Enter your email and password");
-                }
-
-                const email = credentials.email.trim().toLowerCase();
-                assertNotLockedOut(`email:${email}`);
-
-                const user = await usersRepo.findByEmail(email);
-                if (!user || !(await verifyPassword(credentials.password, user))) {
-                    recordFailure(`email:${email}`);
-                    throw new Error(INVALID_CREDENTIALS);
-                }
-
-                clearFailures(`email:${email}`);
-                return toSessionUser(user);
-            },
+            field: "email",
+            inputType: "email",
+            normalise: (raw) => raw.trim().toLowerCase(),
+            lookup: (email) => usersRepo.findByEmail(email),
+            missingMessage: "Enter your email and password",
         }),
         GoogleProvider({
             clientId: process.env.GOOGLE_CLIENT_ID ?? "",
