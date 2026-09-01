@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 
+import { BRAND } from "@/lib/config/brand";
 import { isProductionSite, siteUrl } from "@/lib/siteUrl";
 
 /**
@@ -16,8 +17,8 @@ import { isProductionSite, siteUrl } from "@/lib/siteUrl";
  * missing site-wide.
  */
 
-export const SITE_NAME = "Bangladesh Blood Bank";
-export const SITE_SHORT_NAME = "BloodBank";
+export const SITE_NAME = BRAND.name;
+export const SITE_SHORT_NAME = BRAND.shortName;
 
 export const SITE_DESCRIPTION =
     "Find verified blood donors across Bangladesh in minutes. A free, community-run network connecting donors and patients by blood group, district and upazila.";
@@ -77,6 +78,13 @@ interface BuildMetadataOptions {
     description: string;
     /** Route path, used for the canonical URL. Leading slash, no origin. */
     path: string;
+    /**
+     * Canonical target, when it is not this page. Used by the per-tenant copies
+     * of pages whose text is identical across every organization, so the
+     * platform copy accumulates the signals instead of N near-duplicates
+     * splitting them.
+     */
+    canonicalPath?: string;
     keywords?: string[];
     /** Set on pages that exist to be used, not found: forms, auth, dashboards. */
     noIndex?: boolean;
@@ -93,11 +101,13 @@ export function buildMetadata({
     title,
     description,
     path,
+    canonicalPath,
     keywords,
     noIndex = false,
     type = "website",
 }: BuildMetadataOptions): Metadata {
     const url = absoluteUrl(path);
+    const canonical = absoluteUrl(canonicalPath ?? path);
 
     // A preview deployment serves identical pages on a different hostname.
     // robots.txt already blocks it, but a page-level noindex survives a crawler
@@ -112,7 +122,7 @@ export function buildMetadata({
         title: { absolute: title },
         description,
         keywords: keywords ?? undefined,
-        alternates: { canonical: url },
+        alternates: { canonical },
         robots: {
             index,
             // `noindex, follow` rather than `noindex, nofollow`: a page kept out

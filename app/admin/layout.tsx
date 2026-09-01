@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Droplet } from "lucide-react";
 
+import { BRAND } from "@/lib/config/brand";
+
 /**
  * The super-admin panel. `robots.txt` disallows /admin and `proxy.ts` gates it
  * behind a session, but a page-level noindex is the control that survives an
@@ -27,7 +29,8 @@ export default function AdminLayout({
                             <Droplet className="w-6 h-6 text-white fill-current" />
                         </div>
                         <span className="text-xl font-bold text-white tracking-tight">
-                            Blood<span className="text-red-500">Bank</span>
+                            Bangladesh <span className="text-red-500">Blood</span>
+                            <span className="text-emerald-500"> Bank</span>
                             <span className="text-neutral-400 text-sm ml-2">Admin</span>
                         </span>
                     </Link>
@@ -63,7 +66,9 @@ export default function AdminLayout({
             {/* Admin Footer */}
             <footer className="border-t border-neutral-200 bg-white py-6">
                 <div className="container mx-auto px-4 text-center text-sm text-neutral-500">
-                    Rural Blood Bank Super Admin Panel © {new Date().getFullYear()}
+                    {BRAND.name} Super Admin © {new Date().getFullYear()}
+                    <span className="mx-2 text-neutral-300">·</span>
+                    A project by <span className="font-semibold text-neutral-700">{BRAND.vendor.name}</span>
                 </div>
             </footer>
         </div>

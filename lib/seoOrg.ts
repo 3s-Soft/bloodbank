@@ -16,6 +16,8 @@ interface OrgPageSeo {
         district: string | null;
         upazila: string | null;
     }) => string[];
+    /** Absolute route to canonicalise to, when this page duplicates one. */
+    canonicalPath?: string;
     noIndex?: boolean;
 }
 
@@ -43,6 +45,7 @@ export function orgPageMetadata(config: OrgPageSeo) {
             title: config.title(organization.name, where),
             description: config.description(organization.name, where),
             path: `/${organization.slug}${config.path}`,
+            canonicalPath: config.canonicalPath,
             keywords: config.keywords?.(organization),
             noIndex: config.noIndex || !organization.isVerified,
         });

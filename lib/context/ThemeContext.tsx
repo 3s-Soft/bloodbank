@@ -14,7 +14,7 @@ interface ThemeContextType {
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
-    // Bangladesh Bloodbank uses a unified professional dark theme.
+    // Bangladesh Blood Bank uses a unified professional dark theme.
     // Switching is disabled to maintain a premium, consistent visual identity.
 
     return (
