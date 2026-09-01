@@ -20,6 +20,7 @@ import {
     ChevronRight,
 } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
 import { useState, useEffect } from "react";
 import { useLanguage } from "@/lib/i18n";
 
@@ -379,9 +380,12 @@ export default function OrganizationLanding() {
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
                         <div className="order-2 lg:order-1">
                             <div className="relative rounded-3xl overflow-hidden shadow-2xl border border-white/5 group">
-                                <img
+                                <Image
                                     src="/assets/community.png"
-                                    alt="Community Impact"
+                                    alt="Blood donors and volunteers at a community donation drive in Bangladesh"
+                                    width={640}
+                                    height={640}
+                                    sizes="(max-width: 1024px) 100vw, 50vw"
                                     className="w-full h-auto transition-transform duration-700 group-hover:scale-105"
                                 />
                                 <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-transparent opacity-60" />

@@ -27,8 +27,18 @@ const CardHeader = ({ className, ...props }: React.HTMLAttributes<HTMLDivElement
 );
 CardHeader.displayName = "CardHeader";
 
-const CardTitle = ({ className, ...props }: React.HTMLAttributes<HTMLHeadingElement>) => (
-    <h3 className={cn("text-xl font-bold text-neutral-900 leading-none tracking-tight", className)} {...props} />
+/**
+ * Defaults to `h3`, which is right for a card inside a page that already has an
+ * `h1`. Pages whose whole content is one card — the donor registration form,
+ * the organization application — pass `as="h1"`, because otherwise their only
+ * heading is an `h3` with nothing above it.
+ */
+const CardTitle = ({
+    className,
+    as: Tag = "h3",
+    ...props
+}: React.HTMLAttributes<HTMLHeadingElement> & { as?: "h1" | "h2" | "h3" | "h4" }) => (
+    <Tag className={cn("text-xl font-bold text-neutral-900 leading-none tracking-tight", className)} {...props} />
 );
 CardTitle.displayName = "CardTitle";
 

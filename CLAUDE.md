@@ -95,6 +95,20 @@ Authenticated admin routes are deliberately unlimited — they are already behin
 
 There is none, deliberately. `app/[orgSlug]/dashboard/requests/page.tsx` polls `/api/requests` every 15s (and refetches after mutations, and on window focus). Socket.IO cannot run on Vercel serverless — it needs an always-on process. Emergency requests reach donors instantly via FCM, which is the genuinely time-critical path.
 
+## SEO
+
+Search is the acquisition channel: someone needing O- blood in Savar types it into Google, not into this site.
+
+- **Every route segment owns its metadata.** `lib/seo.ts` exposes `buildMetadata`, which fills in the canonical URL, the OpenGraph and Twitter cards, and the `max-image-preview`/`max-snippet` hints. Client pages cannot export `metadata`, so a public client page gets a sibling `layout.tsx` that does. A new public page without one silently inherits the root title, which is how all 28 pages once shared a single `<title>`.
+- **Tenant pages go through `orgPageMetadata` in `lib/seoOrg.ts`**, which resolves the slug, threads the district and upazila into the title and description, and applies `noIndex` to unverified organizations — the same rule `app/sitemap.ts` uses when deciding what to advertise.
+- `getOrganizationBySlug` is wrapped in React `cache`, because `generateMetadata` and the layout body both need the row and the pool holds one connection.
+- **`buildMetadata` sets `title.absolute`**, opting out of the root layout's `| Bangladesh Blood Bank` template. Use `composeTitle(main, suffix)` to append an organization name only when the result still fits in ~60 characters; tenant names range from "Savar Blood Bank" to "Mirpur Life Savers Foundation" and a fixed template truncates the long ones.
+- **Duplicate content across tenants is handled explicitly.** `/[orgSlug]/privacy` and `/terms` are `noindex` (identical text under N slugs, no platform-level canonical target); `/[orgSlug]/docs` canonicalises to `/docs`. `?q=` on `/docs` canonicalises to the bare path.
+- **Donor profiles are excluded by `noindex`, not by robots.txt.** Blocking the crawl is the weaker control — a disallowed URL can still be indexed from an external link, and a crawler that cannot fetch the page never reads the tag that would remove it. See the comment in `app/robots.ts`.
+- **`NEXT_PUBLIC_SITE_URL` must be set in the Vercel project.** `/`, `/robots.txt` and `/sitemap.xml` are statically prerendered, so `siteUrl()` is resolved at build time and baked into every canonical, `og:url` and JSON-LD `@id`. Without it the build falls back to `VERCEL_PROJECT_PRODUCTION_URL` (the `*.vercel.app` host, not the custom domain) and then to localhost, which `lib/siteUrl.ts` now logs an error about.
+- Structured data is rendered server-side through `components/JsonLd.tsx` (NGO + WebSite site-wide, MedicalOrganization + BreadcrumbList per verified tenant, ItemList of the network on the homepage). It relies on the CSP's existing `'unsafe-inline'` for `script-src`; a move to nonce-based CSP has to carry these tags too.
+- The homepage is `revalidate = 300`, not `force-dynamic`. It was the page crawlers fetch most and it paid a round trip to Hostinger MySQL on every hit.
+
 ## Production hardening
 
 - Security headers are set in `next.config.ts`: CSP, HSTS, `X-Frame-Options: DENY`, `nosniff`, `Referrer-Policy`, `Permissions-Policy`, and `poweredByHeader: false`. `/api/*` additionally sends `Cache-Control: no-store` so tenant-scoped data is never held by a shared cache. The CSP allowlist covers Google Fonts, FCM endpoints and Google OAuth; **adding a third-party script or API means updating `connect-src`/`script-src`, or it will be blocked at runtime.** It still needs `'unsafe-inline'`/`'unsafe-eval'` for the Next.js runtime; tightening that requires nonce-based CSP.

@@ -10,7 +10,30 @@ import {
     CheckCircle2
 } from "lucide-react";
 import Link from "next/link";
+import type { Metadata } from "next";
 import DocSearch from "@/components/DocSearch";
+import JsonLd from "@/components/JsonLd";
+import { breadcrumbJsonLd, buildMetadata } from "@/lib/seo";
+
+/**
+ * The `?q=` search parameter would otherwise mint an unbounded set of crawlable
+ * URLs serving the same document. `buildMetadata` canonicalises every one of
+ * them back to bare `/docs`.
+ */
+export const metadata: Metadata = buildMetadata({
+    title: "Blood Donation Guide & Platform Documentation",
+    description:
+        "How blood donation works on this platform: registering as a donor, posting an emergency blood request, "
+        + "how organizations are verified, and how donor data is protected.",
+    path: "/docs",
+    keywords: [
+        "how to donate blood",
+        "blood donation guide Bangladesh",
+        "blood donor eligibility",
+        "রক্তদান নির্দেশিকা",
+    ],
+    type: "article",
+});
 
 const mainGuides = [
     {
@@ -48,6 +71,12 @@ export default async function GlobalDocs({
 
     return (
         <div className="min-h-screen bg-slate-950 flex flex-col text-slate-50 selection:bg-red-500/30">
+            <JsonLd
+                data={breadcrumbJsonLd([
+                    { name: "Home", path: "/" },
+                    { name: "Documentation", path: "/docs" },
+                ])}
+            />
             {/* Header */}
             <header className="sticky top-0 z-50 bg-slate-900/80 backdrop-blur-xl border-b border-white/5 h-20">
                 <div className="container mx-auto px-4 h-full flex items-center justify-between">

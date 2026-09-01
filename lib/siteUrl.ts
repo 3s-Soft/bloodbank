@@ -40,6 +40,20 @@ export function siteUrl(): string {
         return normalise(authUrl);
     }
 
+    if (production) {
+        // Reaching here in production means none of the three variables above
+        // was set, and the localhost value below would be baked into every
+        // canonical tag, OpenGraph URL, sitemap entry and JSON-LD @id on the
+        // statically prerendered pages. That has shipped once already. Warn
+        // rather than throw, so a misconfigured deploy degrades instead of
+        // failing the build, but make it impossible to miss in the log.
+        console.error(
+            "[siteUrl] No NEXT_PUBLIC_SITE_URL, VERCEL_PROJECT_PRODUCTION_URL or " +
+                "non-localhost NEXTAUTH_URL in a production build. Canonical URLs, " +
+                "robots.txt and the sitemap will point at localhost.",
+        );
+    }
+
     return "http://localhost:3000";
 }
 

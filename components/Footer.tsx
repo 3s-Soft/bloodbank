@@ -18,7 +18,7 @@ export default function Footer() {
                     <div className="space-y-6">
                         <div className="flex items-center space-x-3">
                             <div className="w-8 h-8 rounded-lg overflow-hidden grayscale opacity-50">
-                                <Image src="/assets/logo.png" alt="Logo" className="w-full h-full object-cover" width={100} height={100} />
+                                <Image src="/assets/logo.png" alt="Bangladesh Blood Bank logo" className="w-full h-full object-cover" width={40} height={40} />
                             </div>
                             <h3 className="text-xl font-bold text-white tracking-tight">{organization.name}</h3>
                         </div>
