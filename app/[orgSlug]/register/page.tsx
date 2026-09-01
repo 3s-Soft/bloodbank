@@ -80,6 +80,20 @@ export default function DonorRegistration() {
     } = useForm<DonorFormValues>({
         resolver: zodResolver(donorSchema),
         mode: "onTouched",
+        // district and upazila are set through LocationSelect rather than a
+        // registered input; without defaults they are undefined and Zod reports
+        // a type error instead of "District is required".
+        defaultValues: {
+            name: "",
+            phone: "",
+            email: "",
+            password: "",
+            bloodGroup: "",
+            district: "",
+            upazila: "",
+            village: "",
+            lastDonationDate: "",
+        },
     });
 
     /**

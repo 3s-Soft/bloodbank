@@ -35,8 +35,16 @@ function readConnectionConfig(): mysql.PoolOptions {
         // to concurrent instances rather than concurrent requests.
         connectionLimit: Number.isFinite(poolLimit) && poolLimit > 0 ? poolLimit : 1,
         maxIdle: 1,
-        idleTimeout: 10_000,
+        // MUST stay comfortably below the server's wait_timeout, which is only
+        // 20 seconds on this host. If the server closes an idle connection
+        // first, the pool hands out a dead socket and the next query fails with
+        // ECONNRESET. Closing at 5 seconds means the client always wins the
+        // race. Check `SHOW VARIABLES LIKE 'wait_timeout'` before raising this.
+        idleTimeout: 5_000,
         connectTimeout: 10_000,
+        // TCP keepalive does not prevent the server's wait_timeout, which
+        // counts application-level idle time, but it does surface dead sockets
+        // sooner.
         enableKeepAlive: true,
         // Bangla content (organization names, donor names, lib/i18n/bn.ts)
         // requires the full 4-byte character set.
@@ -73,9 +81,60 @@ function readConnectionConfig(): mysql.PoolOptions {
     };
 }
 
+/**
+ * Errors that mean "this pooled connection is dead", as opposed to a genuine
+ * query failure. They are worth one transparent retry: the pool discards the
+ * bad socket and the second attempt opens a fresh one.
+ */
+const STALE_CONNECTION_CODES = new Set([
+    "ECONNRESET",
+    "EPIPE",
+    "ETIMEDOUT",
+    "PROTOCOL_CONNECTION_LOST",
+    "PROTOCOL_ENQUEUE_AFTER_FATAL_ERROR",
+]);
+
+function isStaleConnectionError(error: unknown): boolean {
+    if (typeof error !== "object" || error === null) return false;
+    const code = (error as { code?: string }).code;
+    return typeof code === "string" && STALE_CONNECTION_CODES.has(code);
+}
+
+/**
+ * Wraps the pool so a query that fails on a dead connection is retried once.
+ *
+ * `idleTimeout` below `wait_timeout` closes the window almost entirely, but not
+ * completely: a request can still arrive for a connection the server has just
+ * killed. Without this, that surfaces to the user as a 500 on an otherwise
+ * healthy request. Only the retriable codes above are retried, so a real SQL
+ * error still fails immediately.
+ */
+function withStaleConnectionRetry(pool: mysql.Pool): mysql.Pool {
+    return new Proxy(pool, {
+        get(target, property, receiver) {
+            const value = Reflect.get(target, property, receiver);
+
+            if ((property === "query" || property === "execute") && typeof value === "function") {
+                const original = value as (...args: unknown[]) => Promise<unknown>;
+                return async (...args: unknown[]) => {
+                    try {
+                        return await original.apply(target, args);
+                    } catch (error) {
+                        if (!isStaleConnectionError(error)) throw error;
+                        console.warn("Retrying query after a stale MySQL connection");
+                        return original.apply(target, args);
+                    }
+                };
+            }
+
+            return typeof value === "function" ? value.bind(target) : value;
+        },
+    });
+}
+
 function createDb(): MySql2Database<typeof schema> {
     if (!globalThis.mysqlPool) {
-        globalThis.mysqlPool = mysql.createPool(readConnectionConfig());
+        globalThis.mysqlPool = withStaleConnectionRetry(mysql.createPool(readConnectionConfig()));
     }
 
     if (!globalThis.drizzleDb) {

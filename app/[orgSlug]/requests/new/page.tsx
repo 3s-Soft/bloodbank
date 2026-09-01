@@ -42,7 +42,21 @@ export default function NewBloodRequest() {
         formState: { errors, isSubmitting },
     } = useForm<RequestFormValues>({
         resolver: zodResolver(requestSchema),
-        defaultValues: { urgency: "normal" },
+        // Fields driven by buttons and LocationSelect rather than a registered
+        // input start as undefined, which makes Zod report a type error
+        // ("Invalid input") instead of the field's own "... is required"
+        // message. Seeding them as empty strings gets the intended wording.
+        defaultValues: {
+            urgency: "normal",
+            bloodGroup: "",
+            district: "",
+            upazila: "",
+            patientName: "",
+            location: "",
+            requiredDate: "",
+            contactNumber: "",
+            additionalNotes: "",
+        },
     });
 
     const onSubmit = async (data: RequestFormValues) => {
