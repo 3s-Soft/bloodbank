@@ -107,3 +107,57 @@ body {
     radial-gradient(at 50% 100%, rgba(15, 23, 42, 1) 0, transparent 50%),
     radial-gradient(at 100% 0%, rgba(220, 38, 38, 0.05) 0, transparent 50%);
 }
+/* ---------------------------------------------------------------------------
+   Interrupted pulse, used on the error and not-found pages.
+
+   One orchestrated moment on load: the trace draws left to right, then the
+   break point appears. Nothing loops -- an error page is not the place for
+   perpetual motion, and a looping animation on a slow phone is a cost with no
+   benefit.
+   --------------------------------------------------------------------------- */
+
+.pulse-trace {
+  stroke-dasharray: 700;
+  stroke-dashoffset: 700;
+  animation: pulse-draw 1.1s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.pulse-trace-resumed {
+  animation-delay: 0.35s;
+}
+
+.pulse-break {
+  opacity: 0;
+  animation: pulse-break-in 0.4s ease-out 0.9s forwards;
+}
+
+@keyframes pulse-draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes pulse-break-in {
+  from {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* The trace still reads as interrupted when it is drawn instantly. */
+@media (prefers-reduced-motion: reduce) {
+  .pulse-trace,
+  .pulse-break {
+    animation: none;
+    stroke-dashoffset: 0;
+    opacity: 1;
+  }
+
+  .pulse-trace-resumed {
+    opacity: 0.28;
+  }
+}
