@@ -107,6 +107,19 @@ async function main() {
     };
     check("health reports database connected", health?.database === "connected", health);
 
+    /* -------------------------------------------------------- precondition */
+    // Every check below assumes the demo seed. Without it the failures are
+    // confusing (404s and empty lists) rather than informative, so stop early
+    // and say what is missing.
+    const seeded = await anon.fetch(`/api/org/stats?orgSlug=${ORG}`);
+    if (seeded.status === 404) {
+        console.error(
+            `\nThe demo data is missing: organization "${ORG}" does not exist.\n` +
+                `This suite runs against the seed. Load it with:  npm run db:seed`,
+        );
+        process.exit(1);
+    }
+
     /* ------------------------------------------------------ public reads */
     console.log("\npublic reads");
     const stats = await anon.json<{ donorsCount: number }>(`/api/org/stats?orgSlug=${ORG}`);

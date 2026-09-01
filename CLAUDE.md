@@ -13,6 +13,7 @@ npm run smoke               # End-to-end smoke suite against a running server
 npm run db:generate         # Generate SQL migration from lib/db/schema.ts
 npm run db:migrate          # Apply migrations (run from a dev machine, never CI)
 npm run db:seed             # Wipe and reseed demo data
+npm run db:reset -- --yes   # Empty every table, keeping schema and migrations
 npm run db:studio           # Drizzle Studio
 ```
 
@@ -99,6 +100,8 @@ There is none, deliberately. `app/[orgSlug]/dashboard/requests/page.tsx` polls `
 - Security headers are set in `next.config.ts`: CSP, HSTS, `X-Frame-Options: DENY`, `nosniff`, `Referrer-Policy`, `Permissions-Policy`, and `poweredByHeader: false`. `/api/*` additionally sends `Cache-Control: no-store` so tenant-scoped data is never held by a shared cache. The CSP allowlist covers Google Fonts, FCM endpoints and Google OAuth; **adding a third-party script or API means updating `connect-src`/`script-src`, or it will be blocked at runtime.** It still needs `'unsafe-inline'`/`'unsafe-eval'` for the Next.js runtime; tightening that requires nonce-based CSP.
 - `GET /api/health` reports database reachability and round-trip latency for uptime monitoring. It reveals no driver detail on failure.
 - `npm run db:seed` **deletes every row**. It refuses to run against a database that does not look like demo data (>5 organizations or >100 donor profiles); override with `SEED_FORCE=true`. Never point it at production casually.
+- `npm run db:reset -- --yes` empties every application table and resets AUTO_INCREMENT, for clearing demo data before go-live. It prints the row counts it is about to destroy and refuses without `--yes`. It leaves the schema and `__drizzle_migrations` alone — clearing that table would make drizzle-kit try to re-create existing tables on the next migrate.
+- The smoke suite runs against the seed and stops with a clear message if the demo organization is absent.
 
 ## Deployment
 
