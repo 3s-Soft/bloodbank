@@ -54,18 +54,22 @@ export enum UrgencyLevel {
     EMERGENCY = "emergency",
 }
 
+// "canceled" with one l, matching RequestStatus and the UI. The legacy events
+// code used the double-l spelling while everything else used single-l, so a
+// cancelled event never matched the UI's `case "canceled"` and fell through to
+// default styling.
 export const EVENT_STATUS_VALUES = [
     "upcoming",
     "ongoing",
     "completed",
-    "cancelled",
+    "canceled",
 ] as const;
 
 export enum EventStatus {
     UPCOMING = "upcoming",
     ONGOING = "ongoing",
     COMPLETED = "completed",
-    CANCELLED = "cancelled",
+    CANCELED = "canceled",
 }
 
 export const FEEDBACK_CATEGORY_VALUES = [

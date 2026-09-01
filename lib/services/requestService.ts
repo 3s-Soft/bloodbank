@@ -90,15 +90,24 @@ export async function matchDonors(
     const upazila = location.upazila?.toLowerCase();
 
     const ranked = [...matches].sort((a, b) => {
-        const score = (candidate: (typeof matches)[number]) => {
+        const locality = (candidate: (typeof matches)[number]) => {
             let value = 0;
             if (upazila && candidate.profile.upazila?.toLowerCase() === upazila) value += 2;
             if (district && candidate.profile.district?.toLowerCase() === district) value += 1;
             return value;
         };
 
-        const difference = score(b) - score(a);
-        if (difference !== 0) return difference;
+        const byLocality = locality(b) - locality(a);
+        if (byLocality !== 0) return byLocality;
+
+        // Verified donors come first when locality ties. Without this an
+        // unverified donor with a high donation count outranks a verified one
+        // in the same area, which is the wrong call for whoever has to phone
+        // down the list.
+        if (a.profile.isVerified !== b.profile.isVerified) {
+            return a.profile.isVerified ? -1 : 1;
+        }
+
         return b.profile.totalDonations - a.profile.totalDonations;
     });
 

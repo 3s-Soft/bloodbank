@@ -74,38 +74,33 @@ export async function update(
     await executor.update(bloodRequests).set(values).where(eq(bloodRequests.id, id));
 }
 
-/** Counts by status in one grouped query, for dashboard tiles. */
-export async function countByStatus(organizationId: number): Promise<Record<string, number>> {
-    const rows = await db
-        .select({ status: bloodRequests.status, total: count() })
-        .from(bloodRequests)
-        .where(eq(bloodRequests.organizationId, organizationId))
-        .groupBy(bloodRequests.status);
-
-    return Object.fromEntries(rows.map((row) => [row.status, Number(row.total)]));
-}
-
-export async function countByUrgency(organizationId: number): Promise<Record<string, number>> {
-    const rows = await db
-        .select({ urgency: bloodRequests.urgency, total: count() })
-        .from(bloodRequests)
-        .where(eq(bloodRequests.organizationId, organizationId))
-        .groupBy(bloodRequests.urgency);
-
-    return Object.fromEntries(rows.map((row) => [row.urgency, Number(row.total)]));
-}
-
-export async function countByBloodGroup(
+/**
+ * Grouped counts for the dashboard tiles.
+ *
+ * Status, urgency and blood group were three functions differing only in the
+ * column they grouped by, which is duplication rather than three ideas.
+ */
+async function countGroupedBy(
     organizationId: number,
+    column: typeof bloodRequests.status | typeof bloodRequests.urgency | typeof bloodRequests.bloodGroup,
 ): Promise<Record<string, number>> {
     const rows = await db
-        .select({ bloodGroup: bloodRequests.bloodGroup, total: count() })
+        .select({ key: column, total: count() })
         .from(bloodRequests)
         .where(eq(bloodRequests.organizationId, organizationId))
-        .groupBy(bloodRequests.bloodGroup);
+        .groupBy(column);
 
-    return Object.fromEntries(rows.map((row) => [row.bloodGroup, Number(row.total)]));
+    return Object.fromEntries(rows.map((row) => [row.key, Number(row.total)]));
 }
+
+export const countByStatus = (organizationId: number) =>
+    countGroupedBy(organizationId, bloodRequests.status);
+
+export const countByUrgency = (organizationId: number) =>
+    countGroupedBy(organizationId, bloodRequests.urgency);
+
+export const countByBloodGroup = (organizationId: number) =>
+    countGroupedBy(organizationId, bloodRequests.bloodGroup);
 
 export async function countCreatedSince(organizationId: number, since: Date): Promise<number> {
     const [row] = await db

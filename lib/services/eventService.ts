@@ -4,6 +4,7 @@ import { AuditAction, EventStatus } from "@/lib/db/enums";
 import { auditLogsRepo, eventsRepo } from "@/lib/repositories/misc";
 import type { EventRow } from "@/lib/types";
 import type { EventCreateInput } from "@/lib/validation/schemas";
+import { definedFields } from "./updates";
 
 /** Event CRUD with audit entries. */
 
@@ -73,17 +74,18 @@ export async function updateEvent(
 ): Promise<EventRow> {
     await requireOwnedEvent(eventId, organizationId);
 
-    const updates: Partial<EventRow> = {};
-    if (input.title !== undefined) updates.title = input.title;
-    if (input.description !== undefined) updates.description = input.description || null;
-    if (input.date !== undefined) updates.date = input.date;
-    if (input.endDate !== undefined) updates.endDate = input.endDate ?? null;
-    if (input.location !== undefined) updates.location = input.location || null;
-    if (input.district !== undefined) updates.district = input.district || null;
-    if (input.upazila !== undefined) updates.upazila = input.upazila || null;
-    if (input.maxParticipants !== undefined) updates.maxParticipants = input.maxParticipants ?? null;
-    if (input.contactNumber !== undefined) updates.contactNumber = input.contactNumber || null;
-    if (input.status !== undefined) updates.status = input.status;
+    const updates = definedFields(input, [
+        "title",
+        "description",
+        "date",
+        "endDate",
+        "location",
+        "district",
+        "upazila",
+        "maxParticipants",
+        "contactNumber",
+        "status",
+    ]) as Partial<EventRow>;
 
     await db.transaction(async (tx) => {
         if (Object.keys(updates).length > 0) {

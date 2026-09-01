@@ -6,6 +6,7 @@ import { AuditAction, DEFAULT_NOTIFICATION_PREFERENCES } from "@/lib/db/enums";
 import { auditLogsRepo } from "@/lib/repositories/misc";
 import * as usersRepo from "@/lib/repositories/users";
 import type { UserRow } from "@/lib/types";
+import { definedFields } from "./updates";
 
 /** Organization member management, with audit entries. */
 
@@ -88,11 +89,7 @@ export async function updateOrgUser(
         }
     }
 
-    const updates: Partial<UserRow> = {};
-    if (input.name !== undefined) updates.name = input.name;
-    if (input.phone !== undefined) updates.phone = input.phone;
-    if (input.email !== undefined) updates.email = input.email || null;
-    if (input.role !== undefined) updates.role = input.role;
+    const updates = definedFields(input, ["name", "phone", "email", "role"]) as Partial<UserRow>;
 
     await db.transaction(async (tx) => {
         if (Object.keys(updates).length > 0) {

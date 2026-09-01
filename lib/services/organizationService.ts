@@ -5,6 +5,7 @@ import { auditLogsRepo } from "@/lib/repositories/misc";
 import * as organizationsRepo from "@/lib/repositories/organizations";
 import type { OrganizationRow } from "@/lib/types";
 import type { OrganizationCreateInput } from "@/lib/validation/schemas";
+import { definedFields } from "./updates";
 
 /** Organization creation and settings changes, with their audit entries. */
 
@@ -43,17 +44,18 @@ export async function updateOrganization(
         throw new HttpError(409, "This URL slug is already taken");
     }
 
-    // Only apply keys that were actually supplied: a partial settings form must
-    // not blank out fields it did not include.
-    const updates: Partial<OrganizationRow> = {};
-    if (input.name !== undefined) updates.name = input.name;
-    if (input.slug !== undefined) updates.slug = input.slug;
-    if (input.logo !== undefined) updates.logo = input.logo || null;
-    if (input.primaryColor !== undefined) updates.primaryColor = input.primaryColor;
-    if (input.contactEmail !== undefined) updates.contactEmail = input.contactEmail || null;
-    if (input.contactPhone !== undefined) updates.contactPhone = input.contactPhone || null;
-    if (input.address !== undefined) updates.address = input.address || null;
-    if (input.isActive !== undefined) updates.isActive = input.isActive;
+    // Only keys actually supplied are applied: a partial settings form must not
+    // blank out fields it did not include.
+    const updates = definedFields(input, [
+        "name",
+        "slug",
+        "logo",
+        "primaryColor",
+        "contactEmail",
+        "contactPhone",
+        "address",
+        "isActive",
+    ]) as Partial<OrganizationRow>;
 
     await db.transaction(async (tx) => {
         if (Object.keys(updates).length > 0) {

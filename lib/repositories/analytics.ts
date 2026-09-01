@@ -36,9 +36,8 @@ export interface OrganizationAnalytics {
 
 const BLOOD_GROUPS = ["A+", "A-", "B+", "B-", "O+", "O-", "AB+", "AB-"] as const;
 
-export async function getOrganizationAnalytics(
-    organizationId: number,
-): Promise<OrganizationAnalytics> {
+/** Runs every aggregate for one organization concurrently. */
+async function runOrganizationQueries(organizationId: number) {
     const weekAgo = new Date();
     weekAgo.setDate(weekAgo.getDate() - 7);
 
@@ -120,6 +119,33 @@ export async function getOrganizationAnalytics(
                 ),
             ),
     ]);
+
+    return {
+        donorTotals,
+        bloodGroupRows,
+        districtRows,
+        upazilaRows,
+        requestStatusRows,
+        pendingUrgencyRows,
+        recentDonors,
+        recentRequests,
+    };
+}
+
+/** Shapes the raw aggregate rows into the dashboard payload. */
+export async function getOrganizationAnalytics(
+    organizationId: number,
+): Promise<OrganizationAnalytics> {
+    const {
+        donorTotals,
+        bloodGroupRows,
+        districtRows,
+        upazilaRows,
+        requestStatusRows,
+        pendingUrgencyRows,
+        recentDonors,
+        recentRequests,
+    } = await runOrganizationQueries(organizationId);
 
     const totalDonors = Number(donorTotals?.total ?? 0);
     const verifiedDonors = Number(donorTotals?.verified ?? 0);
