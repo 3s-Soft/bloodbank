@@ -1,4 +1,4 @@
-import { adminMessaging } from "@/lib/firebase/adminApp";
+import { adminMessaging, isPushConfigured } from "@/lib/firebase/adminApp";
 import { pushSubscriptionsRepo } from "@/lib/repositories/misc";
 import { UrgencyLevel, type BloodGroup } from "@/lib/db/enums";
 
@@ -36,6 +36,13 @@ export async function sendPushNotifications(
     filters: PushFilters = {},
 ): Promise<void> {
     try {
+        // Without credentials there is nothing to send through; say so once
+        // rather than throwing from inside the messaging client.
+        if (!isPushConfigured()) {
+            console.warn("Push notifications are not configured; skipping dispatch.");
+            return;
+        }
+
         const subscriptions = await pushSubscriptionsRepo.findTargets(organizationId, filters);
         const tokens = subscriptions.map((subscription) => subscription.token);
 
