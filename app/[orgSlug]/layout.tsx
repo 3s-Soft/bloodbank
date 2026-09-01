@@ -19,12 +19,15 @@ export default async function OrganizationLayout({
     }
 
     const orgData = {
-        _id: String(organization._id),
+        id: organization.id,
         name: organization.name,
         slug: organization.slug,
         logo: organization.logo,
         primaryColor: organization.primaryColor,
         contactEmail: organization.contactEmail,
+        contactPhone: organization.contactPhone,
+        address: organization.address,
+        isVerified: organization.isVerified,
     };
 
     return (

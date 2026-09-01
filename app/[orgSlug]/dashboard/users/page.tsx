@@ -24,7 +24,7 @@ interface DonorProfile {
 }
 
 interface User {
-    _id: string;
+    id: number;
     name: string;
     phone: string;
     email?: string;
@@ -42,6 +42,7 @@ interface UserStats {
 }
 
 import type { LucideIcon } from "lucide-react";
+import { apiDelete, apiGet, apiPost, apiPut, query } from "@/lib/api/client";
 
 const roleColors: Record<string, { bg: string; text: string; border: string; icon: LucideIcon }> = {
     donor: { bg: "bg-red-500/10", text: "text-red-400", border: "border-red-500/20", icon: Droplet },
@@ -69,14 +70,17 @@ export default function UsersManagementPage({
 
     const fetchUsers = async () => {
         try {
-            const params = new URLSearchParams({ orgSlug });
-            if (roleFilter !== "all") params.append("role", roleFilter);
-            if (searchQuery) params.append("search", searchQuery);
+            const params = query({
+                orgSlug,
+                role: roleFilter !== "all" ? roleFilter : undefined,
+                search: searchQuery || undefined,
+            });
 
-            const res = await fetch(`/api/org/users?${params}`);
-            const data = await res.json();
-            setUsers(data.users || []);
-            setStats(data.stats || null);
+            const data = await apiGet<{ users: User[]; stats: UserStats }>(
+                `/api/org/users?${params}`,
+            );
+            setUsers(data.users);
+            setStats(data.stats);
         } catch (error) {
             console.error("Failed to fetch users", error);
             toast.error("Failed to load users");
@@ -88,30 +92,24 @@ export default function UsersManagementPage({
     // eslint-disable-next-line react-hooks/exhaustive-deps
     useEffect(() => { fetchUsers(); }, [orgSlug, roleFilter, searchQuery]);
 
-    const handleDeleteUser = async (userId: string, userName: string) => {
+    const handleDeleteUser = async (userId: number, userName: string) => {
         if (!confirm(`Are you sure you want to delete "${userName}"? This action cannot be undone.`)) return;
         try {
-            const res = await fetch(`/api/org/users/${userId}`, { method: "DELETE" });
-            if (!res.ok) throw new Error("Failed to delete");
+            await apiDelete(`/api/org/users/${userId}?${query({ orgSlug })}`);
             toast.success("User deleted successfully");
             fetchUsers();
-        } catch {
-            toast.error("Failed to delete user");
+        } catch (error) {
+            toast.error(error instanceof Error ? error.message : "Failed to delete user");
         }
     };
 
-    const handleUpdateRole = async (userId: string, newRole: string) => {
+    const handleUpdateRole = async (userId: number, newRole: string) => {
         try {
-            const res = await fetch(`/api/org/users/${userId}`, {
-                method: "PUT",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ role: newRole }),
-            });
-            if (!res.ok) throw new Error("Failed to update");
+            await apiPut(`/api/org/users/${userId}`, { role: newRole, orgSlug });
             toast.success("User role updated");
             fetchUsers();
-        } catch {
-            toast.error("Failed to update user");
+        } catch (error) {
+            toast.error(error instanceof Error ? error.message : "Failed to update user");
         }
     };
 
@@ -221,7 +219,7 @@ export default function UsersManagementPage({
                                     const roleConfig = roleColors[user.role] || roleColors.patient;
                                     const RoleIcon = roleConfig.icon;
                                     return (
-                                        <tr key={user._id} className="hover:bg-slate-800/30 transition-colors">
+                                        <tr key={user.id} className="hover:bg-slate-800/30 transition-colors">
                                             <td className="py-3.5 px-5">
                                                 <div className="flex items-center gap-3">
                                                     <div
@@ -232,7 +230,7 @@ export default function UsersManagementPage({
                                                     </div>
                                                     <div>
                                                         <div className="font-bold text-white text-sm">{user.name}</div>
-                                                        <div className="text-[10px] text-slate-600">ID: {user._id.slice(-6)}</div>
+                                                        <div className="text-[10px] text-slate-600">ID: {user.id}</div>
                                                     </div>
                                                 </div>
                                             </td>
@@ -287,7 +285,7 @@ export default function UsersManagementPage({
                                                 <div className="flex items-center justify-end gap-2">
                                                     <select
                                                         value={user.role}
-                                                        onChange={(e) => handleUpdateRole(user._id, e.target.value)}
+                                                        onChange={(e) => handleUpdateRole(user.id, e.target.value)}
                                                         className="text-xs px-2 py-1 rounded-lg border border-slate-700 bg-slate-800 text-slate-300 outline-none focus:border-slate-600"
                                                     >
                                                         <option value="donor">Donor</option>
@@ -299,7 +297,7 @@ export default function UsersManagementPage({
                                                         size="sm"
                                                         variant="outline"
                                                         className="border-slate-700 text-red-400 hover:bg-red-500/10 hover:border-red-500/30"
-                                                        onClick={() => handleDeleteUser(user._id, user.name)}
+                                                        onClick={() => handleDeleteUser(user.id, user.name)}
                                                     >
                                                         <Trash2 className="w-3.5 h-3.5" />
                                                     </Button>
@@ -339,13 +337,7 @@ function AddUserModal({
         e.preventDefault();
         setIsSubmitting(true);
         try {
-            const res = await fetch("/api/org/users", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ ...formData, orgSlug }),
-            });
-            const data = await res.json();
-            if (!res.ok) throw new Error(data.error);
+            await apiPost("/api/org/users", { ...formData, orgSlug });
             toast.success("User created successfully");
             onSuccess();
         } catch (error: unknown) {

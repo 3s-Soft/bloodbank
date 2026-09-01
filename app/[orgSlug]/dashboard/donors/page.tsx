@@ -17,9 +17,10 @@ import {
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
+import { apiGet, apiPost, query } from "@/lib/api/client";
 
 interface Donor {
-    _id: string;
+    id: number;
     bloodGroup: string;
     isVerified: boolean;
     isAvailable: boolean;
@@ -28,7 +29,7 @@ interface Donor {
     district: string;
     lastDonationDate?: string;
     user?: {
-        _id: string;
+        id: number;
         name: string;
         phone: string;
         email?: string;
@@ -44,15 +45,13 @@ export default function DonorManagement() {
     const [isLoading, setIsLoading] = useState(true);
     const [filter, setFilter] = useState<"all" | "unverified" | "verified">("all");
     const [searchQuery, setSearchQuery] = useState("");
-    const [selectedDonors, setSelectedDonors] = useState<Set<string>>(new Set());
+    const [selectedDonors, setSelectedDonors] = useState<Set<number>>(new Set());
     const [isBulkProcessing, setIsBulkProcessing] = useState(false);
 
     const fetchDonors = async () => {
         setIsLoading(true);
         try {
-            const res = await fetch(`/api/donors?orgSlug=${orgSlug}`);
-            const data = await res.json();
-            setDonors(data);
+            setDonors(await apiGet<Donor[]>(`/api/donors?${query({ orgSlug })}`));
         } catch (error) {
             console.error("Failed to fetch donors", error);
         } finally {
@@ -63,19 +62,19 @@ export default function DonorManagement() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
     useEffect(() => { fetchDonors(); }, [orgSlug]);
 
-    const handleVerify = async (donorId: string, currentStatus: boolean) => {
+    const handleVerify = async (donorId: number, currentStatus: boolean) => {
         try {
-            const res = await fetch("/api/donors/verify", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ donorId, isVerified: !currentStatus })
+            await apiPost("/api/donors/verify", {
+                donorId,
+                isVerified: !currentStatus,
+                orgSlug,
             });
-            if (res.ok) {
-                toast.success(currentStatus ? "Verification removed" : "Donor verified!");
-                fetchDonors();
-            }
-        } catch {
-            toast.error("Failed to update verification status");
+            toast.success(currentStatus ? "Verification removed" : "Donor verified!");
+            fetchDonors();
+        } catch (error) {
+            toast.error(
+                error instanceof Error ? error.message : "Failed to update verification status",
+            );
         }
     };
 
@@ -83,14 +82,11 @@ export default function DonorManagement() {
         if (selectedDonors.size === 0) { toast.error("Please select donors first"); return; }
         setIsBulkProcessing(true);
         try {
-            const promises = Array.from(selectedDonors).map(donorId =>
-                fetch("/api/donors/verify", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ donorId, isVerified: verify })
-                })
+            await Promise.all(
+                Array.from(selectedDonors).map((donorId) =>
+                    apiPost("/api/donors/verify", { donorId, isVerified: verify, orgSlug }),
+                ),
             );
-            await Promise.all(promises);
             toast.success(`${selectedDonors.size} donors ${verify ? "verified" : "unverified"} successfully!`);
             setSelectedDonors(new Set());
             fetchDonors();
@@ -143,14 +139,14 @@ export default function DonorManagement() {
         return matchesFilter && matchesSearch;
     });
 
-    const toggleDonorSelection = (donorId: string) => {
+    const toggleDonorSelection = (donorId: number) => {
         const s = new Set(selectedDonors);
         if (s.has(donorId)) { s.delete(donorId); } else { s.add(donorId); }
         setSelectedDonors(s);
     };
 
     const toggleSelectAll = () => {
-        setSelectedDonors(selectedDonors.size === filteredDonors.length ? new Set() : new Set(filteredDonors.map(d => d._id)));
+        setSelectedDonors(selectedDonors.size === filteredDonors.length ? new Set() : new Set(filteredDonors.map(d => d.id)));
     };
 
     const unverifiedCount = donors.filter(d => !d.isVerified).length;
@@ -268,13 +264,13 @@ export default function DonorManagement() {
                     {/* Cards */}
                     {filteredDonors.map((donor) => (
                         <div
-                            key={donor._id}
-                            className={`p-4 rounded-2xl bg-slate-900/50 border hover:border-slate-600 transition-all flex flex-col md:flex-row items-center justify-between gap-4 ${selectedDonors.has(donor._id) ? "border-red-500/50 bg-red-500/5" : "border-slate-800"
+                            key={donor.id}
+                            className={`p-4 rounded-2xl bg-slate-900/50 border hover:border-slate-600 transition-all flex flex-col md:flex-row items-center justify-between gap-4 ${selectedDonors.has(donor.id) ? "border-red-500/50 bg-red-500/5" : "border-slate-800"
                                 }`}
                         >
                             <div className="flex items-center gap-4 w-full md:w-auto">
-                                <button onClick={() => toggleDonorSelection(donor._id)} className="p-1 shrink-0">
-                                    {selectedDonors.has(donor._id) ? (
+                                <button onClick={() => toggleDonorSelection(donor.id)} className="p-1 shrink-0">
+                                    {selectedDonors.has(donor.id) ? (
                                         <CheckSquare className="w-5 h-5" style={{ color: primaryColor }} />
                                     ) : (
                                         <Square className="w-5 h-5 text-slate-600" />
@@ -320,7 +316,7 @@ export default function DonorManagement() {
                                         : "text-white border-0 hover:opacity-90"
                                     }
                                     style={!donor.isVerified ? { backgroundColor: primaryColor } : {}}
-                                    onClick={() => handleVerify(donor._id, donor.isVerified)}
+                                    onClick={() => handleVerify(donor.id, donor.isVerified)}
                                 >
                                     {donor.isVerified ? (
                                         <><XCircle className="w-4 h-4 mr-1" /> Unverify</>

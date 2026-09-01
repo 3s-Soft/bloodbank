@@ -1,5 +1,7 @@
 "use client";
 
+import { apiDelete, apiGet, apiPost, apiPut, query } from "@/lib/api/client";
+
 import { useState, useEffect, use } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -19,7 +21,7 @@ import {
 import { toast } from "sonner";
 
 interface EventData {
-    _id: string;
+    id: number;
     title: string;
     description: string;
     date: string;
@@ -45,7 +47,7 @@ export default function ManageEventsPage({
     const [events, setEvents] = useState<EventData[]>([]);
     const [loading, setLoading] = useState(true);
     const [isAdding, setIsAdding] = useState(false);
-    const [editingId, setEditingId] = useState<string | null>(null);
+    const [editingId, setEditingId] = useState<number | null>(null);
 
     // Form state
     const [formData, setFormData] = useState({
@@ -61,11 +63,7 @@ export default function ManageEventsPage({
 
     const fetchEvents = async () => {
         try {
-            const res = await fetch(`/api/events?orgSlug=${orgSlug}`);
-            if (res.ok) {
-                const data = await res.json();
-                setEvents(data);
-            }
+            setEvents(await apiGet<EventData[]>(`/api/events?${query({ orgSlug })}`));
         } catch (error) {
             console.error("Error fetching events:", error);
         } finally {
@@ -82,63 +80,49 @@ export default function ManageEventsPage({
         e.preventDefault();
         if (!session?.user) return;
 
-        const url = "/api/events";
-        const method = editingId ? "PUT" : "POST";
+        // `createdBy` is no longer sent: the server takes the actor from the
+        // session, so it cannot be attributed to another user by the caller.
         const body = {
             ...formData,
             orgSlug,
-            createdBy: session.user.id,
-            eventId: editingId,
             maxParticipants: formData.maxParticipants ? parseInt(formData.maxParticipants) : undefined,
         };
 
         try {
-            const res = await fetch(url, {
-                method,
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(body),
-            });
-
-            if (res.ok) {
-                toast.success(editingId ? "Event updated!" : "Event created!");
-                setIsAdding(false);
-                setEditingId(null);
-                setFormData({
-                    title: "",
-                    description: "",
-                    date: "",
-                    location: "",
-                    district: "",
-                    upazila: "",
-                    maxParticipants: "",
-                    contactNumber: "",
-                });
-                fetchEvents();
+            if (editingId) {
+                await apiPut("/api/events", { ...body, eventId: editingId });
             } else {
-                const errorData = await res.json();
-                toast.error(errorData.error || "Failed to save event");
+                await apiPost("/api/events", body);
             }
-        } catch {
-            toast.error("An error occurred");
+
+            toast.success(editingId ? "Event updated!" : "Event created!");
+            setIsAdding(false);
+            setEditingId(null);
+            setFormData({
+                title: "",
+                description: "",
+                date: "",
+                location: "",
+                district: "",
+                upazila: "",
+                maxParticipants: "",
+                contactNumber: "",
+            });
+            fetchEvents();
+        } catch (error) {
+            toast.error(error instanceof Error ? error.message : "Failed to save event");
         }
     };
 
-    const handleDelete = async (eventId: string) => {
+    const handleDelete = async (eventId: number) => {
         if (!confirm("Are you sure you want to delete this event?")) return;
 
         try {
-            const res = await fetch(`/api/events?eventId=${eventId}&performedBy=${session?.user.id}`, {
-                method: "DELETE",
-            });
-
-            if (res.ok) {
-                toast.success("Event deleted");
-                fetchEvents();
-            } else {
-                toast.error("Failed to delete event");
-            }
-        } catch {
-            toast.error("An error occurred");
+            await apiDelete(`/api/events?${query({ eventId, orgSlug })}`);
+            toast.success("Event deleted");
+            fetchEvents();
+        } catch (error) {
+            toast.error(error instanceof Error ? error.message : "Failed to delete event");
         }
     };
 
@@ -312,7 +296,7 @@ export default function ManageEventsPage({
                     </div>
                 ) : (
                     events.map((event) => (
-                        <Card key={event._id} className="bg-slate-900 border-slate-800 hover:border-slate-700 transition-all overflow-hidden">
+                        <Card key={event.id} className="bg-slate-900 border-slate-800 hover:border-slate-700 transition-all overflow-hidden">
                             <CardContent className="p-6">
                                 <div className="flex flex-col md:flex-row justify-between gap-6">
                                     <div className="flex gap-6">
@@ -360,7 +344,7 @@ export default function ManageEventsPage({
                                             variant="outline"
                                             size="sm"
                                             onClick={() => {
-                                                setEditingId(event._id);
+                                                setEditingId(event.id);
                                                 setFormData({
                                                     title: event.title,
                                                     description: event.description,
@@ -381,7 +365,7 @@ export default function ManageEventsPage({
                                         <Button
                                             variant="ghost"
                                             size="sm"
-                                            onClick={() => handleDelete(event._id)}
+                                            onClick={() => handleDelete(event.id)}
                                             className="text-red-500 hover:bg-red-500 hover:text-white"
                                         >
                                             <Trash2 className="w-4 h-4 mr-2" />

@@ -22,6 +22,7 @@ import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ColorPicker } from "@/components/ui/color-picker";
 import * as z from "zod";
+import { apiGet, apiPut, query } from "@/lib/api/client";
 
 const settingsSchema = z.object({
     name: z.string().min(2, "Name must be at least 2 characters"),
@@ -67,10 +68,9 @@ export default function OrgSettingsPage({
     useEffect(() => {
         const fetchSettings = async () => {
             try {
-                const res = await fetch(`/api/org/settings?orgSlug=${orgSlug}`);
-                if (!res.ok) throw new Error("Failed to fetch settings");
-
-                const data = await res.json();
+                const data = await apiGet<Record<string, string | null>>(
+                    `/api/org/settings?${query({ orgSlug })}`,
+                );
                 reset({
                     name: data.name || "",
                     slug: data.slug || "",
@@ -92,14 +92,7 @@ export default function OrgSettingsPage({
     const onSubmit = async (data: SettingsFormValues) => {
         setIsSubmitting(true);
         try {
-            const res = await fetch("/api/org/settings", {
-                method: "PUT",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ ...data, orgSlug }),
-            });
-
-            const result = await res.json();
-            if (!res.ok) throw new Error(result.error);
+            await apiPut("/api/org/settings", { ...data, orgSlug });
 
             if (data.slug !== orgSlug) {
                 toast.success("Slug updated! Redirecting to new URL...");

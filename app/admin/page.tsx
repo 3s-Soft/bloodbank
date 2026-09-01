@@ -1,5 +1,7 @@
 "use client";
 
+import { apiGet } from "@/lib/api/client";
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -24,7 +26,7 @@ interface BloodGroupStat {
 }
 
 interface OrgStat {
-    _id: string;
+    id: number;
     name: string;
     slug: string;
     primaryColor: string;
@@ -176,8 +178,7 @@ export default function SuperAdminDashboard() {
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const res = await fetch("/api/admin/analytics");
-                const data = await res.json();
+                const data = await apiGet<AnalyticsData>("/api/admin/analytics");
                 setAnalytics(data);
             } catch (error) {
                 console.error("Failed to fetch analytics", error);
@@ -402,7 +403,7 @@ export default function SuperAdminDashboard() {
                                 </thead>
                                 <tbody className="divide-y divide-neutral-50">
                                     {analytics?.orgStats?.map((org) => (
-                                        <tr key={org._id} className="hover:bg-neutral-50">
+                                        <tr key={org.id} className="hover:bg-neutral-50">
                                             <td className="py-4 px-4">
                                                 <div className="flex items-center space-x-3">
                                                     <div
@@ -439,7 +440,7 @@ export default function SuperAdminDashboard() {
                                                             <ExternalLink className="w-4 h-4" />
                                                         </Button>
                                                     </Link>
-                                                    <Link href={`/admin/organizations/${org._id}`}>
+                                                    <Link href={`/admin/organizations/${org.id}`}>
                                                         <Button size="sm" variant="outline">Edit</Button>
                                                     </Link>
                                                 </div>

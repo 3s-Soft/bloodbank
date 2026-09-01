@@ -1,0 +1,1 @@
+ALTER TABLE `events` MODIFY COLUMN `status` enum('upcoming','ongoing','completed','canceled') NOT NULL DEFAULT 'upcoming';

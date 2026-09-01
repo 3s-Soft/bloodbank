@@ -15,9 +15,10 @@ import {
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import PushNotificationManager from "@/components/features/PushNotificationManager";
+import { apiGet, query } from "@/lib/api/client";
 
 interface BloodRequestItem {
-    _id: string;
+    id: number;
     patientName: string;
     bloodGroup: string;
     location: string;
@@ -40,9 +41,9 @@ export default function BloodRequestsListing() {
         const fetchRequests = async () => {
             setIsLoading(true);
             try {
-                const res = await fetch(`/api/requests?orgSlug=${orgSlug}`);
-                const data = await res.json();
-                setRequests(data);
+                setRequests(
+                    await apiGet<BloodRequestItem[]>(`/api/requests?${query({ orgSlug })}`),
+                );
             } catch (error) {
                 console.error("Failed to fetch requests", error);
             } finally {
@@ -150,7 +151,7 @@ export default function BloodRequestsListing() {
 
                             return (
                                 <div
-                                    key={request._id}
+                                    key={request.id}
                                     className={`rounded-2xl border overflow-hidden transition-all hover:border-slate-600 group ${uConfig.bg} ${uConfig.border} ${uConfig.glow || ""}`}
                                 >
                                     {/* Color top bar */}

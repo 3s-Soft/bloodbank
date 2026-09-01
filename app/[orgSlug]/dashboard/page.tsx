@@ -17,15 +17,16 @@ import {
 import Link from "next/link";
 import { useState, useEffect, use } from "react";
 import { useOrganization } from "@/lib/context/OrganizationContext";
+import { apiGet, query } from "@/lib/api/client";
 
 interface BloodGroupStat { group: string; count: number; }
 interface LocationStat { district?: string; upazila?: string; count: number; }
 interface RecentDonor {
-    _id: string; bloodGroup: string; isVerified: boolean; createdAt: string;
+    id: number; bloodGroup: string; isVerified: boolean; createdAt: string;
     user: { name: string; phone: string; };
 }
 interface RecentRequest {
-    _id: string; patientName: string; bloodGroup: string; urgency: string; status: string; createdAt: string;
+    id: number; patientName: string; bloodGroup: string; urgency: string; status: string; createdAt: string;
 }
 interface AnalyticsData {
     organization: { name: string; slug: string; primaryColor: string; };
@@ -142,9 +143,7 @@ export default function OrgDashboardPage({
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const res = await fetch(`/api/org/analytics?orgSlug=${orgSlug}`);
-                const data = await res.json();
-                setAnalytics(data);
+                setAnalytics(await apiGet(`/api/org/analytics?${query({ orgSlug })}`));
             } catch (error) {
                 console.error("Failed to fetch analytics", error);
             } finally {
@@ -355,7 +354,7 @@ export default function OrgDashboardPage({
                         ) : (
                             <div className="space-y-2">
                                 {analytics?.recentDonors?.map((donor) => (
-                                    <div key={donor._id} className="flex items-center justify-between p-3 rounded-xl bg-slate-800/50 hover:bg-slate-800 transition-colors">
+                                    <div key={donor.id} className="flex items-center justify-between p-3 rounded-xl bg-slate-800/50 hover:bg-slate-800 transition-colors">
                                         <div className="flex items-center gap-3">
                                             <div
                                                 className="w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold text-sm"
@@ -401,7 +400,7 @@ export default function OrgDashboardPage({
                         ) : (
                             <div className="space-y-2">
                                 {analytics?.recentRequests?.map((request) => (
-                                    <div key={request._id} className="flex items-center justify-between p-3 rounded-xl bg-slate-800/50 hover:bg-slate-800 transition-colors">
+                                    <div key={request.id} className="flex items-center justify-between p-3 rounded-xl bg-slate-800/50 hover:bg-slate-800 transition-colors">
                                         <div className="flex items-center gap-3">
                                             <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold text-sm ${request.urgency === "emergency" ? "bg-red-500" :
                                                     request.urgency === "urgent" ? "bg-amber-500" : "bg-emerald-500"

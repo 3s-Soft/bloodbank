@@ -1,5 +1,7 @@
 "use client";
 
+import { apiDelete, apiPost } from "@/lib/api/client";
+
 import { useEffect, useState } from "react";
 import { Bell, BellOff } from "lucide-react";
 import { toast } from "sonner";
@@ -68,13 +70,8 @@ export default function PushNotificationManager({
                 return;
             }
 
-            const res = await fetch("/api/push/subscribe", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ token, orgSlug, district, bloodGroup }),
-            });
+            await apiPost("/api/push/subscribe", { token, orgSlug, district, bloodGroup });
 
-            if (!res.ok) throw new Error("Failed to save subscription");
             setSubscribed(true);
             setCurrentToken(token);
             toast.success("You'll be notified about urgent blood requests!");
@@ -92,11 +89,7 @@ export default function PushNotificationManager({
             const messaging = getMessaging(app);
             
             if (currentToken) {
-                await fetch("/api/push/subscribe", {
-                    method: "DELETE",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ token: currentToken }),
-                });
+                await apiDelete("/api/push/subscribe", { token: currentToken });
                 await deleteToken(messaging);
             }
             setSubscribed(false);

@@ -4,7 +4,7 @@ A community-powered, multi-tenant blood donation platform connecting blood donor
 
 ![Next.js](https://img.shields.io/badge/Next.js-16.1.5-black?logo=next.js)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.x-blue?logo=typescript)
-![MongoDB](https://img.shields.io/badge/MongoDB-Mongoose_9-green?logo=mongodb)
+![MySQL](https://img.shields.io/badge/MySQL-Drizzle_ORM-4479A1?logo=mysql)
 ![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-4.x-38B2AC?logo=tailwindcss)
 
 ---
@@ -58,7 +58,7 @@ A community-powered, multi-tenant blood donation platform connecting blood donor
 |----------|------------|
 | **Framework** | Next.js 16 (App Router with Turbopack) |
 | **Language** | TypeScript 5.x |
-| **Database** | MongoDB with Mongoose 9 |
+| **Database** | MySQL / MariaDB with Drizzle ORM |
 | **Authentication** | NextAuth.js 4.x |
 | **Styling** | Tailwind CSS 4.x |
 | **Forms** | React Hook Form + Zod Validation |
@@ -67,6 +67,13 @@ A community-powered, multi-tenant blood donation platform connecting blood donor
 | **PWA** | @ducanh2912/next-pwa |
 
 ---
+
+### Architecture Notes
+
+- **Layered data access.** API routes validate and authorize, services hold business rules and transactions, repositories own every SQL query, and `lib/db/schema.ts` is the single source of truth for types. Routes never write SQL.
+- **Multi-tenancy.** Every request resolves `orgSlug` to an organization row and filters on `organization_id`; an organization id is never accepted from the client.
+- **Firebase is push-only.** Cloud Messaging delivers urgent blood requests. All application data is in MySQL.
+- **No realtime channel.** The requests dashboard polls every 15 seconds; the time-critical path (emergency alerts) goes over FCM push instead.
 
 ## 📁 Project Structure
 
@@ -116,7 +123,9 @@ bloodbank/
 │   ├── context/
 │   │   └── OrganizationContext.tsx  # Organization React context
 │   ├── db/
-│   │   └── mongodb.ts             # MongoDB connection
+│   │   ├── index.ts               # MySQL connection pool (serverless-shaped)
+│   │   ├── schema.ts              # Drizzle tables — source of truth for types
+│   │   └── enums.ts               # Enum values shared by schema and app
 │   └── models/
 │       ├── User.ts                # User & DonorProfile models
 │       ├── BloodRequest.ts        # Blood request model
@@ -128,75 +137,30 @@ bloodbank/
 
 ---
 
-## 🗄 Database Models
+## 🗄 Database Schema
 
-### User
-```typescript
-{
-  name: string;           // Required
-  phone: string;          // Required, unique identifier
-  email?: string;         // Optional
-  password?: string;      // Optional (for demo, uses simple bypass)
-  role: UserRole;         // donor | patient | volunteer | admin | super_admin
-  organization?: ObjectId;
-  image?: string;
-  createdAt: Date;
-  updatedAt: Date;
-}
-```
+Defined in `lib/db/schema.ts` (Drizzle), which is the single source of truth — TypeScript
+types are inferred from it, and migrations are generated from it with `npm run db:generate`.
 
-### DonorProfile
-```typescript
-{
-  user: ObjectId;           // Reference to User
-  organization: ObjectId;   // Reference to Organization
-  bloodGroup: string;       // A+, A-, B+, B-, O+, O-, AB+, AB-
-  district: string;
-  upazila: string;
-  village?: string;
-  lastDonationDate?: Date;
-  isAvailable: boolean;     // Default: true
-  isVerified: boolean;      // Default: false (requires admin verification)
-}
-```
+| Table | Purpose | Notable constraints |
+|-------|---------|---------------------|
+| `organizations` | One row per tenant | `slug` unique |
+| `users` | Accounts across all roles | `phone` and `email` unique; bcrypt `password` |
+| `donor_profiles` | A person's donor record within one organization | **unique(`user_id`, `organization_id`)** — makes re-registration an update, not a duplicate |
+| `blood_requests` | Requests, with status and urgency | indexed on (`organization_id`, `status`) |
+| `blood_request_matches` | Donors matched to a request | composite primary key |
+| `donations` | Donation history | drives points and badges |
+| `events` | Organization events | |
+| `audit_logs` | Administrative actions | actor always taken from the session |
+| `feedback` | Submitted feedback | `organization_id` nullable (platform-level form) |
+| `push_subscriptions` | FCM tokens with optional delivery filters | `token` unique |
 
-### BloodRequest
-```typescript
-{
-  patientName: string;
-  bloodGroup: string;
-  location: string;
-  district: string;
-  upazila: string;
-  urgency: UrgencyLevel;     // normal | urgent | emergency
-  requiredDate: Date;
-  contactNumber: string;
-  additionalNotes?: string;
-  status: RequestStatus;     // pending | fulfilled | canceled
-  requester: ObjectId;       // Reference to User
-  organization: ObjectId;    // Reference to Organization
-  createdAt: Date;
-  updatedAt: Date;
-}
-```
+All foreign keys cascade on delete, so removing an organization removes its donors,
+requests, events, donations and audit trail with it.
 
-### Organization
-```typescript
-{
-  name: string;
-  slug: string;              // Unique, lowercase URL slug
-  logo?: string;
-  primaryColor?: string;     // Default: #D32F2F (red)
-  contactEmail?: string;
-  contactPhone?: string;
-  address?: string;
-  isActive: boolean;         // Default: true
-  createdAt: Date;
-  updatedAt: Date;
-}
-```
-
----
+**Passwords are bcrypt-hashed with no plaintext fallback.** An earlier build compared the
+submitted password against the stored value when the hash comparison failed, which allowed
+signing in as any account whose password had been stored unhashed; that path has been removed.
 
 ## 🔌 API Endpoints
 
@@ -239,8 +203,8 @@ bloodbank/
 ## 🚀 Getting Started
 
 ### Prerequisites
-- Node.js 18+ 
-- MongoDB (local or Atlas)
+- Node.js 18+
+- A MySQL 8 or MariaDB 10.2+ database (local, or shared hosting such as Hostinger)
 - npm or yarn
 
 ### 1. Run with Docker (Recommended)
@@ -270,12 +234,19 @@ npm install
 #### III. Setup Environment Variables
 Copy `.env.example` to `.env.local` and fill in your connection details.
 
-#### IV. Seed the Database
+#### IV. Create the Schema
 ```bash
-npx tsx scripts/seed.ts
+npm run db:migrate
 ```
 
-#### V. Run Development Server
+If your host does not allow remote DDL, paste `drizzle/0000_*.sql` into phpMyAdmin instead.
+
+#### V. Seed the Database
+```bash
+npm run db:seed
+```
+
+#### VI. Run Development Server
 ```bash
 npm run dev
 ```

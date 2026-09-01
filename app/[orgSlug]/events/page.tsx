@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { useOrganization } from "@/lib/context/OrganizationContext";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
+import { apiGet, query } from "@/lib/api/client";
 import {
     Calendar,
     MapPin,
@@ -16,7 +17,7 @@ import {
 } from "lucide-react";
 
 interface EventData {
-    _id: string;
+    id: number;
     title: string;
     description: string;
     date: string;
@@ -50,15 +51,12 @@ export default function EventsPage({
     useEffect(() => {
         async function fetchEvents() {
             try {
-                const upcoming = filter === "upcoming" ? "&upcoming=true" : "";
-                const status = filter === "completed" ? "&status=completed" : "";
-                const res = await fetch(
-                    `/api/events?orgSlug=${orgSlug}${upcoming}${status}`
-                );
-                if (res.ok) {
-                    const data = await res.json();
-                    setEvents(data);
-                }
+                const params = query({
+                    orgSlug,
+                    upcomingOnly: filter === "upcoming" ? "true" : undefined,
+                    status: filter === "completed" ? "completed" : undefined,
+                });
+                setEvents(await apiGet<EventData[]>(`/api/events?${params}`));
             } catch (error) {
                 console.error("Error fetching events:", error);
             } finally {
@@ -171,7 +169,7 @@ export default function EventsPage({
                             const dateInfo = formatDate(event.date);
                             return (
                                 <Card
-                                    key={event._id}
+                                    key={event.id}
                                     className="bg-slate-900 border-slate-800 hover:border-slate-700 transition-all overflow-hidden"
                                 >
                                     <CardContent className="p-0">

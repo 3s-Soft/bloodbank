@@ -1,5 +1,7 @@
 "use client";
 
+import { apiDelete, apiGet, apiPut } from "@/lib/api/client";
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -28,7 +30,7 @@ const organizationSchema = z.object({
 type OrganizationFormValues = z.infer<typeof organizationSchema>;
 
 interface OrganizationWithStats extends OrganizationFormValues {
-    _id: string;
+    id: number;
     createdAt: string;
     updatedAt: string;
     stats: {
@@ -70,10 +72,7 @@ export default function EditOrganizationPage({
     useEffect(() => {
         const fetchOrganization = async () => {
             try {
-                const res = await fetch(`/api/admin/organizations/${id}`);
-                if (!res.ok) throw new Error("Organization not found");
-
-                const data = await res.json();
+                const data = await apiGet<OrganizationWithStats>(`/api/admin/organizations/${id}`);
                 setOrganization(data);
                 reset({
                     name: data.name,
@@ -97,17 +96,7 @@ export default function EditOrganizationPage({
     const onSubmit = async (data: OrganizationFormValues) => {
         setIsSubmitting(true);
         try {
-            const response = await fetch(`/api/admin/organizations/${id}`, {
-                method: "PUT",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(data),
-            });
-
-            const result = await response.json();
-
-            if (!response.ok) {
-                throw new Error(result.error || "Failed to update organization");
-            }
+            await apiPut(`/api/admin/organizations/${id}`, data);
 
             toast.success("Organization updated successfully!");
             router.push("/admin/organizations");
@@ -125,16 +114,12 @@ export default function EditOrganizationPage({
 
         setIsDeleting(true);
         try {
-            const res = await fetch(`/api/admin/organizations/${id}`, {
-                method: "DELETE",
-            });
-
-            if (!res.ok) throw new Error("Failed to delete");
+            await apiDelete(`/api/admin/organizations/${id}`);
 
             toast.success("Organization deleted successfully");
             router.push("/admin/organizations");
         } catch (error) {
-            toast.error("Failed to delete organization");
+            toast.error(error instanceof Error ? error.message : "Failed to delete organization");
         } finally {
             setIsDeleting(false);
         }

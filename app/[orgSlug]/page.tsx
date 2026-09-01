@@ -1,6 +1,7 @@
 "use client";
 
 import { useOrganization } from "@/lib/context/OrganizationContext";
+import { apiGet, query } from "@/lib/api/client";
 import { Button } from "@/components/ui/button";
 import {
     Droplet,
@@ -38,11 +39,7 @@ export default function OrganizationLanding() {
     useEffect(() => {
         const fetchStats = async () => {
             try {
-                const res = await fetch(`/api/org/stats?orgSlug=${orgSlug}`);
-                if (res.ok) {
-                    const data = await res.json();
-                    setStats(data);
-                }
+                setStats(await apiGet(`/api/org/stats?${query({ orgSlug })}`));
             } catch (error) {
                 console.error("Failed to fetch stats", error);
             }

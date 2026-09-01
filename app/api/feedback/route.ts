@@ -1,89 +1,52 @@
-import { NextRequest, NextResponse } from "next/server";
-import { adminDb } from "@/lib/firebase/adminApp";
-import { COLLECTIONS } from "@/lib/firebase/types";
+import { created, ok, searchParams, withErrorHandling } from "@/lib/api/responses";
+import { RATE_LIMITS, enforceRateLimit } from "@/lib/api/rateLimit";
+import { toFeedbackDto } from "@/lib/api/serialize";
+import { requireOrgAdmin, requireOrganization, requireSuperAdmin } from "@/lib/auth/guards";
+import { feedbackRepo } from "@/lib/repositories/misc";
+import { feedbackCreateSchema, feedbackQuerySchema } from "@/lib/validation/schemas";
 
-// Feedback structures replaced instead of importing from old mongoose models
-const FeedbackCategory = { GENERAL: "general", BUG: "bug", FEATURE: "feature", SUPPORT: "support" };
-const FeedbackStatus = { NEW: "new", IN_PROGRESS: "in_progress", RESOLVED: "resolved", DISMISSED: "dismissed" };
+/**
+ * GET /api/feedback — submitted feedback.
+ *
+ * Scoped to an organization for its admins; platform-wide for super admins.
+ */
+export const GET = withErrorHandling(async (request: Request) => {
+    const query = feedbackQuerySchema.parse(searchParams(request));
 
-// GET: List feedback (admin)
-export async function GET(req: NextRequest) {
-    try {
-        const { searchParams } = new URL(req.url);
-        const orgSlug = searchParams.get("orgSlug");
-        const status = searchParams.get("status");
-        const category = searchParams.get("category");
-
-        let query: FirebaseFirestore.Query<FirebaseFirestore.DocumentData> = adminDb.collection(COLLECTIONS.FEEDBACK);
-
-        if (orgSlug) {
-            const orgsRef = adminDb.collection(COLLECTIONS.ORGANIZATIONS);
-            const orgSnap = await orgsRef.where("slug", "==", orgSlug).limit(1).get();
-            if (orgSnap.empty) {
-                return NextResponse.json({ error: "Organization not found" }, { status: 404 });
-            }
-            query = query.where("organization", "==", orgSnap.docs[0].id);
-        }
-
-        if (status) query = query.where("status", "==", status);
-        if (category) query = query.where("category", "==", category);
-
-        const feedbackSnap = await query.orderBy("createdAt", "desc").limit(100).get();
-        const feedback = await Promise.all(feedbackSnap.docs.map(async (doc) => {
-             const data = doc.data();
-             let userObj = null;
-             if (data.user) {
-                  const uDoc = await adminDb.collection(COLLECTIONS.USERS).doc(data.user).get();
-                  if (uDoc.exists) userObj = { _id: uDoc.id, name: uDoc.data()?.name, email: uDoc.data()?.email };
-             }
-             return { _id: doc.id, ...data, user: userObj };
-        }));
-
-        return NextResponse.json(feedback);
-    } catch (error) {
-        console.error("Error fetching feedback:", error);
-        return NextResponse.json({ error: "Failed to fetch feedback" }, { status: 500 });
+    if (query.orgSlug) {
+        const { organization } = await requireOrgAdmin(query.orgSlug);
+        return ok(
+            (
+                await feedbackRepo.list({
+                    organizationId: organization.id,
+                    status: query.status,
+                    category: query.category,
+                })
+            ).map(toFeedbackDto),
+        );
     }
-}
 
-// POST: Submit feedback (public)
-export async function POST(req: NextRequest) {
-    try {
-        const body = await req.json();
-        const { name, email, category, message, orgSlug, userId } = body;
+    await requireSuperAdmin();
+    const rows = await feedbackRepo.list({ status: query.status, category: query.category });
 
-        if (!name || !message) {
-            return NextResponse.json(
-                { error: "Name and message are required" },
-                { status: 400 }
-            );
-        }
+    return ok(rows.map(toFeedbackDto));
+});
 
-        const feedbackData: Record<string, unknown> = {
-            name,
-            email,
-            category: category || FeedbackCategory.GENERAL,
-            message,
-            status: FeedbackStatus.NEW,
-            createdAt: new Date(),
-            updatedAt: new Date()
-        };
+/** POST /api/feedback — public feedback submission. */
+export const POST = withErrorHandling(async (request: Request) => {
+    enforceRateLimit(request, RATE_LIMITS.submission);
 
-        if (orgSlug) {
-            const orgsRef = adminDb.collection(COLLECTIONS.ORGANIZATIONS);
-            const orgSnap = await orgsRef.where("slug", "==", orgSlug).limit(1).get();
-            if (!orgSnap.empty) {
-                 feedbackData.organization = orgSnap.docs[0].id;
-            }
-        }
+    const input = feedbackCreateSchema.parse(await request.json());
 
-        if (userId) feedbackData.user = userId;
+    const organization = input.orgSlug ? await requireOrganization(input.orgSlug) : null;
 
-        const feedbackRef = await adminDb.collection(COLLECTIONS.FEEDBACK).add(feedbackData);
+    const id = await feedbackRepo.create({
+        name: input.name,
+        email: input.email || null,
+        category: input.category,
+        message: input.message,
+        organizationId: organization?.id ?? null,
+    });
 
-        return NextResponse.json({ success: true, feedback: { _id: feedbackRef.id, ...feedbackData } });
-    } catch (error) {
-        console.error("Error submitting feedback:", error);
-        return NextResponse.json({ error: "Failed to submit feedback" }, { status: 500 });
-    }
-}
+    return created({ id, message: "Thank you for your feedback" });
+});

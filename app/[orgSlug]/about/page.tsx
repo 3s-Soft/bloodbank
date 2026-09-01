@@ -3,6 +3,7 @@
 import { useState, useEffect, use } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useOrganization } from "@/lib/context/OrganizationContext";
+import { apiGet, query } from "@/lib/api/client";
 import {
     Building2,
     MapPin,
@@ -39,11 +40,7 @@ export default function AboutPage({
     useEffect(() => {
         async function fetchStats() {
             try {
-                const res = await fetch(`/api/org/stats?orgSlug=${orgSlug}`);
-                if (res.ok) {
-                    const data = await res.json();
-                    setStats(data);
-                }
+                setStats(await apiGet(`/api/org/stats?${query({ orgSlug })}`));
             } catch (error) {
                 console.error("Error fetching stats:", error);
             } finally {

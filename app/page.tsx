@@ -9,25 +9,13 @@ import {
   Activity,
 } from "lucide-react";
 import Link from "next/link";
-import { adminDb } from "@/lib/firebase/adminApp";
-import { COLLECTIONS } from "@/lib/firebase/types";
 import LandingNav from "@/components/LandingNav";
+import * as organizationsRepo from "@/lib/repositories/organizations";
 
 export const dynamic = "force-dynamic";
 
-interface OrganizationData {
-  _id: string;
-  name: string;
-  slug: string;
-  primaryColor: string;
-  isActive: boolean;
-  isVerified: boolean;
-}
-
-async function getOrganizations(): Promise<OrganizationData[]> {
-  const orgsRef = adminDb.collection(COLLECTIONS.ORGANIZATIONS);
-  const snapshot = await orgsRef.where("isActive", "==", true).get();
-  return snapshot.docs.map(doc => ({ _id: doc.id, ...doc.data() } as unknown as OrganizationData));
+async function getOrganizations() {
+  return organizationsRepo.listActive();
 }
 
 export default async function Home() {
@@ -105,7 +93,7 @@ export default async function Home() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {organizations.map((org) => (
               <Link
-                key={org._id}
+                key={org.id}
                 href={`/${org.slug}`}
                 className="group relative h-48 rounded-3xl bg-slate-900/50 border border-white/5 overflow-hidden p-8 hover:bg-slate-900 transition-all hover:scale-[1.02] hover:border-red-500/20"
               >

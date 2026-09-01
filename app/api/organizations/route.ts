@@ -1,82 +1,42 @@
-import { NextRequest, NextResponse } from "next/server";
-import { adminDb } from "@/lib/firebase/adminApp";
-import { COLLECTIONS } from "@/lib/firebase/types";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/authOptions";
+import { created, ok, searchParams, withErrorHandling } from "@/lib/api/responses";
+import { RATE_LIMITS, enforceRateLimit } from "@/lib/api/rateLimit";
+import { toOrganizationDto } from "@/lib/api/serialize";
+import { requireSession } from "@/lib/auth/guards";
+import * as organizationsRepo from "@/lib/repositories/organizations";
+import { createOrganization } from "@/lib/services/organizationService";
+import { organizationCreateSchema } from "@/lib/validation/schemas";
 
-export async function POST(request: NextRequest) {
-    try {
-        const session = await getServerSession(authOptions);
+/**
+ * GET /api/organizations — public directory.
+ *
+ * Unverified organizations are hidden unless explicitly requested, so a
+ * freshly-submitted organization does not appear as endorsed.
+ */
+export const GET = withErrorHandling(async (request: Request) => {
+    const includeUnverified = searchParams(request).includeUnverified === "true";
+    const rows = await organizationsRepo.listActive();
 
-        if (!session?.user) {
-            return NextResponse.json({ error: "You must be logged in to create an organization" }, { status: 401 });
-        }
+    const visible = includeUnverified ? rows : rows.filter((row) => row.isVerified);
 
-        const body = await request.json();
-        const { name, slug, contactEmail, contactPhone, address, primaryColor } = body;
+    return ok(visible.map(toOrganizationDto));
+});
 
-        if (!name || !slug) {
-            return NextResponse.json({ error: "Name and slug are required" }, { status: 400 });
-        }
+/**
+ * POST /api/organizations — request a new organization.
+ *
+ * Any signed-in user may apply; it is created unverified and a super admin
+ * reviews it.
+ */
+export const POST = withErrorHandling(async (request: Request) => {
+    enforceRateLimit(request, RATE_LIMITS.submission);
 
-        const orgsRef = adminDb.collection(COLLECTIONS.ORGANIZATIONS);
-        const existingOrg = await orgsRef.where("slug", "==", slug.toLowerCase()).limit(1).get();
-        
-        if (!existingOrg.empty) {
-            return NextResponse.json({ error: "An organization with this slug already exists" }, { status: 400 });
-        }
+    await requireSession();
+    const input = organizationCreateSchema.parse(await request.json());
 
-        const orgData = {
-            name,
-            slug: slug.toLowerCase(),
-            contactEmail,
-            contactPhone,
-            address,
-            primaryColor: primaryColor || "#D32F2F",
-            isActive: true,
-            isVerified: false,
-            createdBy: session.user.id,
-            createdAt: new Date(),
-            updatedAt: new Date()
-        };
+    const organization = await createOrganization(input);
 
-        const orgDoc = await orgsRef.add(orgData);
-
-        return NextResponse.json({
-            message: "Organization created successfully! It will be reviewed by an admin.",
-            organization: { _id: orgDoc.id, ...orgData },
-        }, { status: 201 });
-    } catch (error: unknown) {
-        console.error("Error creating organization:", error);
-        return NextResponse.json({ error: (error instanceof Error ? error.message : "Failed to create organization") }, { status: 500 });
-    }
-}
-
-export async function GET(request: NextRequest) {
-    try {
-        const { searchParams } = new URL(request.url);
-        const includeUnverified = searchParams.get("includeUnverified") === "true";
-
-        let orgsRef: FirebaseFirestore.Query = adminDb.collection(COLLECTIONS.ORGANIZATIONS);
-        orgsRef = orgsRef.where("isActive", "==", true);
-        
-        if (!includeUnverified) {
-            orgsRef = orgsRef.where("isVerified", "==", true);
-        }
-
-        const snapshot = await orgsRef.orderBy("createdAt", "desc").get();
-        
-        const organizations = snapshot.docs.map(doc => ({
-            _id: doc.id,
-            ...doc.data()
-        }));
-
-        return NextResponse.json(organizations);
-    } catch (error: unknown) {
-        console.error("Error fetching organizations:", error);
-        return NextResponse.json({
-            error: "Internal Server Error",
-            message: error instanceof Error ? error.message : "Unknown error",
-        }, { status: 500 });
-    }
-}
+    return created({
+        ...toOrganizationDto(organization),
+        message: "Organization submitted. It will be reviewed by an administrator.",
+    });
+});

@@ -12,6 +12,7 @@ import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useState } from "react";
+import { apiPost } from "@/lib/api/client";
 
 const requestSchema = z.object({
     patientName: z.string().min(2, "Patient name is required"),
@@ -41,20 +42,26 @@ export default function NewBloodRequest() {
         formState: { errors, isSubmitting },
     } = useForm<RequestFormValues>({
         resolver: zodResolver(requestSchema),
-        defaultValues: { urgency: "normal" },
+        // Fields driven by buttons and LocationSelect rather than a registered
+        // input start as undefined, which makes Zod report a type error
+        // ("Invalid input") instead of the field's own "... is required"
+        // message. Seeding them as empty strings gets the intended wording.
+        defaultValues: {
+            urgency: "normal",
+            bloodGroup: "",
+            district: "",
+            upazila: "",
+            patientName: "",
+            location: "",
+            requiredDate: "",
+            contactNumber: "",
+            additionalNotes: "",
+        },
     });
 
     const onSubmit = async (data: RequestFormValues) => {
         try {
-            const response = await fetch("/api/requests/new", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ ...data, orgSlug: organization.slug }),
-            });
-            if (!response.ok) {
-                const error = await response.json();
-                throw new Error(error.error || "Failed to post request");
-            }
+            await apiPost("/api/requests/new", { ...data, orgSlug: organization.slug });
             toast.success("Blood request posted successfully. We hope a donor connects soon!");
             router.push(`/${organization.slug}/requests`);
         } catch (error) {

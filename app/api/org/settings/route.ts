@@ -1,79 +1,28 @@
-import { NextResponse } from "next/server";
-import { adminDb } from "@/lib/firebase/adminApp";
-import { COLLECTIONS } from "@/lib/firebase/types";
+import { ok, searchParams, withErrorHandling } from "@/lib/api/responses";
+import { toOrganizationDto } from "@/lib/api/serialize";
+import { requireOrgAdmin } from "@/lib/auth/guards";
+import { updateOrganization } from "@/lib/services/organizationService";
+import { organizationSettingsSchema, orgSlugQuerySchema } from "@/lib/validation/schemas";
 
-// GET - Get organization settings by slug
-export async function GET(req: Request) {
-    try {
-        const { searchParams } = new URL(req.url);
-        const orgSlug = searchParams.get("orgSlug");
+/** GET /api/org/settings — current settings for an organization. */
+export const GET = withErrorHandling(async (request: Request) => {
+    const query = orgSlugQuerySchema.parse(searchParams(request));
+    const { organization } = await requireOrgAdmin(query.orgSlug);
 
-        if (!orgSlug) {
-            return NextResponse.json({ error: "Organization slug is required" }, { status: 400 });
-        }
+    return ok(toOrganizationDto(organization));
+});
 
-        const orgsRef = adminDb.collection(COLLECTIONS.ORGANIZATIONS);
-        const orgSnapshot = await orgsRef.where("slug", "==", orgSlug).limit(1).get();
+/**
+ * PUT /api/org/settings — update branding and contact details.
+ *
+ * Previously unauthenticated: anyone could rename an organization or take over
+ * its URL slug.
+ */
+export const PUT = withErrorHandling(async (request: Request) => {
+    const input = organizationSettingsSchema.parse(await request.json());
+    const { user, organization } = await requireOrgAdmin(input.orgSlug);
 
-        if (orgSnapshot.empty) {
-            return NextResponse.json({ error: "Organization not found" }, { status: 404 });
-        }
+    const updated = await updateOrganization(organization.id, input, user.id);
 
-        return NextResponse.json({ _id: orgSnapshot.docs[0].id, ...orgSnapshot.docs[0].data() });
-    } catch (error: unknown) {
-        console.error("Fetch organization error:", error);
-        return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
-    }
-}
-
-// PUT - Update organization settings
-export async function PUT(req: Request) {
-    try {
-        const body = await req.json();
-        const { orgSlug, name, slug, logo, primaryColor, contactEmail, contactPhone, address } = body;
-
-        if (!orgSlug) {
-            return NextResponse.json({ error: "Organization slug is required" }, { status: 400 });
-        }
-
-        const orgsRef = adminDb.collection(COLLECTIONS.ORGANIZATIONS);
-        const currentOrgSnap = await orgsRef.where("slug", "==", orgSlug).limit(1).get();
-
-        if (currentOrgSnap.empty) {
-            return NextResponse.json({ error: "Organization not found" }, { status: 404 });
-        }
-
-        const orgId = currentOrgSnap.docs[0].id;
-        const updateData: Record<string, unknown> = {
-            name,
-            logo,
-            primaryColor,
-            contactEmail,
-            contactPhone,
-            address,
-            updatedAt: new Date()
-        };
-
-        // If slug is being updated
-        if (slug && slug !== orgSlug) {
-            const normalizedSlug = slug.toLowerCase().trim();
-            // Check if new slug is already taken
-            const existing = await orgsRef.where("slug", "==", normalizedSlug).limit(1).get();
-            if (!existing.empty && existing.docs[0].id !== orgId) {
-                return NextResponse.json({ error: "This URL slug is already taken" }, { status: 400 });
-            }
-            updateData.slug = normalizedSlug;
-        }
-
-        // Remove undefined fields
-        Object.keys(updateData).forEach(key => updateData[key] === undefined && delete updateData[key]);
-
-        await orgsRef.doc(orgId).update(updateData);
-        const freshSnap = await orgsRef.doc(orgId).get();
-
-        return NextResponse.json({ message: "Organization updated successfully", organization: { _id: freshSnap.id, ...freshSnap.data() } });
-    } catch (error: unknown) {
-        console.error("Update organization error:", error);
-        return NextResponse.json({ error: (error instanceof Error ? error.message : "Internal Server Error") }, { status: 500 });
-    }
-}
+    return ok(toOrganizationDto(updated));
+});
