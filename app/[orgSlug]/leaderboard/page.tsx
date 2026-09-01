@@ -6,9 +6,10 @@ import { useOrganization } from "@/lib/context/OrganizationContext";
 import { DonorBadge } from "@/components/features/DonorBadge";
 import { Trophy, Medal, Crown, MapPin, Droplet, Filter } from "lucide-react";
 import Link from "next/link";
+import { apiGet, query } from "@/lib/api/client";
 
 interface LeaderboardEntry {
-    _id: string;
+    id: number;
     bloodGroup: string;
     district: string;
     upazila: string;
@@ -37,16 +38,13 @@ export default function LeaderboardPage({
     useEffect(() => {
         async function fetchLeaderboard() {
             try {
-                const res = await fetch(`/api/donors?orgSlug=${orgSlug}`);
-                if (res.ok) {
-                    const data = await res.json();
-                    // Sort by points descending
-                    const sorted = data.sort(
-                        (a: LeaderboardEntry, b: LeaderboardEntry) =>
-                            (b.points || 0) - (a.points || 0)
-                    );
-                    setDonors(sorted);
-                }
+                const data = await apiGet<LeaderboardEntry[]>(
+                    `/api/donors?${query({ orgSlug })}`,
+                );
+                // Sort by points descending.
+                setDonors(
+                    [...data].sort((a, b) => (b.points || 0) - (a.points || 0)),
+                );
             } catch (error) {
                 console.error("Error fetching leaderboard:", error);
             } finally {
@@ -157,8 +155,8 @@ export default function LeaderboardPage({
                             <div className="space-y-2">
                                 {filteredDonors.map((donor, index) => (
                                     <Link
-                                        key={donor._id}
-                                        href={`/${orgSlug}/donors/${donor._id}`}
+                                        key={donor.id}
+                                        href={`/${orgSlug}/donors/${donor.id}`}
                                     >
                                         <div
                                             className={`flex items-center gap-4 p-4 rounded-xl border transition-all cursor-pointer ${getPositionBg(index)}`}

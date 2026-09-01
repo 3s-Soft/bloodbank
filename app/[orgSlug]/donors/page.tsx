@@ -18,9 +18,10 @@ import {
     Shield,
 } from "lucide-react";
 import { useState, useEffect } from "react";
+import { apiGet, query } from "@/lib/api/client";
 
 interface Donor {
-    _id: string;
+    id: number;
     bloodGroup: string;
     isVerified: boolean;
     isAvailable: boolean;
@@ -29,7 +30,7 @@ interface Donor {
     district: string;
     lastDonationDate?: string;
     createdAt: string;
-    user?: { _id: string; name: string; phone: string };
+    user?: { id: number; name: string; phone: string | null } | null;
 }
 
 type SortOption = "relevance" | "newest" | "lastDonation" | "name" | "location";
@@ -57,21 +58,14 @@ export default function DonorDiscovery() {
 
         setIsLoading(true);
         try {
-            const params = new URLSearchParams({ orgSlug: organization.slug });
-            if (bloodGroup) params.append("bloodGroup", bloodGroup);
-            if (district) params.append("district", district);
-            if (upazila) params.append("upazila", upazila);
+            const params = query({
+                orgSlug: organization.slug,
+                bloodGroup,
+                district,
+                upazila,
+            });
 
-            const res = await fetch(`/api/donors?${params.toString()}`);
-            const data = await res.json();
-
-            if (!res.ok) {
-                console.error("Failed to fetch donors:", data?.error || "Unknown error");
-                setDonors([]);
-                return;
-            }
-
-            setDonors(Array.isArray(data) ? data : []);
+            setDonors(await apiGet<Donor[]>(`/api/donors?${params}`));
         } catch (error) {
             console.error("Failed to fetch donors", error);
             setDonors([]);
@@ -279,7 +273,7 @@ export default function DonorDiscovery() {
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                         {filteredAndSortedDonors.map((donor) => (
                             <div
-                                key={donor._id}
+                                key={donor.id}
                                 className="rounded-2xl border border-slate-800 bg-slate-900/40 overflow-hidden hover:border-slate-600 transition-all group"
                             >
                                 {/* Color bar */}

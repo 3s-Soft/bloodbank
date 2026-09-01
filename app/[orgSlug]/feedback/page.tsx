@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { useOrganization } from "@/lib/context/OrganizationContext";
 import { MessageSquare, Send, Bug, Lightbulb, Star, CheckCircle } from "lucide-react";
 import { toast } from "sonner";
+import { apiPost } from "@/lib/api/client";
 
 const categories = [
     { value: "general", label: "General Feedback", icon: MessageSquare, color: "text-blue-400" },
@@ -41,26 +42,20 @@ export default function FeedbackPage({
 
         setSubmitting(true);
         try {
-            const res = await fetch("/api/feedback", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    name: name.trim(),
-                    email: email.trim() || undefined,
-                    category,
-                    message: message.trim(),
-                    orgSlug,
-                }),
+            await apiPost("/api/feedback", {
+                name: name.trim(),
+                email: email.trim() || undefined,
+                category,
+                message: message.trim(),
+                orgSlug,
             });
 
-            if (res.ok) {
-                setSubmitted(true);
-                toast.success("Thank you for your feedback!");
-            } else {
-                toast.error("Failed to submit feedback. Please try again.");
-            }
-        } catch {
-            toast.error("Something went wrong. Please try again.");
+            setSubmitted(true);
+            toast.success("Thank you for your feedback!");
+        } catch (error) {
+            toast.error(
+                error instanceof Error ? error.message : "Something went wrong. Please try again.",
+            );
         } finally {
             setSubmitting(false);
         }

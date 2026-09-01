@@ -16,9 +16,10 @@ import {
     Shield,
 } from "lucide-react";
 import Link from "next/link";
+import { apiGet, query } from "@/lib/api/client";
 
 interface DonorData {
-    _id: string;
+    id: number;
     bloodGroup: string;
     district: string;
     upazila: string;
@@ -36,7 +37,7 @@ interface DonorData {
 }
 
 interface DonationRecord {
-    _id: string;
+    id: number;
     donationDate: string;
     bloodGroup: string;
     location?: string;
@@ -61,22 +62,15 @@ export default function DonorProfilePage({
     useEffect(() => {
         async function fetchData() {
             try {
-                // Fetch donor profile
-                const donorRes = await fetch(`/api/donors?orgSlug=${orgSlug}&donorId=${donorId}`);
-                if (donorRes.ok) {
-                    const donorData = await donorRes.json();
-                    const found = Array.isArray(donorData)
-                        ? donorData.find((d: DonorData) => d._id === donorId)
-                        : donorData;
-                    setDonor(found || null);
-                }
+                // The donor and their donation history are independent
+                // lookups, so they run together rather than in sequence.
+                const [donorList, donationHistory] = await Promise.all([
+                    apiGet<DonorData[]>(`/api/donors?${query({ orgSlug, donorId })}`),
+                    apiGet<DonationRecord[]>(`/api/donations?${query({ donorId })}`),
+                ]);
 
-                // Fetch donation history
-                const donationsRes = await fetch(`/api/donations?donorId=${donorId}`);
-                if (donationsRes.ok) {
-                    const donationData = await donationsRes.json();
-                    setDonations(donationData);
-                }
+                setDonor(donorList[0] ?? null);
+                setDonations(donationHistory);
             } catch (error) {
                 console.error("Error fetching donor data:", error);
             } finally {
@@ -249,7 +243,7 @@ export default function DonorProfilePage({
                             <div className="space-y-3">
                                 {donations.map((donation) => (
                                     <div
-                                        key={donation._id}
+                                        key={donation.id}
                                         className="flex items-center justify-between p-4 rounded-xl bg-slate-800/50 border border-slate-700 hover:border-slate-600 transition-all"
                                     >
                                         <div className="flex items-center gap-4">

@@ -1,77 +1,29 @@
-import { NextResponse } from "next/server";
-import { adminDb } from "@/lib/firebase/adminApp";
-import { COLLECTIONS, UrgencyLevel, RequestStatus } from "@/lib/firebase/types";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/authOptions";
-import { sendPushNotifications, buildBloodRequestPayload } from "@/lib/pushNotifications";
+import { created, withErrorHandling } from "@/lib/api/responses";
+import { RATE_LIMITS, enforceRateLimit } from "@/lib/api/rateLimit";
+import { toBloodRequestDto } from "@/lib/api/serialize";
+import { optionalSession, requireOrganization } from "@/lib/auth/guards";
+import { createRequest } from "@/lib/services/requestService";
+import { bloodRequestCreateSchema } from "@/lib/validation/schemas";
 
-export async function POST(req: Request) {
-    try {
-        const session = await getServerSession(authOptions);
-        const body = await req.json();
+/**
+ * POST /api/requests/new — public blood request creation.
+ *
+ * Public by design: someone needing blood must not have to register first. If
+ * the caller happens to be signed in, the request is attributed to them.
+ */
+export const POST = withErrorHandling(async (request: Request) => {
+    enforceRateLimit(request, RATE_LIMITS.bloodRequest);
 
-        const {
-            patientName,
-            bloodGroup,
-            location,
-            district,
-            upazila,
-            urgency,
-            requiredDate,
-            contactNumber,
-            additionalNotes,
-            orgSlug
-        } = body;
+    const input = bloodRequestCreateSchema.parse(await request.json());
+    const organization = await requireOrganization(input.orgSlug);
+    const session = await optionalSession();
 
-        // Find organization
-        const orgsRef = adminDb.collection(COLLECTIONS.ORGANIZATIONS);
-        const orgSnapshot = await orgsRef.where("slug", "==", orgSlug).limit(1).get();
-        if (orgSnapshot.empty) {
-            return NextResponse.json({ error: "Organization not found" }, { status: 404 });
-        }
-        const organizationId = orgSnapshot.docs[0].id;
+    const bloodRequest = await createRequest(
+        input,
+        organization.id,
+        organization.slug,
+        session?.id ?? null,
+    );
 
-        // Create the blood request
-        const requestsRef = adminDb.collection(COLLECTIONS.BLOOD_REQUESTS);
-        const requestData = {
-            patientName,
-            bloodGroup,
-            location,
-            district,
-            upazila,
-            urgency,
-            requiredDate: new Date(requiredDate),
-            contactNumber,
-            additionalNotes: additionalNotes || null,
-            status: RequestStatus.PENDING,
-            requester: session?.user ? session.user.id : null,
-            organization: organizationId,
-            matchedDonors: [],
-            createdAt: new Date(),
-            updatedAt: new Date()
-        };
-        
-        const docRef = await requestsRef.add(requestData);
-        const newRequest = { _id: docRef.id, ...requestData };
-
-        // Send push notifications for urgent and emergency requests (fire-and-forget)
-        if (urgency === UrgencyLevel.URGENT || urgency === UrgencyLevel.EMERGENCY) {
-            const payload = buildBloodRequestPayload(
-                urgency as UrgencyLevel,
-                bloodGroup,
-                district,
-                orgSlug,
-                docRef.id
-            );
-            sendPushNotifications(organizationId, payload, { district, bloodGroup }).catch(
-                (err) => console.error("Push notification error:", err)
-            );
-        }
-
-        return NextResponse.json({ message: "Request posted successfully", request: newRequest }, { status: 201 });
-    } catch (error) {
-        console.error("Blood request creation error:", error);
-        const message = error instanceof Error ? error.message : "Internal Server Error";
-        return NextResponse.json({ error: message }, { status: 500 });
-    }
-}
+    return created(toBloodRequestDto(bloodRequest, null));
+});

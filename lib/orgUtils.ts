@@ -1,10 +1,13 @@
-import { adminDb } from "./firebase/adminApp";
-import { COLLECTIONS, IOrganization } from "./firebase/types";
+import * as organizationsRepo from "@/lib/repositories/organizations";
+import type { OrganizationRow } from "@/lib/types";
 
-export async function getOrganizationBySlug(slug: string): Promise<IOrganization | null> {
-    const orgsRef = adminDb.collection(COLLECTIONS.ORGANIZATIONS);
-    const snapshot = await orgsRef.where("slug", "==", slug).where("isActive", "==", true).limit(1).get();
-    
-    if (snapshot.empty) return null;
-    return { _id: snapshot.docs[0].id, ...snapshot.docs[0].data() } as IOrganization;
+/**
+ * Resolves the `[orgSlug]` route segment to an organization.
+ *
+ * Kept as a standalone helper because server components (notably
+ * `app/[orgSlug]/layout.tsx`) call it directly, outside the API layer.
+ * Inactive organizations resolve to null so their pages 404.
+ */
+export async function getOrganizationBySlug(slug: string): Promise<OrganizationRow | null> {
+    return organizationsRepo.findBySlug(slug);
 }

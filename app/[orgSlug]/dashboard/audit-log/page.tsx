@@ -1,5 +1,7 @@
 "use client";
 
+import { apiGet, query } from "@/lib/api/client";
+
 import { useState, useEffect, use } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useOrganization } from "@/lib/context/OrganizationContext";
@@ -17,7 +19,7 @@ import {
 } from "lucide-react";
 
 interface AuditLogEntry {
-    _id: string;
+    id: number;
     action: string;
     performedBy: {
         name: string;
@@ -81,14 +83,12 @@ export default function AuditLogPage({
     useEffect(() => {
         async function fetchLogs() {
             try {
-                const actionParam = filterAction ? `&action=${filterAction}` : "";
-                const res = await fetch(
-                    `/api/org/audit-log?orgSlug=${orgSlug}${actionParam}&limit=100`
-                );
-                if (res.ok) {
-                    const data = await res.json();
-                    setLogs(data);
-                }
+                const params = query({
+                    orgSlug,
+                    action: filterAction || undefined,
+                    limit: 100,
+                });
+                setLogs(await apiGet(`/api/org/audit-log?${params}`));
             } catch (error) {
                 console.error("Error fetching audit logs:", error);
             } finally {
@@ -179,7 +179,7 @@ export default function AuditLogPage({
 
                                 return (
                                     <div
-                                        key={log._id}
+                                        key={log.id}
                                         className="flex items-start gap-4 p-4 rounded-xl bg-slate-800/50 border border-slate-700 hover:border-slate-600 transition-all"
                                     >
                                         <div className={`w-10 h-10 rounded-xl bg-slate-900 flex items-center justify-center flex-shrink-0`}>

@@ -1,38 +1,41 @@
 "use client";
 
-import { createContext, useContext, ReactNode } from "react";
+import { createContext, useContext, type ReactNode } from "react";
 
-interface OrganizationData {
-    _id: string;
+/**
+ * Branding and identity for the organization behind the current `[orgSlug]`
+ * route. Provided by `app/[orgSlug]/layout.tsx`, which has already resolved and
+ * validated the slug server-side.
+ */
+export interface OrganizationData {
+    id: number;
     name: string;
     slug: string;
-    logo?: string;
-    primaryColor?: string;
-    contactEmail?: string;
-    contactPhone?: string;
-    address?: string;
-    isVerified?: boolean;
+    logo: string | null;
+    primaryColor: string;
+    contactEmail: string | null;
+    contactPhone: string | null;
+    address: string | null;
+    isVerified: boolean;
 }
 
 const OrganizationContext = createContext<OrganizationData | null>(null);
 
 export function OrganizationProvider({
     children,
-    value
+    value,
 }: {
     children: ReactNode;
-    value: OrganizationData
+    value: OrganizationData;
 }) {
     return (
-        <OrganizationContext.Provider value={value}>
-            {children}
-        </OrganizationContext.Provider>
+        <OrganizationContext.Provider value={value}>{children}</OrganizationContext.Provider>
     );
 }
 
 export function useOrganization() {
     const context = useContext(OrganizationContext);
-    if (context === null || context === undefined) {
+    if (!context) {
         throw new Error("useOrganization must be used within an OrganizationProvider");
     }
     return context;

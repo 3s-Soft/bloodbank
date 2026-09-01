@@ -1,5 +1,7 @@
 "use client";
 
+import { apiPost } from "@/lib/api/client";
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -48,17 +50,7 @@ export default function NewOrganizationPage() {
     const onSubmit = async (data: OrganizationFormValues) => {
         setIsSubmitting(true);
         try {
-            const response = await fetch("/api/admin/organizations", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(data),
-            });
-
-            const result = await response.json();
-
-            if (!response.ok) {
-                throw new Error(result.error || "Failed to create organization");
-            }
+            await apiPost("/api/admin/organizations", data);
 
             toast.success("Organization created successfully!");
             router.push("/admin/organizations");

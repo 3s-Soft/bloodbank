@@ -1,8 +1,13 @@
-import { initializeApp, getApps, getApp } from "firebase/app";
-import { getAuth } from "firebase/auth";
-import { getFirestore } from "firebase/firestore";
-// import { getMessaging } from "firebase/messaging";
+import { getApp, getApps, initializeApp } from "firebase/app";
 
+/**
+ * Firebase client app.
+ *
+ * Only Cloud Messaging uses this now: `PushNotificationManager` calls
+ * `getMessaging(app)` to obtain a device token. Firestore and Firebase Auth are
+ * no longer part of the stack - data is in MySQL and sign-in goes through
+ * NextAuth.
+ */
 const firebaseConfig = {
     apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
     authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
@@ -12,12 +17,6 @@ const firebaseConfig = {
     appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 };
 
-// Initialize Firebase for Client (Browser)
-const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
-const auth = getAuth(app);
-const db = getFirestore(app);
+const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
 
-// Messaging is only available in the browser context (not SSR)
-// export const messaging = typeof window !== "undefined" ? getMessaging(app) : null;
-
-export { app, auth, db };
+export { app };

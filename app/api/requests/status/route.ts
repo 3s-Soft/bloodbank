@@ -1,26 +1,27 @@
-import { NextResponse } from "next/server";
-import { adminDb } from "@/lib/firebase/adminApp";
-import { COLLECTIONS } from "@/lib/firebase/types";
+import { ok, withErrorHandling } from "@/lib/api/responses";
+import { toBloodRequestDto } from "@/lib/api/serialize";
+import { requireOrgAdmin } from "@/lib/auth/guards";
+import { updateStatus } from "@/lib/services/requestService";
+import { bloodRequestStatusSchema } from "@/lib/validation/schemas";
 
-export async function POST(req: Request) {
-    try {
-        const { requestId, status } = await req.json();
+/**
+ * POST /api/requests/status — admin-only status change.
+ *
+ * Previously unauthenticated, so anyone could mark requests fulfilled or
+ * cancelled. The audit entry now records the session user rather than an id
+ * supplied by the caller.
+ */
+export const POST = withErrorHandling(async (request: Request) => {
+    const input = bloodRequestStatusSchema.parse(await request.json());
+    const { user, organization } = await requireOrgAdmin(input.orgSlug);
 
-        if (!requestId || !status) {
-            return NextResponse.json({ error: "Request ID and Status are required" }, { status: 400 });
-        }
+    const updated = await updateStatus(
+        input.requestId,
+        input.status,
+        organization.id,
+        user.id,
+        input.fulfilledById,
+    );
 
-        const requestRef = adminDb.collection(COLLECTIONS.BLOOD_REQUESTS).doc(requestId);
-        const doc = await requestRef.get();
-        if(!doc.exists) {
-            return NextResponse.json({ error: "Blood request not found" }, { status: 404 });
-        }
-
-        await requestRef.update({ status, updatedAt: new Date() });
-
-        return NextResponse.json({ message: "Request status updated", request: { _id: requestId, ...doc.data(), status } });
-    } catch (error: unknown) {
-        console.error("Request status update error:", error);
-        return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
-    }
-}
+    return ok(toBloodRequestDto(updated, null));
+});

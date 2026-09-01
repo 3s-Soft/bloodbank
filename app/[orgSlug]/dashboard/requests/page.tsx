@@ -1,9 +1,7 @@
 "use client";
 
-import { collection, query, where, onSnapshot, getFirestore } from "firebase/firestore";
-import { app } from "@/lib/firebase/clientApp";
-import { COLLECTIONS } from "@/lib/firebase/types";
 import { useOrganization } from "@/lib/context/OrganizationContext";
+import { apiGet, apiPost, query } from "@/lib/api/client";
 import { Button } from "@/components/ui/button";
 import {
     Droplet,
@@ -20,11 +18,11 @@ import {
     Clock,
     CheckCircle,
 } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 
 interface BloodRequest {
-    _id: string;
+    id: number;
     patientName: string;
     bloodGroup: string;
     location: string;
@@ -49,58 +47,64 @@ export default function RequestManagement() {
     const [searchQuery, setSearchQuery] = useState("");
 
 
-    const db = getFirestore(app);
+    /**
+     * Requests are polled rather than streamed.
+     *
+     * This dashboard previously held a Firestore onSnapshot listener. MySQL has
+     * no equivalent push channel, and Vercel serverless cannot host a WebSocket
+     * server, so the list refreshes on an interval and immediately after any
+     * mutation. Emergency requests still reach donors instantly over FCM push;
+     * this interval only governs how fast an admin sees the table update.
+     */
+    const REFRESH_INTERVAL_MS = 15_000;
+
+    const fetchRequests = useCallback(
+        async (options: { showSpinner?: boolean } = {}) => {
+            if (options.showSpinner) setIsLoading(true);
+            try {
+                const data = await apiGet<BloodRequest[]>(
+                    `/api/requests?${query({ orgSlug })}`,
+                );
+                setAllRequests(data);
+            } catch (error) {
+                console.error("Failed to load requests", error);
+                // Only surface an error for the initial load: a failed
+                // background refresh should not interrupt someone mid-task.
+                if (options.showSpinner) toast.error("Failed to load requests");
+            } finally {
+                if (options.showSpinner) setIsLoading(false);
+            }
+        },
+        [orgSlug],
+    );
 
     useEffect(() => {
-        if (!organization._id) return;
+        void fetchRequests({ showSpinner: true });
 
-        const q = query(
-            collection(db, COLLECTIONS.BLOOD_REQUESTS),
-            where("organization", "==", organization._id)
-        );
+        const interval = setInterval(() => {
+            // Skip polling while the tab is hidden; it resumes on focus below.
+            if (document.visibilityState === "visible") void fetchRequests();
+        }, REFRESH_INTERVAL_MS);
 
-        const unsubscribe = onSnapshot(q, (snapshot) => {
-            setIsLoading(true); // Set loading state at the start of the async callback
-            const requests = snapshot.docs.map((doc) => {
-                const data = doc.data();
-                return {
-                    ...data,
-                    _id: doc.id,
-                    requiredDate: data.requiredDate?.toDate?.()?.toISOString() || data.requiredDate,
-                    createdAt: data.createdAt?.toDate?.()?.toISOString() || data.createdAt,
-                } as BloodRequest;
-            });
+        const onFocus = () => void fetchRequests();
+        window.addEventListener("focus", onFocus);
 
-            requests.sort((a: BloodRequest, b: BloodRequest) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+        return () => {
+            clearInterval(interval);
+            window.removeEventListener("focus", onFocus);
+        };
+    }, [fetchRequests]);
 
-            setAllRequests(requests);
-            setIsLoading(false);
-        }, (error) => {
-            console.error("Firebase listen error", error);
-            setIsLoading(false);
-            toast.error("Failed to load requests in real-time");
-        });
-
-        return () => unsubscribe();
-    }, [organization._id]);
-
-    const handleStatusUpdate = async (requestId: string, newStatus: string) => {
+    const handleStatusUpdate = async (requestId: number, newStatus: string) => {
         try {
-            const res = await fetch("/api/requests/status", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ requestId, status: newStatus })
-            });
-            if (res.ok) {
-                toast.success(`Request marked as ${newStatus}`);
-                // Real-time listener handles the data refresh automatically
-            }
-        } catch {
-            toast.error("Failed to update request status");
+            await apiPost("/api/requests/status", { requestId, status: newStatus, orgSlug });
+            toast.success(`Request marked as ${newStatus}`);
+            // Refresh now rather than waiting for the next poll.
+            await fetchRequests();
+        } catch (error) {
+            toast.error(error instanceof Error ? error.message : "Failed to update request status");
         }
     };
-
-
 
     const filteredRequests = allRequests.filter(request => {
         const matchesStatus = statusFilter === "all" || request.status === statusFilter;
@@ -267,7 +271,7 @@ export default function RequestManagement() {
                         const uStyle = urgencyStyle[request.urgency];
                         return (
                             <div
-                                key={request._id}
+                                key={request.id}
                                 className={`rounded-2xl bg-slate-900/50 border overflow-hidden transition-all hover:border-slate-600 ${request.urgency === "emergency" && request.status === "pending"
                                     ? "border-red-500/50 bg-red-500/5"
                                     : "border-slate-800"
@@ -323,7 +327,7 @@ export default function RequestManagement() {
                                                     <Button
                                                         className="bg-emerald-600 hover:bg-emerald-700 text-white"
                                                         size="sm"
-                                                        onClick={() => handleStatusUpdate(request._id, "fulfilled")}
+                                                        onClick={() => handleStatusUpdate(request.id, "fulfilled")}
                                                     >
                                                         <CheckCircle2 className="w-4 h-4 mr-1.5" />
                                                         Fulfilled
@@ -332,7 +336,7 @@ export default function RequestManagement() {
                                                         variant="outline"
                                                         size="sm"
                                                         className="border-slate-700 text-slate-400 hover:text-red-400 hover:border-red-500/50"
-                                                        onClick={() => handleStatusUpdate(request._id, "canceled")}
+                                                        onClick={() => handleStatusUpdate(request.id, "canceled")}
                                                     >
                                                         <XCircle className="w-4 h-4" />
                                                     </Button>
@@ -342,7 +346,7 @@ export default function RequestManagement() {
                                                     variant="outline"
                                                     size="sm"
                                                     className="border-slate-700 text-slate-400 hover:bg-slate-800 hover:text-white"
-                                                    onClick={() => handleStatusUpdate(request._id, "pending")}
+                                                    onClick={() => handleStatusUpdate(request.id, "pending")}
                                                 >
                                                     Reopen
                                                 </Button>

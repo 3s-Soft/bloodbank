@@ -12,9 +12,9 @@ import { Droplet, Heart, Mail, User, Activity, MapPin, ChevronRight, ChevronLeft
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { useState } from "react";
-import { signInWithPopup } from "firebase/auth";
-import { auth, googleProvider } from "@/lib/firebase";
+import { useEffect, useState } from "react";
+import { signIn, useSession } from "next-auth/react";
+import { apiPost } from "@/lib/api/client";
 
 const donorSchema = z.object({
     name: z.string().min(2, "Name must be at least 2 characters"),
@@ -37,7 +37,9 @@ export default function DonorRegistration() {
     const router = useRouter();
     const primaryColor = organization.primaryColor || "#D32F2F";
 
+    const { data: session } = useSession();
     const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+    const [hasPrefilled, setHasPrefilled] = useState(false);
     const [step, setStep] = useState(1);
 
     const {
@@ -64,38 +66,36 @@ export default function DonorRegistration() {
 
     const prevStep = () => setStep((s) => s - 1);
 
+    /**
+     * Google sign-in is a full-page redirect through NextAuth, not the popup
+     * Firebase provided. Anything typed into the form is therefore lost on the
+     * round trip, which is why the button is only offered on step 1 (below),
+     * before the donor has entered anything else.
+     */
     const handleGoogleSignUp = async () => {
         setIsGoogleLoading(true);
         try {
-            const result = await signInWithPopup(auth, googleProvider);
-            const user = result.user;
-
-            if (user) {
-                toast.success(`Google account linked! Please complete your donor profile.`);
-                // Pre-fill form
-                if (user.displayName) setValue("name", user.displayName);
-                if (user.email) setValue("email", user.email);
-            }
+            await signIn("google", { callbackUrl: `/${organization.slug}/register` });
         } catch (error) {
-            console.error("Google Sign-In Error:", error);
+            console.error("Google sign-in failed:", error);
             toast.error("Failed to link Google account");
-        } finally {
             setIsGoogleLoading(false);
         }
     };
 
+    // Prefill from the session once the redirect lands back here.
+    useEffect(() => {
+        if (session?.user && !hasPrefilled) {
+            if (session.user.name) setValue("name", session.user.name);
+            if (session.user.email) setValue("email", session.user.email);
+            setHasPrefilled(true);
+            toast.success("Google account linked. Please complete your donor profile.");
+        }
+    }, [session, hasPrefilled, setValue]);
+
     const onSubmit = async (data: DonorFormValues) => {
         try {
-            const response = await fetch("/api/donors/register", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ ...data, orgSlug: organization.slug }),
-            });
-
-            if (!response.ok) {
-                const error = await response.json();
-                throw new Error(error.error || "Something went wrong");
-            }
+            await apiPost("/api/donors/register", { ...data, orgSlug: organization.slug });
 
             toast.success("Registration successful! You are now a donor.");
             router.push(`/${organization.slug}/donors`);
@@ -120,6 +120,7 @@ export default function DonorRegistration() {
                         <p className="text-slate-400 font-medium">Register as a donor at {organization.name}</p>
                     </CardHeader>
                     <CardContent className="p-8">
+                        {step === 1 && (
                         <Button
                             type="button"
                             onClick={handleGoogleSignUp}
@@ -153,7 +154,9 @@ export default function DonorRegistration() {
                                 </div>
                             )}
                         </Button>
+                        )}
 
+                        {step === 1 && (
                         <div className="relative my-6">
                             <div className="absolute inset-0 flex items-center">
                                 <div className="w-full border-t border-slate-800"></div>
@@ -162,6 +165,7 @@ export default function DonorRegistration() {
                                 <span className="bg-[#0f172a] px-3 text-slate-500">Or register manually</span>
                             </div>
                         </div>
+                        )}
 
                         {/* Progress Indicator */}
                         <div className="flex items-center justify-between mb-8 relative">

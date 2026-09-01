@@ -1,5 +1,7 @@
 "use client";
 
+import { apiDelete, apiGet, apiPost } from "@/lib/api/client";
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -19,7 +21,7 @@ import { useState, useEffect } from "react";
 import { toast } from "sonner";
 
 interface Organization {
-    _id: string;
+    id: number;
     name: string;
     slug: string;
     primaryColor: string;
@@ -35,8 +37,8 @@ export default function OrganizationsPage() {
     const [organizations, setOrganizations] = useState<Organization[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState("");
-    const [deleting, setDeleting] = useState<string | null>(null);
-    const [verifying, setVerifying] = useState<string | null>(null);
+    const [deleting, setDeleting] = useState<number | null>(null);
+    const [verifying, setVerifying] = useState<number | null>(null);
     const [activeTab, setActiveTab] = useState<"all" | "pending">("all");
 
     useEffect(() => {
@@ -45,9 +47,7 @@ export default function OrganizationsPage() {
 
     const fetchOrganizations = async () => {
         try {
-            const res = await fetch("/api/admin/organizations");
-            const data = await res.json();
-            setOrganizations(data);
+            setOrganizations(await apiGet<Organization[]>("/api/admin/organizations"));
         } catch (error) {
             console.error("Failed to fetch organizations", error);
             toast.error("Failed to load organizations");
@@ -56,54 +56,43 @@ export default function OrganizationsPage() {
         }
     };
 
-    const handleDelete = async (id: string, name: string) => {
+    const handleDelete = async (id: number, name: string) => {
         if (!confirm(`Are you sure you want to delete "${name}"? This action cannot be undone.`)) {
             return;
         }
 
         setDeleting(id);
         try {
-            const res = await fetch(`/api/admin/organizations/${id}`, {
-                method: "DELETE",
-            });
-
-            if (!res.ok) {
-                throw new Error("Failed to delete");
-            }
+            await apiDelete(`/api/admin/organizations/${id}`);
 
             toast.success("Organization deleted successfully");
-            setOrganizations(organizations.filter((org) => org._id !== id));
+            setOrganizations(organizations.filter((org) => org.id !== id));
         } catch (error) {
-            toast.error("Failed to delete organization");
+            toast.error(error instanceof Error ? error.message : "Failed to delete organization");
         } finally {
             setDeleting(null);
         }
     };
 
-    const handleVerify = async (id: string, action: "verify" | "reject") => {
+    const handleVerify = async (id: number, action: "verify" | "reject") => {
         setVerifying(id);
         try {
-            const res = await fetch(`/api/admin/organizations/${id}/verify`, {
-                method: "PATCH",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ action }),
-            });
-
-            if (!res.ok) {
-                throw new Error("Failed to process");
-            }
-
             if (action === "verify") {
+                await apiPost(`/api/admin/organizations/${id}/verify`, { isVerified: true });
                 toast.success("Organization verified successfully!");
-                setOrganizations(organizations.map((org) =>
-                    org._id === id ? { ...org, isVerified: true } : org
-                ));
+                setOrganizations(
+                    organizations.map((org) =>
+                        org.id === id ? { ...org, isVerified: true } : org,
+                    ),
+                );
             } else {
+                // Rejecting an application removes it outright.
+                await apiDelete(`/api/admin/organizations/${id}`);
                 toast.success("Organization rejected and removed");
-                setOrganizations(organizations.filter((org) => org._id !== id));
+                setOrganizations(organizations.filter((org) => org.id !== id));
             }
         } catch (error) {
-            toast.error("Failed to process request");
+            toast.error(error instanceof Error ? error.message : "Failed to process request");
         } finally {
             setVerifying(null);
         }
@@ -216,7 +205,7 @@ export default function OrganizationsPage() {
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {filteredOrganizations.map((org) => (
-                        <Card key={org._id} className="border-none shadow-sm hover:shadow-md transition-shadow bg-slate-900/50 border border-slate-800">
+                        <Card key={org.id} className="border-none shadow-sm hover:shadow-md transition-shadow bg-slate-900/50 border border-slate-800">
                             <div
                                 className="h-2 w-full rounded-t-xl"
                                 style={{ backgroundColor: org.primaryColor || "#D32F2F" }}
@@ -273,10 +262,10 @@ export default function OrganizationsPage() {
                                         <Button
                                             size="sm"
                                             className="flex-1 bg-green-600 hover:bg-green-700 text-white font-bold"
-                                            onClick={() => handleVerify(org._id, "verify")}
-                                            disabled={verifying === org._id}
+                                            onClick={() => handleVerify(org.id, "verify")}
+                                            disabled={verifying === org.id}
                                         >
-                                            {verifying === org._id ? (
+                                            {verifying === org.id ? (
                                                 <Loader2 className="w-4 h-4 animate-spin" />
                                             ) : (
                                                 <>
@@ -289,8 +278,8 @@ export default function OrganizationsPage() {
                                             size="sm"
                                             variant="outline"
                                             className="flex-1 border-red-500/50 text-red-400 hover:bg-red-500/10"
-                                            onClick={() => handleVerify(org._id, "reject")}
-                                            disabled={verifying === org._id}
+                                            onClick={() => handleVerify(org.id, "reject")}
+                                            disabled={verifying === org.id}
                                         >
                                             <XCircle className="w-4 h-4 mr-2" />
                                             Reject
@@ -304,7 +293,7 @@ export default function OrganizationsPage() {
                                                 View
                                             </Button>
                                         </Link>
-                                        <Link href={`/admin/organizations/${org._id}`}>
+                                        <Link href={`/admin/organizations/${org.id}`}>
                                             <Button size="sm" variant="outline" className="border-slate-700 text-slate-300 hover:bg-slate-800">
                                                 <Edit className="w-4 h-4" />
                                             </Button>
@@ -313,8 +302,8 @@ export default function OrganizationsPage() {
                                             size="sm"
                                             variant="outline"
                                             className="text-red-400 border-red-500/50 hover:bg-red-500/10"
-                                            onClick={() => handleDelete(org._id, org.name)}
-                                            disabled={deleting === org._id}
+                                            onClick={() => handleDelete(org.id, org.name)}
+                                            disabled={deleting === org.id}
                                         >
                                             <Trash2 className="w-4 h-4" />
                                         </Button>

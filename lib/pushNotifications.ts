@@ -1,6 +1,14 @@
-import { adminMessaging, adminDb } from "@/lib/firebase/adminApp";
-import { COLLECTIONS } from "@/lib/firebase/types";
-import { UrgencyLevel } from "@/lib/firebase/types";
+import { adminMessaging } from "@/lib/firebase/adminApp";
+import { pushSubscriptionsRepo } from "@/lib/repositories/misc";
+import { UrgencyLevel, type BloodGroup } from "@/lib/db/enums";
+
+/**
+ * Push delivery over Firebase Cloud Messaging.
+ *
+ * Firebase remains the notification transport after the move to MySQL; only the
+ * subscription store changed. Subscriber selection is now a SQL query rather
+ * than fetching every subscription for an organization and filtering in memory.
+ */
 
 export interface PushNotificationPayload {
     title: string;
@@ -11,99 +19,71 @@ export interface PushNotificationPayload {
     tag?: string;
 }
 
-/**
- * Send push notifications to all subscribers of an organisation that match
- * optional district / blood-group filters.
- */
-export async function sendPushNotifications(
-    organizationId: string,
-    payload: PushNotificationPayload,
-    filters?: { district?: string; bloodGroup?: string }
-): Promise<void> {
-
-    // Include subscribers that match the filter OR have no filter set
-    const subsRef = adminDb.collection(COLLECTIONS.PUSH_SUBSCRIPTIONS).where("organization", "==", organizationId);
-
-    // Note: Firestore has limitations on complex OR queries. 
-    // Usually it's better to fetch by org and filter in memory for complex combinations like this.
-    const snapshot = await subsRef.get();
-    
-    const tokens: string[] = [];
-    const validDocs: { id: string, token: string }[] = [];
-
-    snapshot.docs.forEach((doc) => {
-        const data = doc.data();
-        let districtMatch = true;
-        let bloodGroupMatch = true;
-
-        if (filters?.district) {
-             districtMatch = !data.district || data.district === filters.district;
-        }
-        if (filters?.bloodGroup) {
-             bloodGroupMatch = !data.bloodGroup || data.bloodGroup === filters.bloodGroup;
-        }
-
-        if (districtMatch && bloodGroupMatch && data.token) {
-             tokens.push(data.token);
-             validDocs.push({ id: doc.id, token: data.token });
-        }
-    });
-
-    if (tokens.length === 0) return;
-
-    try {
-        const messagePayload = {
-             tokens,
-             notification: {
-                 title: payload.title,
-                 body: payload.body,
-             },
-             data: {
-                 url: payload.url || "/",
-             }
-        };
-
-        const response = await adminMessaging.sendEachForMulticast(messagePayload);
-        
-        // Remove subscriptions that are no longer valid
-        if (response.failureCount > 0) {
-            const failedTokens: string[] = [];
-            response.responses.forEach((resp, idx) => {
-                if (!resp.success) {
-                    const errCode = resp.error?.code;
-                    if (errCode === 'messaging/invalid-registration-token' ||
-                        errCode === 'messaging/registration-token-not-registered') {
-                        failedTokens.push(tokens[idx]);
-                    }
-                }
-            });
-
-            if (failedTokens.length > 0) {
-                 const invalidSubs = validDocs.filter(doc => failedTokens.includes(doc.token));
-                 const batch = adminDb.batch();
-                 invalidSubs.forEach(doc => {
-                      batch.delete(adminDb.collection(COLLECTIONS.PUSH_SUBSCRIPTIONS).doc(doc.id));
-                 });
-                 await batch.commit();
-            }
-        }
-    } catch(err) {
-        console.error("FCM Send Error: ", err);
-    }
+export interface PushFilters {
+    district?: string | null;
+    bloodGroup?: BloodGroup | null;
 }
 
 /**
- * Build a push notification payload for an urgent/emergency blood request.
+ * Sends to every matching subscriber of an organization.
+ *
+ * Never throws: callers treat push as fire-and-forget, because a notification
+ * failure must not fail the blood request that triggered it.
  */
+export async function sendPushNotifications(
+    organizationId: number,
+    payload: PushNotificationPayload,
+    filters: PushFilters = {},
+): Promise<void> {
+    try {
+        const subscriptions = await pushSubscriptionsRepo.findTargets(organizationId, filters);
+        const tokens = subscriptions.map((subscription) => subscription.token);
+
+        if (tokens.length === 0) return;
+
+        const response = await adminMessaging.sendEachForMulticast({
+            tokens,
+            notification: {
+                title: payload.title,
+                body: payload.body,
+            },
+            data: {
+                url: payload.url ?? "/",
+            },
+        });
+
+        if (response.failureCount === 0) return;
+
+        // Tokens rejected as unknown belong to uninstalled apps or cleared site
+        // data; keeping them would make every future send report failures.
+        const staleTokens = response.responses.flatMap((result, index) => {
+            if (result.success) return [];
+            const code = result.error?.code;
+            const isStale =
+                code === "messaging/invalid-registration-token" ||
+                code === "messaging/registration-token-not-registered";
+            return isStale ? [tokens[index]] : [];
+        });
+
+        if (staleTokens.length > 0) {
+            await pushSubscriptionsRepo.removeTokens(staleTokens);
+        }
+    } catch (error) {
+        console.error("Push notification dispatch failed:", error);
+    }
+}
+
+/** Notification content for an urgent or emergency blood request. */
 export function buildBloodRequestPayload(
     urgency: UrgencyLevel,
     bloodGroup: string,
     district: string,
     orgSlug: string,
-    requestId: string
+    requestId: number,
 ): PushNotificationPayload {
     const urgencyLabel = urgency.charAt(0).toUpperCase() + urgency.slice(1).toLowerCase();
     const isEmergency = urgency === UrgencyLevel.EMERGENCY;
+
     return {
         title: isEmergency
             ? `🚨 Emergency: ${bloodGroup} Blood Needed`
