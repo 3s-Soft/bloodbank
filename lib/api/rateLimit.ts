@@ -87,4 +87,6 @@ export const RATE_LIMITS = {
     submission: { limit: 5, windowMs: 60_000, bucket: "submission" },
     /** Push subscription changes, which a client may retry. */
     pushSubscribe: { limit: 20, windowMs: 60_000, bucket: "push" },
+    /** Verification codes: tighter than the rest, since each send costs money. */
+    otp: { limit: 5, windowMs: 300_000, bucket: "otp" },
 } as const satisfies Record<string, RateLimitOptions>;

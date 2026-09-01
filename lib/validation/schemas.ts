@@ -251,6 +251,9 @@ export const organizationCreateSchema = z.object({
     contactEmail: emailSchema.optional().or(z.literal("")),
     contactPhone: phoneSchema.optional().or(z.literal("")),
     address: z.string().trim().max(512).optional().or(z.literal("")),
+    // Standardised location, matching how donors and requests record area.
+    district: z.string().trim().max(128).optional().or(z.literal("")),
+    upazila: z.string().trim().max(128).optional().or(z.literal("")),
 });
 
 export const organizationUpdateSchema = organizationCreateSchema.partial().extend({
@@ -275,6 +278,17 @@ export const feedbackQuerySchema = z.object({
     orgSlug: slugSchema.optional(),
     status: feedbackStatusSchema.optional(),
     category: feedbackCategorySchema.optional(),
+});
+
+/* --------------------------------------------------------------------- otp */
+
+export const otpSendSchema = z.object({
+    phone: phoneSchema,
+});
+
+export const otpVerifySchema = z.object({
+    phone: phoneSchema,
+    code: z.string().trim().regex(/^\d{6}$/, "Enter the 6-digit code"),
 });
 
 /* -------------------------------------------------------------------- push */

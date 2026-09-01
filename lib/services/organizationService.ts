@@ -24,6 +24,8 @@ export async function createOrganization(
         contactEmail: input.contactEmail || null,
         contactPhone: input.contactPhone || null,
         address: input.address || null,
+        district: input.district || null,
+        upazila: input.upazila || null,
         isActive: true,
         isVerified: false,
     });
@@ -54,6 +56,8 @@ export async function updateOrganization(
         "contactEmail",
         "contactPhone",
         "address",
+        "district",
+        "upazila",
         "isActive",
     ]) as Partial<OrganizationRow>;
 
