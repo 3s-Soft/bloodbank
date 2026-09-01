@@ -196,6 +196,171 @@ async function clearTables() {
     await db.delete(organizations);
 }
 
+/**
+ * Seeds one organization: its admin, donors, requests, donations and events.
+ *
+ * Extracted so `seed()` reads as the shape of the dataset rather than every
+ * detail of it.
+ */
+async function seedOrganization(
+    org: { id: number; name: string; slug: string },
+    definition: (typeof ORGANIZATIONS)[number],
+    passwordHash: string,
+) {
+    console.log(`\n  ${org.name}`);
+
+    const [adminResult] = await db.insert(users).values({
+        name: `${org.name.split(" ")[0]} Admin`,
+        phone: definition.adminPhone,
+        email: `admin@${org.slug}.org`,
+        password: passwordHash,
+        role: UserRole.ADMIN,
+        organizationId: org.id,
+        onboardingCompleted: true,
+        notificationPreferences: DEFAULT_NOTIFICATION_PREFERENCES,
+    });
+    const adminId = Number(adminResult.insertId);
+    console.log(`    admin: ${definition.adminPhone}`);
+
+    /* donors */
+    const donorCount = 15 + Math.floor(random() * 11);
+    const donorProfileIds: number[] = [];
+
+    for (let i = 0; i < donorCount; i += 1) {
+        const district = pick(DISTRICTS);
+        const bloodGroup = pick(BLOOD_GROUPS);
+        const isVerified = random() > 0.3;
+        const totalDonations = Math.floor(random() * 12);
+        const hasDonated = totalDonations > 0;
+
+        const [userResult] = await db.insert(users).values({
+            name: `${pick(FIRST_NAMES)} ${pick(LAST_NAMES)}`,
+            phone: nextPhone(),
+            password: passwordHash,
+            role: UserRole.DONOR,
+            organizationId: org.id,
+            onboardingCompleted: true,
+            notificationPreferences: DEFAULT_NOTIFICATION_PREFERENCES,
+        });
+        const userId = Number(userResult.insertId);
+
+        const [profileResult] = await db.insert(donorProfiles).values({
+            userId,
+            organizationId: org.id,
+            bloodGroup,
+            district: district.name,
+            upazila: pick(district.upazilas),
+            village: pick(VILLAGES),
+            lastDonationDate: hasDonated ? daysAgo(180) : null,
+            totalDonations,
+            points: calculatePoints(totalDonations, isVerified, true, true),
+            badges: calculateBadges(totalDonations, isVerified),
+            isAvailable: random() > 0.2,
+            isVerified,
+        });
+        donorProfileIds.push(Number(profileResult.insertId));
+    }
+    console.log(`    donors: ${donorCount}`);
+
+    /* blood requests */
+    const requestCount = 5 + Math.floor(random() * 5);
+    for (let i = 0; i < requestCount; i += 1) {
+        const district = pick(DISTRICTS);
+        const roll = random();
+        const status =
+            roll > 0.6
+                ? RequestStatus.PENDING
+                : roll > 0.25
+                  ? RequestStatus.FULFILLED
+                  : RequestStatus.CANCELED;
+        const urgencyRoll = random();
+        const urgency =
+            urgencyRoll > 0.7
+                ? UrgencyLevel.EMERGENCY
+                : urgencyRoll > 0.4
+                  ? UrgencyLevel.URGENT
+                  : UrgencyLevel.NORMAL;
+
+        await db.insert(bloodRequests).values({
+            patientName: pick(PATIENT_NAMES),
+            bloodGroup: pick(BLOOD_GROUPS),
+            location: `${pick(VILLAGES)} Bazar`,
+            district: district.name,
+            upazila: pick(district.upazilas),
+            urgency,
+            requiredDate: daysAhead(14),
+            contactNumber: nextPhone(),
+            additionalNotes: "Seeded demo request.",
+            status,
+            organizationId: org.id,
+            createdAt: daysAgo(30),
+        });
+    }
+    console.log(`    blood requests: ${requestCount}`);
+
+    /* donations against the first few donors, with matching audit entries */
+    const donationCount = Math.min(4, donorProfileIds.length);
+    for (let i = 0; i < donationCount; i += 1) {
+        const donorProfileId = donorProfileIds[i];
+        const [profile] = await db
+            .select()
+            .from(donorProfiles)
+            .where(eq(donorProfiles.id, donorProfileId));
+
+        await db.insert(donations).values({
+            donorProfileId,
+            organizationId: org.id,
+            bloodGroup: profile.bloodGroup,
+            donationDate: daysAgo(90),
+            location: `${org.name} Center`,
+            recipientName: pick(PATIENT_NAMES),
+            notes: "Seeded demo donation.",
+            pointsAwarded: POINTS.DONATION,
+        });
+
+        await db.insert(auditLogs).values({
+            action: AuditAction.DONATION_RECORDED,
+            performedById: adminId,
+            organizationId: org.id,
+            targetType: "DonorProfile",
+            targetId: donorProfileId,
+            details: "Seeded donation record.",
+        });
+    }
+    console.log(`    donations: ${donationCount}`);
+
+    /* events */
+    await db.insert(events).values([
+        {
+            title: `${org.name} Monthly Blood Drive`,
+            description: "Open blood donation camp for the local community.",
+            date: daysAhead(21),
+            location: `${org.name} Center`,
+            district: "Dhaka",
+            upazila: "Savar",
+            organizationId: org.id,
+            createdById: adminId,
+            maxParticipants: 100,
+            contactNumber: definition.contactPhone,
+            status: EventStatus.UPCOMING,
+        },
+        {
+            title: "Donor Awareness Session",
+            description: "Session on donation eligibility and safety.",
+            date: daysAgo(20),
+            location: "Community Hall",
+            district: "Dhaka",
+            upazila: "Dhamrai",
+            organizationId: org.id,
+            createdById: adminId,
+            maxParticipants: 50,
+            contactNumber: definition.contactPhone,
+            status: EventStatus.COMPLETED,
+        },
+    ]);
+    console.log("    events: 2");
+}
+
 async function seed() {
     console.log("Seeding database...\n");
 
@@ -235,159 +400,7 @@ async function seed() {
 
     /* ------------------------------------------------- per-organization data */
     for (const [index, org] of orgIds.entries()) {
-        const definition = ORGANIZATIONS[index];
-        console.log(`\n  ${org.name}`);
-
-        const [adminResult] = await db.insert(users).values({
-            name: `${org.name.split(" ")[0]} Admin`,
-            phone: definition.adminPhone,
-            email: `admin@${org.slug}.org`,
-            password: passwordHash,
-            role: UserRole.ADMIN,
-            organizationId: org.id,
-            onboardingCompleted: true,
-            notificationPreferences: DEFAULT_NOTIFICATION_PREFERENCES,
-        });
-        const adminId = Number(adminResult.insertId);
-        console.log(`    admin: ${definition.adminPhone}`);
-
-        /* donors */
-        const donorCount = 15 + Math.floor(random() * 11);
-        const donorProfileIds: number[] = [];
-
-        for (let i = 0; i < donorCount; i += 1) {
-            const district = pick(DISTRICTS);
-            const bloodGroup = pick(BLOOD_GROUPS);
-            const isVerified = random() > 0.3;
-            const totalDonations = Math.floor(random() * 12);
-            const hasDonated = totalDonations > 0;
-
-            const [userResult] = await db.insert(users).values({
-                name: `${pick(FIRST_NAMES)} ${pick(LAST_NAMES)}`,
-                phone: nextPhone(),
-                password: passwordHash,
-                role: UserRole.DONOR,
-                organizationId: org.id,
-                onboardingCompleted: true,
-                notificationPreferences: DEFAULT_NOTIFICATION_PREFERENCES,
-            });
-            const userId = Number(userResult.insertId);
-
-            const [profileResult] = await db.insert(donorProfiles).values({
-                userId,
-                organizationId: org.id,
-                bloodGroup,
-                district: district.name,
-                upazila: pick(district.upazilas),
-                village: pick(VILLAGES),
-                lastDonationDate: hasDonated ? daysAgo(180) : null,
-                totalDonations,
-                points: calculatePoints(totalDonations, isVerified, true, true),
-                badges: calculateBadges(totalDonations, isVerified),
-                isAvailable: random() > 0.2,
-                isVerified,
-            });
-            donorProfileIds.push(Number(profileResult.insertId));
-        }
-        console.log(`    donors: ${donorCount}`);
-
-        /* blood requests */
-        const requestCount = 5 + Math.floor(random() * 5);
-        for (let i = 0; i < requestCount; i += 1) {
-            const district = pick(DISTRICTS);
-            const roll = random();
-            const status =
-                roll > 0.6
-                    ? RequestStatus.PENDING
-                    : roll > 0.25
-                      ? RequestStatus.FULFILLED
-                      : RequestStatus.CANCELED;
-            const urgencyRoll = random();
-            const urgency =
-                urgencyRoll > 0.7
-                    ? UrgencyLevel.EMERGENCY
-                    : urgencyRoll > 0.4
-                      ? UrgencyLevel.URGENT
-                      : UrgencyLevel.NORMAL;
-
-            await db.insert(bloodRequests).values({
-                patientName: pick(PATIENT_NAMES),
-                bloodGroup: pick(BLOOD_GROUPS),
-                location: `${pick(VILLAGES)} Bazar`,
-                district: district.name,
-                upazila: pick(district.upazilas),
-                urgency,
-                requiredDate: daysAhead(14),
-                contactNumber: nextPhone(),
-                additionalNotes: "Seeded demo request.",
-                status,
-                organizationId: org.id,
-                createdAt: daysAgo(30),
-            });
-        }
-        console.log(`    blood requests: ${requestCount}`);
-
-        /* donations against the first few donors, with matching audit entries */
-        const donationCount = Math.min(4, donorProfileIds.length);
-        for (let i = 0; i < donationCount; i += 1) {
-            const donorProfileId = donorProfileIds[i];
-            const [profile] = await db
-                .select()
-                .from(donorProfiles)
-                .where(eq(donorProfiles.id, donorProfileId));
-
-            await db.insert(donations).values({
-                donorProfileId,
-                organizationId: org.id,
-                bloodGroup: profile.bloodGroup,
-                donationDate: daysAgo(90),
-                location: `${org.name} Center`,
-                recipientName: pick(PATIENT_NAMES),
-                notes: "Seeded demo donation.",
-                pointsAwarded: POINTS.DONATION,
-            });
-
-            await db.insert(auditLogs).values({
-                action: AuditAction.DONATION_RECORDED,
-                performedById: adminId,
-                organizationId: org.id,
-                targetType: "DonorProfile",
-                targetId: donorProfileId,
-                details: "Seeded donation record.",
-            });
-        }
-        console.log(`    donations: ${donationCount}`);
-
-        /* events */
-        await db.insert(events).values([
-            {
-                title: `${org.name} Monthly Blood Drive`,
-                description: "Open blood donation camp for the local community.",
-                date: daysAhead(21),
-                location: `${org.name} Center`,
-                district: "Dhaka",
-                upazila: "Savar",
-                organizationId: org.id,
-                createdById: adminId,
-                maxParticipants: 100,
-                contactNumber: definition.contactPhone,
-                status: EventStatus.UPCOMING,
-            },
-            {
-                title: "Donor Awareness Session",
-                description: "Session on donation eligibility and safety.",
-                date: daysAgo(20),
-                location: "Community Hall",
-                district: "Dhaka",
-                upazila: "Dhamrai",
-                organizationId: org.id,
-                createdById: adminId,
-                maxParticipants: 50,
-                contactNumber: definition.contactPhone,
-                status: EventStatus.COMPLETED,
-            },
-        ]);
-        console.log("    events: 2");
+        await seedOrganization(org, ORGANIZATIONS[index], passwordHash);
     }
 
     /* platform feedback */
