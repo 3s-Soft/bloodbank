@@ -1,5 +1,16 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { Droplet } from "lucide-react";
+
+/**
+ * The super-admin panel. `robots.txt` disallows /admin and `proxy.ts` gates it
+ * behind a session, but a page-level noindex is the control that survives an
+ * inbound link from somewhere that never read robots.txt.
+ */
+export const metadata: Metadata = {
+    title: "Admin",
+    robots: { index: false, follow: false, nocache: true },
+};
 
 export default function AdminLayout({
     children,

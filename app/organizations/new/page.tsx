@@ -153,7 +153,7 @@ export default function RequestOrganizationPage() {
                         <div className="mx-auto w-16 h-16 rounded-2xl bg-red-500/10 flex items-center justify-center mb-4 border border-red-500/20">
                             <Building2 className="w-8 h-8 text-red-500" />
                         </div>
-                        <CardTitle className="text-3xl font-black text-white">
+                        <CardTitle as="h1" className="text-3xl font-black text-white">
                             Request a Blood Bank
                         </CardTitle>
                         <p className="text-slate-400 font-medium mt-2">

@@ -147,7 +147,7 @@ export default function DonorRegistration() {
                         >
                             <Droplet className="w-8 h-8 text-red-500 fill-current group-hover:scale-110 transition-transform" />
                         </Link>
-                        <CardTitle className="text-3xl font-black text-white tracking-tight">
+                        <CardTitle as="h1" className="text-3xl font-black text-white tracking-tight">
                             Become a Life Saver
                         </CardTitle>
                         <p className="text-slate-400 font-medium">

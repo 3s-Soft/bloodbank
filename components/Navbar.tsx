@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useSession, signOut } from "next-auth/react";
 import { Button } from "./ui/button";
 import { Menu, X } from "lucide-react";
@@ -24,9 +25,12 @@ export default function Navbar() {
                 {/* Logo */}
                 <Link href={`/${orgSlug}`} className="flex items-center space-x-3 group">
                     <div className="relative w-10 h-10 overflow-hidden rounded-xl transition-all group-hover:scale-105">
-                        <img
+                        <Image
                             src="/assets/logo.png"
-                            alt="Bangladesh Bloodbank Logo"
+                            alt={`${organization.name} logo`}
+                            width={40}
+                            height={40}
+                            priority
                             className="w-full h-full object-cover"
                         />
                     </div>

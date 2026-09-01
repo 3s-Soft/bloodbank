@@ -10,9 +10,18 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import LandingNav from "@/components/LandingNav";
+import JsonLd from "@/components/JsonLd";
 import * as organizationsRepo from "@/lib/repositories/organizations";
+import { itemListJsonLd } from "@/lib/seo";
 
-export const dynamic = "force-dynamic";
+/**
+ * Was `force-dynamic`, which meant every crawler hit and every visitor paid a
+ * public-internet round trip to MySQL before the first byte. The organization
+ * list changes a few times a month; five minutes of caching costs nothing in
+ * freshness and takes the database off the critical path for the page search
+ * engines fetch most often.
+ */
+export const revalidate = 300;
 
 async function getOrganizations() {
   return organizationsRepo.listActive();
@@ -23,6 +32,18 @@ export default async function Home() {
 
   return (
     <div className="flex flex-col min-h-screen bg-slate-950">
+      {/* The network of blood banks is the page's substance; listing it as
+          structured data is what lets a search engine understand the homepage
+          as a directory rather than a marketing page. */}
+      <JsonLd
+        data={itemListJsonLd(
+          "Blood banks on the Bangladesh Blood Bank network",
+          organizations
+            .filter((org) => org.isVerified)
+            .map((org) => ({ name: org.name, path: `/${org.slug}` })),
+        )}
+      />
+
       {/* ===== NAVIGATION ===== */}
       <LandingNav />
 
