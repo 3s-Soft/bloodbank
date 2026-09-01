@@ -9,9 +9,9 @@ import {
   Activity,
 } from "lucide-react";
 import Link from "next/link";
-import Image from "next/image";
 import LandingNav from "@/components/LandingNav";
 import JsonLd from "@/components/JsonLd";
+import BrandLogo from "@/components/BrandLogo";
 import * as organizationsRepo from "@/lib/repositories/organizations";
 import { itemListJsonLd } from "@/lib/seo";
 import { BRAND } from "@/lib/config/brand";
@@ -244,21 +244,7 @@ export default async function Home() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-12 mb-12">
             {/* Branding */}
             <div className="space-y-6">
-              <div className="flex items-center space-x-2.5">
-                <div className="relative w-9 h-9 rounded-xl overflow-hidden">
-                  <Image
-                    src="/assets/logo-mark.png"
-                    alt={`${BRAND.name} logo`}
-                    width={36}
-                    height={36}
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-                <span className="text-xl font-black text-white tracking-tight">
-                  Bangladesh <span className="text-red-500">Blood</span>
-                  <span className="text-emerald-500"> Bank</span>
-                </span>
-              </div>
+              <BrandLogo size="md" />
               <p className="text-sm text-slate-400 leading-relaxed max-w-sm font-medium">
                 A professional, non-profit collective initiative to unify blood donation across Bangladesh.
                 Connecting donors with patients — quickly, reliably, and free.

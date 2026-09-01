@@ -21,11 +21,15 @@ at 32px:
 extract({ left: 272, top: 95, width: 716, height: 675 })
 ```
 
+The emblem is then inset by about 6% of the final size before padding out to
+square. It is a circle, and sized edge-to-edge it gets clipped by the
+`rounded-xl` corner of the container it sits in.
+
 The generated set is:
 
 | Path | Source | Notes |
 |---|---|---|
-| `public/assets/logo-mark.png` | emblem | 512×512. Navbar, footers, page headers. |
+| `public/assets/logo-mark.png` | emblem | 512×512. Rendered through `components/BrandLogo.tsx`, which is the only place any header or footer should draw the lockup. |
 | `public/assets/logo.png` | full lockup | 400×400. |
 | `public/assets/favicon.png` | emblem | 64×64. |
 | `public/assets/og-image.jpg` | full lockup | 1200×630, the ratio Facebook and X crop to. |

@@ -13,6 +13,8 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import DocSearch from "@/components/DocSearch";
 import JsonLd from "@/components/JsonLd";
+import BrandLogo from "@/components/BrandLogo";
+import { BRAND } from "@/lib/config/brand";
 import { breadcrumbJsonLd, buildMetadata } from "@/lib/seo";
 
 /**
@@ -81,13 +83,8 @@ export default async function GlobalDocs({
             <header className="sticky top-0 z-50 bg-slate-900/80 backdrop-blur-xl border-b border-white/5 h-20">
                 <div className="container mx-auto px-4 h-full flex items-center justify-between">
                     <div className="flex items-center gap-6">
-                        <Link href="/" className="flex items-center space-x-2.5 group hover:opacity-80 transition-opacity">
-                            <div className="relative w-9 h-9 rounded-xl bg-gradient-to-br from-red-500 to-red-600 flex items-center justify-center shadow-lg shadow-red-500/20">
-                                <Droplet className="w-5 h-5 text-white fill-current" />
-                            </div>
-                            <span className="text-xl font-black text-white tracking-tight">
-                                Blood<span className="text-red-500">Bank</span>
-                            </span>
+                        <Link href="/" className="group hover:opacity-80 transition-opacity">
+                            <BrandLogo size="md" priority />
                         </Link>
                         <div className="h-6 w-px bg-slate-800 hidden sm:block" />
                         <div className="hidden sm:flex items-center gap-2 text-slate-400 font-bold text-sm tracking-tight">
@@ -342,9 +339,11 @@ export default async function GlobalDocs({
             {/* Platform Footer */}
             <footer className="py-12 border-t border-white/5 bg-slate-950">
                 <div className="container mx-auto px-4 text-center">
-                    <div className="flex items-center justify-center gap-3 mb-8">
-                        <Droplet className="w-5 h-5 text-slate-600" />
-                        <span className="text-[10px] font-black text-slate-600 uppercase tracking-[0.5em]">Bangladesh Blood Bank Infrastructure</span>
+                    <div className="flex flex-col items-center gap-4 mb-8">
+                        <BrandLogo size="sm" />
+                        <span className="text-[10px] font-black text-slate-600 uppercase tracking-[0.4em]">
+                            A project by {BRAND.vendor.name}
+                        </span>
                     </div>
                     <div className="flex flex-wrap justify-center gap-8 text-[10px] font-black text-slate-500 uppercase tracking-widest">
                         <Link href="/" className="hover:text-white transition-colors">Home Page</Link>

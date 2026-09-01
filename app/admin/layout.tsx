@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Droplet } from "lucide-react";
-
+import BrandLogo from "@/components/BrandLogo";
 import { BRAND } from "@/lib/config/brand";
 
 /**
@@ -24,15 +23,8 @@ export default function AdminLayout({
             {/* Admin Navbar */}
             <nav className="sticky top-0 z-50 w-full border-b border-neutral-200 bg-neutral-900">
                 <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-                    <Link href="/admin" className="flex items-center space-x-2 group">
-                        <div className="bg-red-600 p-1.5 rounded-lg">
-                            <Droplet className="w-6 h-6 text-white fill-current" />
-                        </div>
-                        <span className="text-xl font-bold text-white tracking-tight">
-                            Bangladesh <span className="text-red-500">Blood</span>
-                            <span className="text-emerald-500"> Bank</span>
-                            <span className="text-neutral-400 text-sm ml-2">Admin</span>
-                        </span>
+                    <Link href="/admin" className="group">
+                        <BrandLogo size="md" suffix="Admin" priority />
                     </Link>
 
                     <div className="flex items-center space-x-6">

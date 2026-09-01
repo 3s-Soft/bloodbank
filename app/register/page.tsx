@@ -1,10 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import Image from "next/image";
 import { ArrowLeft, ArrowRight, Building2, Droplet, MapPin, Shield } from "lucide-react";
 
+import BrandLogo from "@/components/BrandLogo";
 import JsonLd from "@/components/JsonLd";
-import { BRAND } from "@/lib/config/brand";
 import * as organizationsRepo from "@/lib/repositories/organizations";
 import { breadcrumbJsonLd, buildMetadata, itemListJsonLd } from "@/lib/seo";
 
@@ -62,20 +61,8 @@ export default async function ChooseOrganizationToRegister() {
 
             <header className="border-b border-white/5 bg-slate-900/50">
                 <div className="container mx-auto px-4 h-20 flex items-center justify-between max-w-5xl">
-                    <Link href="/" className="flex items-center gap-3">
-                        <div className="relative w-10 h-10 rounded-xl overflow-hidden">
-                            <Image
-                                src="/assets/logo-mark.png"
-                                alt={`${BRAND.name} logo`}
-                                width={40}
-                                height={40}
-                                className="w-full h-full object-cover"
-                            />
-                        </div>
-                        <span className="text-lg font-black text-white tracking-tight">
-                            Bangladesh <span className="text-red-500">Blood</span>
-                            <span className="text-emerald-500"> Bank</span>
-                        </span>
+                    <Link href="/" className="group">
+                        <BrandLogo size="lg" priority />
                     </Link>
                     <Link
                         href="/"
