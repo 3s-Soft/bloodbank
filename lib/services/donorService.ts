@@ -7,6 +7,7 @@ import { calculateBadges, calculatePoints } from "@/lib/gamification";
 import * as donorProfilesRepo from "@/lib/repositories/donorProfiles";
 import { auditLogsRepo } from "@/lib/repositories/misc";
 import * as usersRepo from "@/lib/repositories/users";
+import { hasRecentVerification, isOtpRequired } from "./otpService";
 import type { DonorRegistrationInput } from "@/lib/validation/schemas";
 
 /**
@@ -23,6 +24,14 @@ export async function registerDonor(
 ): Promise<{ userId: number; created: boolean }> {
     const phone = input.phone?.trim() || null;
     const email = input.email?.trim().toLowerCase() || null;
+
+    // Verification is checked here rather than trusted from the request: a
+    // client-supplied "verified" flag would make the OTP flow decorative.
+    // Only enforced when an SMS gateway is actually configured and enabled,
+    // so deployments without one keep registering donors as before.
+    if (phone && isOtpRequired() && !(await hasRecentVerification(phone))) {
+        throw new HttpError(403, "Verify your phone number before registering.");
+    }
 
     return db.transaction(async (tx) => {
         const existing = await usersRepo.findByPhoneOrEmail(phone, email, tx);

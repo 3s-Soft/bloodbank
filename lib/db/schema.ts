@@ -48,6 +48,11 @@ export const organizations = mysqlTable(
         contactEmail: varchar("contact_email", { length: 191 }),
         contactPhone: varchar("contact_phone", { length: 32 }),
         address: varchar("address", { length: 512 }),
+        // Standardised against lib/data/locations.ts rather than free text, so
+        // organizations can be filtered and grouped by area consistently with
+        // donors and requests.
+        district: varchar("district", { length: 128 }),
+        upazila: varchar("upazila", { length: 128 }),
         isActive: boolean("is_active").notNull().default(true),
         isVerified: boolean("is_verified").notNull().default(false),
         createdAt: createdAt(),
@@ -273,6 +278,31 @@ export const feedback = mysqlTable(
     (table) => [
         index("feedback_org_status_idx").on(table.organizationId, table.status),
         index("feedback_category_idx").on(table.category),
+    ],
+);
+
+/**
+ * One-time codes for phone verification.
+ *
+ * The code is stored as a bcrypt hash, never in plain text: this table holds
+ * the only thing standing between a phone number and an account, and it sits in
+ * a database reachable over the public internet.
+ */
+export const phoneVerifications = mysqlTable(
+    "phone_verifications",
+    {
+        id: int("id", { unsigned: true }).autoincrement().primaryKey(),
+        phone: varchar("phone", { length: 32 }).notNull(),
+        codeHash: varchar("code_hash", { length: 255 }).notNull(),
+        expiresAt: timestamp("expires_at").notNull(),
+        // Capped so a code cannot be brute-forced within its lifetime.
+        attempts: int("attempts", { unsigned: true }).notNull().default(0),
+        consumedAt: timestamp("consumed_at"),
+        createdAt: createdAt(),
+    },
+    (table) => [
+        index("phone_verifications_phone_idx").on(table.phone),
+        index("phone_verifications_expires_idx").on(table.expiresAt),
     ],
 );
 

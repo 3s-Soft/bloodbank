@@ -24,6 +24,8 @@ const organizationSchema = z.object({
     contactEmail: z.string().email("Must be a valid email").optional().or(z.literal("")),
     contactPhone: z.string().optional(),
     address: z.string().optional(),
+    district: z.string().optional(),
+    upazila: z.string().optional(),
 });
 
 type OrganizationFormValues = z.infer<typeof organizationSchema>;

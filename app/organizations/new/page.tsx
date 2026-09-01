@@ -1,5 +1,7 @@
 "use client";
 
+import { LocationSelect } from "@/components/ui/location-select";
+
 import { apiPost } from "@/lib/api/client";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -23,6 +25,8 @@ const organizationSchema = z.object({
     contactEmail: z.string().email("Must be a valid email").optional().or(z.literal("")),
     contactPhone: z.string().optional(),
     address: z.string().optional(),
+    district: z.string().min(1, "District is required"),
+    upazila: z.string().min(1, "Upazila is required"),
 });
 
 type OrganizationFormValues = z.infer<typeof organizationSchema>;
@@ -42,6 +46,10 @@ export default function RequestOrganizationPage() {
         trigger,
     } = useForm<OrganizationFormValues>({
         resolver: zodResolver(organizationSchema),
+        // district and upazila come from LocationSelect rather than a registered
+        // input; without defaults they are undefined and Zod reports a type
+        // error instead of "District is required".
+        defaultValues: { district: "", upazila: "" },
     });
 
     const name = watch("name");
@@ -187,6 +195,41 @@ export default function RequestOrganizationPage() {
                                 {...register("contactPhone")}
                                 error={errors.contactPhone?.message}
                             />
+
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label className="text-sm font-medium text-slate-300 ml-1 block mb-2">
+                                        District
+                                    </label>
+                                    <LocationSelect
+                                        type="district"
+                                        value={watch("district") || ""}
+                                        onChange={(value) => {
+                                            setValue("district", value, { shouldValidate: true });
+                                            // Upazilas depend on the district, so a
+                                            // stale selection must not survive.
+                                            setValue("upazila", "", { shouldValidate: false });
+                                        }}
+                                        error={errors.district?.message}
+                                    />
+                                </div>
+                                <div>
+                                    <label className="text-sm font-medium text-slate-300 ml-1 block mb-2">
+                                        Upazila
+                                    </label>
+                                    <LocationSelect
+                                        type="upazila"
+                                        district={watch("district")}
+                                        value={watch("upazila") || ""}
+                                        onChange={(value) =>
+                                            setValue("upazila", value, { shouldValidate: true })
+                                        }
+                                        error={errors.upazila?.message}
+                                        disabled={!watch("district")}
+                                    />
+                                </div>
+                            </div>
 
                             <div>
                                 <label className="text-sm font-medium text-slate-300 ml-1 block mb-2">
