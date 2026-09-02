@@ -1,4 +1,4 @@
-# Rural Blood Bank 🩸
+# Bangladesh Blood Bank 🩸
 
 A community-powered, multi-tenant blood donation platform connecting blood donors with patients in rural areas of Bangladesh. Built with modern web technologies and designed for organizations to manage their own blood bank networks.
 

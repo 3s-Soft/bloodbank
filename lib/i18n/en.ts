@@ -32,7 +32,7 @@ export const en = {
     // Home Page
     home: {
         heroTitle: "Every Drop Saves a Life",
-        heroSubtitle: "Welcome to Bangladesh Bloodbank. Connect with verified donors across the country in seconds.",
+        heroSubtitle: "Welcome to Bangladesh Blood Bank. Connect with verified donors across the country in seconds.",
         findDonor: "Find a Donor",
         requestBlood: "Request Blood Now",
         statsTitle: "Our Nationwide Impact",
@@ -162,8 +162,10 @@ export const en = {
         contactUs: "Contact support",
         privacyPolicy: "Data privacy",
         termsOfService: "Platform terms",
-        allRightsReserved: "Bangladesh Bloodbank. All rights reserved",
+        allRightsReserved: "All rights reserved",
         nonprofit: "A professional, non-profit collective initiative to unify blood donation across Bangladesh.",
+        cookiePolicy: "Cookies",
+        builtBy: "A project by",
     },
 };
 

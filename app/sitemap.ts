@@ -19,8 +19,9 @@ export const revalidate = 3600;
  * Deliberately excluded:
  *   - `donors/[donorId]`, which carries a person's name and phone number
  *   - `requests/new` and `feedback`, which are forms with nothing to index
- *   - `docs`, `privacy` and `terms`, which are identical for every tenant and
- *     would otherwise be duplicated once per organization
+ *   - `docs`, `privacy` and `terms`, which are identical for every tenant. The
+ *     platform copies of those are listed below instead, and the tenant copies
+ *     canonicalise to them.
  */
 const ORG_PAGES = [
     { path: "", priority: 0.9, changeFrequency: "daily" as const },
@@ -49,6 +50,45 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
             lastModified: now,
             changeFrequency: "monthly",
             priority: 0.4,
+        },
+        {
+            url: `${base}/register`,
+            lastModified: now,
+            changeFrequency: "weekly",
+            priority: 0.8,
+        },
+        {
+            url: `${base}/about`,
+            lastModified: now,
+            changeFrequency: "monthly",
+            priority: 0.6,
+        },
+        {
+            url: `${base}/contact`,
+            lastModified: now,
+            changeFrequency: "monthly",
+            priority: 0.5,
+        },
+        // The platform policies. These are the canonical target for the
+        // per-tenant copies, so they belong here even though nobody searches
+        // for them directly.
+        {
+            url: `${base}/privacy`,
+            lastModified: now,
+            changeFrequency: "yearly",
+            priority: 0.3,
+        },
+        {
+            url: `${base}/terms`,
+            lastModified: now,
+            changeFrequency: "yearly",
+            priority: 0.3,
+        },
+        {
+            url: `${base}/cookies`,
+            lastModified: now,
+            changeFrequency: "yearly",
+            priority: 0.2,
         },
     ];
 

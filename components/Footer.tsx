@@ -5,6 +5,7 @@ import { useOrganization } from "@/lib/context/OrganizationContext";
 import Link from "next/link";
 import { useLanguage } from "@/lib/i18n";
 import { APP_VERSION_STRING } from "@/lib/config/version";
+import { BRAND } from "@/lib/config/brand";
 
 export default function Footer() {
     const organization = useOrganization();
@@ -18,7 +19,7 @@ export default function Footer() {
                     <div className="space-y-6">
                         <div className="flex items-center space-x-3">
                             <div className="w-8 h-8 rounded-lg overflow-hidden grayscale opacity-50">
-                                <Image src="/assets/logo.png" alt="Bangladesh Blood Bank logo" className="w-full h-full object-cover" width={40} height={40} />
+                                <Image src="/assets/logo-mark.png" alt={`${BRAND.name} logo`} className="w-full h-full object-cover" width={40} height={40} />
                             </div>
                             <h3 className="text-xl font-bold text-white tracking-tight">{organization.name}</h3>
                         </div>
@@ -46,19 +47,27 @@ export default function Footer() {
                             {organization.contactEmail || "Connecting life-savers across Bangladesh."}
                         </p>
                         <div className="pt-2 text-[10px] font-black uppercase tracking-widest text-slate-600 flex items-center justify-between">
-                            <span>Powered by Bangladesh Bloodbank</span>
+                            <span>Powered by {BRAND.name}</span>
                             <span className="bg-slate-800/50 px-2 py-0.5 rounded-full text-slate-400">{APP_VERSION_STRING}</span>
                         </div>
                     </div>
                 </div>
 
                 <div className="pt-12 border-t border-slate-800 flex flex-col md:flex-row justify-between items-center gap-6">
-                    <p className="text-xs text-slate-500 font-medium">
-                        © {new Date().getFullYear()} {organization.name}. {t.footer.allRightsReserved}.
-                    </p>
-                    <div className="flex space-x-6 text-xs font-bold text-slate-500 uppercase tracking-widest">
-                        <Link href={`/${orgSlug}/privacy`} className="hover:text-white transition-colors">{t.footer.privacyPolicy}</Link>
-                        <Link href={`/${orgSlug}/terms`} className="hover:text-white transition-colors">{t.footer.termsOfService}</Link>
+                    <div className="text-center md:text-left space-y-1">
+                        <p className="text-xs text-slate-500 font-medium">
+                            © {new Date().getFullYear()} {organization.name}. {t.footer.allRightsReserved}.
+                        </p>
+                        <p className="text-xs text-slate-600 font-medium">
+                            {t.footer.builtBy} <span className="text-slate-400 font-bold">{BRAND.vendor.name}</span>
+                        </p>
+                    </div>
+                    <div className="flex flex-wrap justify-center gap-x-6 gap-y-2 text-xs font-bold text-slate-500 uppercase tracking-widest">
+                        <Link href="/about" className="hover:text-white transition-colors">{t.footer.aboutUs}</Link>
+                        <Link href="/contact" className="hover:text-white transition-colors">{t.footer.contactUs}</Link>
+                        <Link href="/privacy" className="hover:text-white transition-colors">{t.footer.privacyPolicy}</Link>
+                        <Link href="/terms" className="hover:text-white transition-colors">{t.footer.termsOfService}</Link>
+                        <Link href="/cookies" className="hover:text-white transition-colors">{t.footer.cookiePolicy}</Link>
                     </div>
                 </div>
             </div>

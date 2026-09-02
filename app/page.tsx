@@ -11,8 +11,10 @@ import {
 import Link from "next/link";
 import LandingNav from "@/components/LandingNav";
 import JsonLd from "@/components/JsonLd";
+import BrandLogo from "@/components/BrandLogo";
 import * as organizationsRepo from "@/lib/repositories/organizations";
 import { itemListJsonLd } from "@/lib/seo";
+import { BRAND } from "@/lib/config/brand";
 
 /**
  * Was `force-dynamic`, which meant every crawler hit and every visitor paid a
@@ -217,7 +219,7 @@ export default async function Home() {
 
               <div className="flex flex-col sm:flex-row justify-center gap-4">
                 <Link
-                  href="/login"
+                  href="/register"
                   className="h-14 px-10 rounded-2xl bg-red-500 text-white text-base font-bold hover:bg-red-600 transition-all shadow-2xl shadow-red-500/20 flex items-center justify-center gap-2"
                 >
                   <Heart className="w-5 h-5 fill-current" />
@@ -242,14 +244,7 @@ export default async function Home() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-12 mb-12">
             {/* Branding */}
             <div className="space-y-6">
-              <div className="flex items-center space-x-2.5">
-                <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-red-500 to-red-600 flex items-center justify-center shadow-lg shadow-red-500/20">
-                  <Droplet className="w-5 h-5 text-white fill-current" />
-                </div>
-                <span className="text-xl font-black text-white tracking-tight">
-                  Blood<span className="text-red-500">Bank</span>
-                </span>
-              </div>
+              <BrandLogo size="md" />
               <p className="text-sm text-slate-400 leading-relaxed max-w-sm font-medium">
                 A professional, non-profit collective initiative to unify blood donation across Bangladesh.
                 Connecting donors with patients — quickly, reliably, and free.
@@ -262,8 +257,11 @@ export default async function Home() {
               <ul className="space-y-3 text-sm font-bold">
                 <li><Link href="#organizations" className="text-slate-400 hover:text-white transition-colors">Find Blood Banks</Link></li>
                 <li><Link href="/docs" className="text-slate-400 hover:text-white transition-colors">Documentation</Link></li>
+                <li><Link href="/register" className="text-slate-400 hover:text-white transition-colors">Become a Donor</Link></li>
+                <li><Link href="/about" className="text-slate-400 hover:text-white transition-colors">About Us</Link></li>
+                <li><Link href="/contact" className="text-slate-400 hover:text-white transition-colors">Contact</Link></li>
                 <li><Link href="/login" className="text-slate-400 hover:text-white transition-colors">Login</Link></li>
-                <li><Link href="/organizations/new" className="text-slate-400 hover:text-white transition-colors">Request Organization</Link></li>
+                <li><Link href="/organizations/new" className="text-slate-400 hover:text-white transition-colors">List Your Blood Bank</Link></li>
               </ul>
             </div>
 
@@ -280,12 +278,18 @@ export default async function Home() {
           </div>
 
           <div className="pt-12 border-t border-slate-800 flex flex-col md:flex-row justify-between items-center gap-6">
-            <p className="text-xs text-slate-500 font-bold">
-              © {new Date().getFullYear()} Bangladesh Blood Bank.
-            </p>
-            <div className="flex space-x-6 text-[10px] font-black text-slate-600 uppercase tracking-[0.2em]">
-              <Link href="/docs#safety" className="hover:text-white transition-colors">Privacy</Link>
-              <Link href="/docs#vision" className="hover:text-white transition-colors">Terms</Link>
+            <div className="text-center md:text-left space-y-1">
+              <p className="text-xs text-slate-500 font-bold">
+                © {new Date().getFullYear()} {BRAND.name}.
+              </p>
+              <p className="text-xs text-slate-600 font-medium">
+                A project by <span className="text-slate-400 font-bold">{BRAND.vendor.name}</span>
+              </p>
+            </div>
+            <div className="flex flex-wrap justify-center gap-x-6 gap-y-2 text-[10px] font-black text-slate-600 uppercase tracking-[0.2em]">
+              <Link href="/privacy" className="hover:text-white transition-colors">Privacy</Link>
+              <Link href="/terms" className="hover:text-white transition-colors">Terms</Link>
+              <Link href="/cookies" className="hover:text-white transition-colors">Cookies</Link>
             </div>
           </div>
         </div>

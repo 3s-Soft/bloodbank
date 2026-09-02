@@ -26,7 +26,7 @@ export default function Navbar() {
                 <Link href={`/${orgSlug}`} className="flex items-center space-x-3 group">
                     <div className="relative w-10 h-10 overflow-hidden rounded-xl transition-all group-hover:scale-105">
                         <Image
-                            src="/assets/logo.png"
+                            src="/assets/logo-mark.png"
                             alt={`${organization.name} logo`}
                             width={40}
                             height={40}

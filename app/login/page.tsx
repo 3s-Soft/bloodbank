@@ -2,12 +2,14 @@
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Droplet, Phone, Lock, ArrowLeft, Mail } from "lucide-react";
+import { Phone, Lock, ArrowLeft, Mail } from "lucide-react";
 import { signIn } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState, Suspense } from "react";
 import { toast } from "sonner";
 import Link from "next/link";
+
+import BrandLogo from "@/components/BrandLogo";
 
 function LoginForm() {
     const router = useRouter();
@@ -74,10 +76,8 @@ function LoginForm() {
         <Card className="w-full max-w-sm border-none shadow-2xl overflow-hidden bg-slate-900/50 backdrop-blur-xl border border-slate-800">
             <div className="h-2 w-full bg-red-600" />
             <CardHeader className="text-center pt-8 pb-4">
-                <Link href="/" className="inline-flex items-center justify-center space-x-2 mb-4">
-                    <div className="bg-red-500/10 p-2 rounded-xl border border-red-500/20">
-                        <Droplet className="w-6 h-6 text-red-500 fill-current" />
-                    </div>
+                <Link href="/" className="inline-flex justify-center mb-4">
+                    <BrandLogo size="lg" priority />
                 </Link>
                 <CardTitle className="text-3xl font-black text-white tracking-tight">Welcome Back</CardTitle>
                 <p className="text-slate-400 font-medium mt-1 text-sm">
@@ -213,7 +213,11 @@ function LoginForm() {
                     <p className="text-xs text-slate-500 font-medium">
                         Don&apos;t have an account?{" "}
                         <Link
-                            href={orgSlug ? `/${orgSlug}/register` : "/#organizations"}
+                            // Without a tenant in the URL this used to point at
+                            // "/#organizations", an anchor on the homepage that
+                            // lands on an empty grid when no blood bank has
+                            // joined. /register is the chooser.
+                            href={orgSlug ? `/${orgSlug}/register` : "/register"}
                             className="font-black text-red-500 hover:text-red-400"
                         >
                             Register

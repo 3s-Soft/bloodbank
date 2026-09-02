@@ -1,7 +1,9 @@
 "use client";
 
-import { Droplet, User, LogOut } from "lucide-react";
+import { User, LogOut } from "lucide-react";
 import Link from "next/link";
+
+import BrandLogo from "@/components/BrandLogo";
 import { useSession, signOut } from "next-auth/react";
 
 export default function LandingNav() {
@@ -10,13 +12,8 @@ export default function LandingNav() {
     return (
         <nav className="sticky top-0 z-50 w-full border-b border-white/5 bg-slate-950/80 backdrop-blur-xl">
             <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-                <Link href="/" className="flex items-center space-x-2.5 group">
-                    <div className="relative w-9 h-9 rounded-xl bg-gradient-to-br from-red-500 to-red-600 flex items-center justify-center shadow-lg shadow-red-500/20">
-                        <Droplet className="w-5 h-5 text-white fill-current" />
-                    </div>
-                    <span className="text-xl font-black text-white tracking-tight">
-                        Blood<span className="text-red-500">Bank</span>
-                    </span>
+                <Link href="/" className="group">
+                    <BrandLogo size="md" priority />
                 </Link>
 
                 <div className="hidden lg:flex items-center space-x-8">
